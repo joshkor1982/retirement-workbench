@@ -66,6 +66,7 @@ later.
 | Find jobs near a ZIP code or remote, and track every opening | **Jobs** |
 | Find a SkillBridge program, track leads, work the packet, and download your request memo | **SkillBridge** |
 | Watch homes for sale where you are moving | **Housing** |
+| Check the weather where you are and where you plan to retire | **Dashboard** |
 
 <table><tr>
 <td><img src="docs/timeline.png" alt="The timeline: every milestone from packet to retirement day"></td>
@@ -91,6 +92,7 @@ already have, and each one is off until you turn it on in **Settings**.
 | Federal jobs | A free key from [developer.usajobs.gov](https://developer.usajobs.gov) | USAJOBS results inside the app |
 | All other jobs | A free key from [developer.adzuna.com](https://developer.adzuna.com) | Private-sector results inside the app |
 | Housing | Your destination ZIP code, on the **Housing** page | Homes for sale, updated every 30 minutes |
+| Weather | Where you are now and where you plan to retire, in **Settings** (a US ZIP code or any city) | Current weather and a 3-day outlook for both places on the Dashboard, from [Open-Meteo](https://open-meteo.com) |
 
 ### Set up the Advisor
 

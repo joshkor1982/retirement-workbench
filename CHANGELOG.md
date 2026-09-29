@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- VA pay per month is calculated from your estimated rating and dependents,
+  using VA's rate table effective December 1, 2025.
+- Weather on the dashboard for where you are now and where you plan to
+  retire, from Open-Meteo. Works with a US ZIP code or any city worldwide.
+
+### Changed
+- The Budget page's live clock is now the Money Countdown. With debt it counts
+  to your debt-free date; without debt it counts to retirement day and your
+  savings goal.
+- The retirement request window is 24 to 12 months before the retirement
+  date, per Army Directive 2026-08 (17 April 2026). The old 9-month cutoff and
+  Letter of Lateness guidance are gone.
+- The timeline card is named Retirement Timeline, and its description explains
+  how to change it.
+
 ## 1.0.0-beta.1 - 2026-09-29
 
 The first public release.
