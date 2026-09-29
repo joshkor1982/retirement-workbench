@@ -76,6 +76,8 @@ type Settings struct {
 	LeaveSet        bool    `json:"leave_set,omitempty"`
 	LeaveAsOf       string  `json:"leave_as_of,omitempty"` // YYYY-MM-DD the balance was read
 	RetSystem       string  `json:"ret_system,omitempty"`  // high3 | brs
+	PayGrade        string  `json:"pay_grade,omitempty"`   // e.g. E-8
+	PayRaise        float64 `json:"pay_raise,omitempty"`   // assumed raise for unpublished years; 0 = default
 	RetYears        float64 `json:"ret_years,omitempty"`
 	RetHigh3        int64   `json:"ret_high3_cents,omitempty"`
 	RetSBP          bool    `json:"ret_sbp,omitempty"`
@@ -4047,7 +4049,7 @@ func (s *Server) settings(w http.ResponseWriter, r *http.Request) {
 	for _, p := range aiProviders {
 		provs = append(provs, provView{p, aiStatus(p.Key)})
 	}
-	s.page(w, "settings", map[string]any{"Err": r.URL.Query().Get("err"), "AIProviders": provs, "DataDir": absPath(s.data)})
+	s.page(w, "settings", map[string]any{"Err": r.URL.Query().Get("err"), "AIProviders": provs, "DataDir": absPath(s.data), "PayGrades": payGrades})
 }
 
 func (s *Server) settingsSave(w http.ResponseWriter, r *http.Request) {
@@ -4061,6 +4063,23 @@ func (s *Server) settingsSave(w http.ResponseWriter, r *http.Request) {
 		}
 		if r.FormValue("usajobs_key_clear") == "1" {
 			st.Settings.USAJobsKey = ""
+		}
+		if r.Form.Has("pay_grade") {
+			g := strings.TrimSpace(r.FormValue("pay_grade"))
+			for _, x := range payGrades {
+				if x == g {
+					st.Settings.PayGrade = g
+				}
+			}
+			if g == "" {
+				st.Settings.PayGrade = ""
+			}
+			if v, err := strconv.ParseFloat(strings.TrimSpace(r.FormValue("ret_years")), 64); err == nil && v >= 0 && v <= 45 {
+				st.Settings.RetYears = v
+			}
+			if v, err := strconv.ParseFloat(strings.TrimSpace(r.FormValue("pay_raise")), 64); err == nil && v >= 0 && v <= 15 {
+				st.Settings.PayRaise = v
+			}
 		}
 		if r.Form.Has("weather_here") {
 			st.Settings.WeatherHere = strings.TrimSpace(r.FormValue("weather_here"))

@@ -824,3 +824,33 @@ func TestPARWindowIsTwelveMonths(t *testing.T) {
 		t.Errorf("window = %s to %s, want Dec 3, 2025 to Dec 3, 2026", v.WindowOpen, v.WindowClose)
 	}
 }
+
+func TestHigh3E8With22Years(t *testing.T) {
+	rd, _ := parseDay("2027-11-01")
+	h := calcHigh3("E-8", 22, rd, 3.0)
+	if !h.OK || h.From != "Nov 2024" || h.To != "Oct 2027" || h.Projected != 10 {
+		t.Fatalf("E-8 22 years: %+v", h)
+	}
+	// Hand-check: the 36 months are Nov 2024 to Oct 2027. Service runs from
+	// 19 to 22 years, so the months use "over 18" and "over 20" on each
+	// year's table, and the 10 months of 2027 use 2026 plus 3%.
+	var sum int64
+	add := func(n int, cents int64) { sum += int64(n) * cents }
+	add(2, basicPay[2024]["E-8"][18])  // Nov-Dec 2024, 19 years
+	add(10, basicPay[2025]["E-8"][18]) // Jan-Oct 2025, 19 years
+	add(2, basicPay[2025]["E-8"][20])  // Nov-Dec 2025, 20 years
+	add(10, basicPay[2026]["E-8"][20]) // Jan-Oct 2026, 20 years
+	add(2, basicPay[2026]["E-8"][20])  // Nov-Dec 2026, 21 years
+	add(10, int64(float64(basicPay[2026]["E-8"][20])*1.03+0.5))
+	if want := (sum + 18) / 36; h.Amount != want {
+		t.Errorf("High-3 = %s, hand-check says %s", money(h.Amount), money(want))
+	}
+	t.Logf("E-8, 22 years, retiring Nov 1 2027: High-3 %s", money(h.Amount))
+	// The official 2026 E-8 row, straight from DFAS.
+	if basicPay[2026]["E-8"][20] != 699540 || basicPay[2026]["E-8"][22] != 730830 || basicPay[2026]["E-8"][30] != 806730 {
+		t.Error("2026 E-8 row does not match the DFAS table")
+	}
+	if calcHigh3("E-5", 20, rd, 3).OK || calcHigh3("O-9", 30, rd, 3).OK {
+		t.Error("unsupported grades must fall back to manual entry")
+	}
+}

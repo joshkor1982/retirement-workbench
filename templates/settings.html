@@ -14,6 +14,12 @@
         <input type="text" name="weather_here" value="{{.Settings.WeatherHere}}" placeholder="ZIP code or city"></label>
       <label class="field"><span class="field-label">Where You Plan to Retire</span>
         <input type="text" name="weather_retire" value="{{.Settings.WeatherRetire}}" placeholder="ZIP code or city"></label>
+      <label class="field"><span class="field-label">Pay Grade</span>
+        <select name="pay_grade"><option value="">Choose</option>{{range .PayGrades}}<option value="{{.}}"{{if eq . $.Settings.PayGrade}} selected{{end}}>{{.}}</option>{{end}}</select></label>
+      <label class="field"><span class="field-label">Years of Service at Retirement</span>
+        <input type="number" name="ret_years" step="any" min="0" max="45" value="{{if .Settings.RetYears}}{{.Settings.RetYears}}{{end}}" placeholder="22"></label>
+      <label class="field"><span class="field-label">Assumed Future Raise (%)</span>
+        <input type="number" name="pay_raise" step="0.1" min="0" max="15" value="{{if .Settings.PayRaise}}{{.Settings.PayRaise}}{{end}}" placeholder="3.0"></label>
       <label class="field"><span class="field-label">Leave Balance (Days)</span>
         <input type="number" name="leave_days" step="0.5" min="-30" max="200" value="{{if .Settings.LeaveSet}}{{.Settings.LeaveDays}}{{end}}" placeholder="From your LES"></label>
       <label class="field"><span class="field-label">Balance As Of</span>

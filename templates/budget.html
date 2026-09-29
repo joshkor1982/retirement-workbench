@@ -216,9 +216,19 @@
     <label class="field"><span class="field-label">Retirement System</span>
       <select name="system"><option value="high3"{{if ne .Settings.RetSystem "brs"}} selected{{end}}>High-3</option><option value="brs"{{if eq .Settings.RetSystem "brs"}} selected{{end}}>Blended (BRS)</option></select></label>
     <label class="field"><span class="field-label">Years of Service</span>
-      <input type="number" name="years" step="any" min="0" max="45" value="{{if .Settings.RetYears}}{{.Settings.RetYears}}{{end}}" placeholder="20" required></label>
+      <input type="number" name="years" step="any" min="0" max="45" value="{{if .Settings.RetYears}}{{.Settings.RetYears}}{{end}}" placeholder="22" required></label>
+    {{if .Ret.High3.OK}}
+    <div class="high3-calc">
+      <span class="field-label">High-3 Monthly Base Pay</span>
+      <span class="va-amount">{{money .Ret.High3.Amount}}</span>
+      <span class="hint">Calculated for {{.Ret.High3.Grade}} with {{.Settings.RetYears}} years at retirement, averaging {{.Ret.High3.From}} to {{.Ret.High3.To}} on the DoD basic pay tables.{{if .Ret.High3.Projected}} {{.Ret.High3.Projected}} of the 36 months fall in years with no published table yet, so they assume a {{.Ret.High3.Raise}} raise.{{end}} Assumes the same grade all 3 years. Change grade or years in <a href="/settings">Settings</a>.</span>
+    </div>
+    <input type="hidden" name="high3" value="">
+    {{else}}
     <label class="field"><span class="field-label">High-3 Monthly Base Pay</span>
-      <input type="text" name="high3" inputmode="decimal" value="{{if .Settings.RetHigh3}}{{money .Settings.RetHigh3}}{{end}}" placeholder="6,450.00" required></label>
+      <input type="text" name="high3" inputmode="decimal" value="{{if .Settings.RetHigh3}}{{money .Settings.RetHigh3}}{{end}}" placeholder="6,450.00"></label>
+    <p class="hint high3-note">{{if .Settings.PayGrade}}ARW does not calculate High-3 for {{.Settings.PayGrade}} yet, so enter it here.{{else}}Set your pay grade in <a href="/settings">Settings</a> and ARW works this out for you.{{end}}</p>
+    {{end}}
     <label class="field inline-check"><input type="checkbox" name="sbp" value="1"{{if .Settings.RetSBP}} checked{{end}}> SBP for Spouse</label>
     <div class="va-calc">
       <div class="va-calc-head">

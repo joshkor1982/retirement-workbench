@@ -535,10 +535,13 @@ body.adv-hidden .adv-reopen { display: inline-block; }
 
 /* Resume targets (one resume per position) */
 .target-list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.target-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px;
-  padding: 8px 10px; border: 1px solid var(--c-line); border-radius: var(--r-1); background: var(--bg-well); }
-.target-list li.target-on { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
-.target-list a { color: var(--fg-body); }
+.target-list li { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 9px 12px; border: 1px solid var(--c-line); border-radius: var(--r-1); background: var(--bg-well);
+  transition: border-color .14s ease, background-color .14s ease; }
+.target-list li:hover { border-color: var(--fg-accent); }
+.target-list li.target-on { border-color: var(--fg-accent); background: color-mix(in srgb, var(--accent) 10%, var(--bg-well)); }
+.target-list a, .target-list a:visited { color: var(--fg-body); text-decoration: none; }
+.target-list a::after { content: ""; position: absolute; inset: 0; } /* the whole row is the link */
 .target-meta { font-size: var(--t-12); color: var(--fg-muted); white-space: nowrap; }
 
 /* Advisor sidebar conversation turns */
@@ -848,3 +851,57 @@ input[type="file"]:hover::file-selector-button { border-color: var(--fg-accent);
 .wx-drange { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
 .wx-credit { margin: 10px 0 0; font-size: var(--t-12); color: var(--fg-muted); }
 @media (max-width: 700px) { .wx-facts { grid-template-columns: repeat(2, 1fr); } }
+.high3-calc { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: .8rem 1rem;
+  border-radius: var(--r-1); background: var(--bg-well); border: 1px solid var(--c-line); }
+.high3-calc .hint, .high3-note { flex: 1 1 100%; margin: 0; }
+
+/* Compact weather: about half the height. Name and conditions on the left,
+   details and the 3-day outlook on the right. */
+.weather-card { padding-top: 1rem; padding-bottom: .9rem; }
+.weather-card > h2 { margin-bottom: .6rem; }
+.wx-place { display: grid; grid-template-columns: minmax(150px, auto) 1fr; grid-template-areas: "head facts" "now days";
+  column-gap: 20px; row-gap: 4px; align-items: center; padding: .7rem 1rem; }
+.wx-head { grid-area: head; }
+.wx-now { grid-area: now; margin: 0; gap: 10px; }
+.wx-icon { width: 36px; height: 36px; }
+.wx-temp { font-size: 30px; }
+.wx-text { font-size: var(--t-12); margin-top: 2px; }
+.wx-facts { grid-area: facts; grid-template-columns: repeat(4, auto); justify-content: start; gap: 4px 18px; padding: 0; border: 0; }
+.wx-fact { flex-direction: row; gap: 5px; align-items: baseline; }
+.wx-fact b { font-size: var(--t-13); }
+.wx-days { grid-area: days; margin: 0; grid-template-columns: repeat(3, auto); justify-content: start; gap: 4px 18px; }
+.wx-name { font-size: var(--t-15); }
+.wx-credit { margin-top: 6px; }
+@media (max-width: 1100px) { .wx-place { grid-template-columns: 1fr; grid-template-areas: "head" "now" "facts" "days"; }
+  .wx-facts { grid-template-columns: repeat(2, auto); } }
+
+/* Weather, tighter still: every line stays on one row. */
+.wx-place { grid-template-columns: minmax(210px, 260px) 1fr; }
+.wx-role, .wx-name, .wx-fact, .wx-day, .wx-text { white-space: nowrap; }
+.wx-name { overflow: hidden; text-overflow: ellipsis; }
+.wx-head { flex-direction: row; align-items: baseline; gap: 8px; min-width: 0; }
+.wx-role { font-size: 11px; }
+.wx-facts { gap: 4px 16px; }
+.wx-days { gap: 4px 16px; }
+/* Weather: one full-width row per place, so nothing truncates. The layout
+   follows the card's own width (container query), so an open Advisor panel
+   folds the outlook onto a second line instead of cutting it off. */
+.weather-card { container-type: inline-size; }
+.wx-grid { grid-template-columns: 1fr; gap: 10px; }
+.wx-place { grid-template-columns: 180px 128px auto 1fr; grid-template-areas: "head now facts days"; column-gap: 18px; padding: .6rem 1rem; }
+.wx-head { flex-direction: column; align-items: flex-start; gap: 1px; }
+.wx-name { overflow: visible; }
+.wx-facts { grid-template-columns: repeat(4, auto); gap: 4px 12px; }
+.wx-days { justify-content: end; gap: 4px 12px; }
+.wx-day { gap: 5px; }
+@container (max-width: 1080px) {
+  .wx-place { grid-template-columns: 180px 128px 1fr; grid-template-areas: "head now facts" "head now days"; row-gap: 6px; }
+  .wx-days { justify-content: start; }
+}
+@container (max-width: 640px) {
+  .wx-place { grid-template-columns: 1fr; grid-template-areas: "head" "now" "facts" "days"; }
+  .wx-facts { grid-template-columns: repeat(2, auto); }
+}
+.wx-facts, .wx-days { display: flex; flex-wrap: wrap; align-items: baseline; min-width: 0; }
+.wx-place > * { min-width: 0; }
+@container (max-width: 640px) { .wx-place { grid-template-columns: minmax(0, 1fr); } .wx-name { white-space: normal; } }

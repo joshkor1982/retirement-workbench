@@ -31,18 +31,40 @@ type retirePay struct {
 	VA         int64
 	Rating     int
 	RatesAsOf  string // VA rate table effective date
-	CRDP       bool   // rating >= 50: both paid in full
-	Offset     int64  // retired pay given up to the VA waiver
-	Total      int64  // what arrives each month
-	Change     int64  // Total minus current take-home
+	High3      high3Calc
+	CRDP       bool  // rating >= 50: both paid in full
+	Offset     int64 // retired pay given up to the VA waiver
+	Total      int64 // what arrives each month
+	Change     int64 // Total minus current take-home
 	HaveIncome bool
+}
+
+// raise returns the assumed yearly raise for unpublished pay years.
+func (s Settings) raise() float64 {
+	if s.PayRaise > 0 {
+		return s.PayRaise
+	}
+	return defaultRaise
+}
+
+// high3 prefers the calculated High-3 from grade and years of service, and
+// falls back to the amount typed in by hand.
+func (st State) high3() (int64, high3Calc) {
+	s := st.Settings
+	rd, _ := parseDay(s.RetirementDate)
+	h := calcHigh3(s.PayGrade, s.RetYears, rd, s.raise())
+	if h.OK {
+		return h.Amount, h
+	}
+	return s.RetHigh3, h
 }
 
 func estimateRetirePay(st State) retirePay {
 	s := st.Settings
-	if s.RetYears <= 0 || s.RetHigh3 <= 0 {
+	high3, calc := st.high3()
+	if s.RetYears <= 0 || high3 <= 0 {
 		// No pension inputs yet, but VA pay can still be shown from the rating.
-		return retirePay{Rating: roundRating(s.VaEstimate), RatesAsOf: vaRatesEffective,
+		return retirePay{Rating: roundRating(s.VaEstimate), RatesAsOf: vaRatesEffective, High3: calc,
 			VA: vaMonthly(s.VaEstimate, vaDependents{Spouse: s.RetSpouse, Children: s.RetKids, SchoolKids: s.RetSchoolKids, Parents: s.RetParents})}
 	}
 	rate := 0.025
@@ -56,7 +78,7 @@ func estimateRetirePay(st State) retirePay {
 	}
 	p := retirePay{Set: true, System: sys, Years: fmtDays(s.RetYears),
 		Multiplier: strconv.FormatFloat(mult*100, 'f', 1, 64) + "%",
-		Gross:      int64(float64(s.RetHigh3)*mult + 0.5), Rating: roundRating(s.VaEstimate),
+		Gross:      int64(float64(high3)*mult + 0.5), Rating: roundRating(s.VaEstimate), High3: calc,
 		VA: vaMonthly(s.VaEstimate, vaDependents{Spouse: s.RetSpouse, Children: s.RetKids, SchoolKids: s.RetSchoolKids, Parents: s.RetParents})}
 	if s.RetSBP {
 		p.SBP = int64(float64(p.Gross)*0.065 + 0.5)
@@ -79,7 +101,7 @@ func estimateRetirePay(st State) retirePay {
 
 func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 	years, yErr := strconv.ParseFloat(strings.TrimSpace(r.FormValue("years")), 64)
-	high3, hOK := optionalMoney(r.FormValue("high3"))
+	high3, hOK := optionalMoney(r.FormValue("high3")) // blank is fine when ARW calculates it
 	count := func(k string, hi int) int {
 		n, _ := strconv.Atoi(strings.TrimSpace(r.FormValue(k)))
 		return min(max(n, 0), hi)

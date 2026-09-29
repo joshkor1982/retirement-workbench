@@ -5,6 +5,9 @@
 ### Added
 - VA pay per month is calculated from your estimated rating and dependents,
   using VA's rate table effective December 1, 2025.
+- High-3 is calculated from your pay grade and years of service, month by
+  month, on the DoD basic pay tables (2026 enlisted is the official DFAS
+  table). Years with no published table use an assumed raise you can change.
 - Weather on the dashboard for where you are now and where you plan to
   retire, from Open-Meteo. Works with a US ZIP code or any city worldwide.
 
@@ -17,6 +20,9 @@
   Letter of Lateness guidance are gone.
 - The timeline card is named Retirement Timeline, and its description explains
   how to change it.
+- The weather card sits at the top of the dashboard in a compact layout.
+- The selected resume no longer uses a one-off thick edge; it matches the rest
+  of the app.
 
 ## 1.0.0-beta.1 - 2026-09-29
 

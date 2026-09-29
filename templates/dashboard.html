@@ -1,4 +1,9 @@
 {{template "head" .}}
+<section class="card weather-card" id="weather" data-weather>
+  <h2>Weather</h2>
+  <div class="wx-grid" id="wx-grid"><p class="hint">{{if or .Settings.WeatherHere .Settings.WeatherRetire}}Checking the weather...{{else}}Add where you are now and where you plan to retire in <a href="/settings">Settings</a> to see the weather in both places.{{end}}</p></div>
+  <p class="wx-credit">Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</p>
+</section>
 {{if not .Settings.RetirementDate}}
 <section class="card">
   <h2>Set Your Retirement Date</h2>
@@ -53,11 +58,6 @@
   </div>
 </section>
 
-<section class="card weather-card" id="weather" data-weather>
-  <h2>Weather</h2>
-  <div class="wx-grid" id="wx-grid"><p class="hint">{{if or .Settings.WeatherHere .Settings.WeatherRetire}}Checking the weather...{{else}}Add where you are now and where you plan to retire in <a href="/settings">Settings</a> to see the weather in both places.{{end}}</p></div>
-  <p class="wx-credit">Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</p>
-</section>
 
 {{if .Week}}
 <section class="card week-banner">
