@@ -1,6 +1,7 @@
 name: Release
 
-# Push a tag like v1.0.0 to build every download and draft a GitHub release.
+# Push a tag like v1.0.0 (or v1.0.0-beta.1 for a pre-release) to build every
+# download and publish a GitHub release.
 # Runs on macOS so the Mac app can be merged into one universal binary and
 # signed; the Windows and Linux builds cross-compile from the same runner.
 on:
@@ -23,7 +24,14 @@ jobs:
         run: go test -count=1 ./...
       - name: Build every platform
         run: scripts/build-release.sh "$GITHUB_REF_NAME"
-      - name: Draft the release
+      - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --draft --generate-notes --title "ARW $GITHUB_REF_NAME"
+        # A tag with a hyphen (v1.0.0-beta.1) is a pre-release. The notes are the
+        # tag's section of CHANGELOG.md, followed by the install steps.
+        run: |
+          flag=""; case "$GITHUB_REF_NAME" in *-*) flag="--prerelease";; esac
+          ver="${GITHUB_REF_NAME#v}"
+          awk -v v="$ver" '$0 ~ "^## "v {on=1; next} on && /^## / {exit} on' CHANGELOG.md > notes.md
+          cat packaging/release-notes-footer.md >> notes.md
+          gh release create "$GITHUB_REF_NAME" dist/* $flag --title "ARW $GITHUB_REF_NAME" --notes-file notes.md

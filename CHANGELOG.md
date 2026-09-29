@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.0.0-beta.1 - 2026-09-29
+
+The first public release.
 
 ### Added
 - Renamed to ARW (Army Retirement Workbench). Downloads for Mac (one

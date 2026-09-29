@@ -15,7 +15,7 @@ and a dozen websites.
 ## Get started
 
 1. Download the file for your computer from the
-   [latest release](../../releases/latest).
+   [releases page](../../releases).
 2. Unzip it and open **ARW** (`ARW.app` on a Mac, `arw.exe` on Windows).
 3. The app opens in your browser at `http://127.0.0.1:5252`.
 4. Open **Settings**, enter your name, branch, and retirement date, and click
