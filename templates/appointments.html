@@ -1,0 +1,33 @@
+{{template "head" .}}
+<section class="card">
+  <h2>Add an Appointment</h2>
+  <form method="post" action="/appointments" class="field-row">
+    <label class="field field-grow"><span class="field-label">What</span>
+      <input type="text" name="title" required placeholder="Separation physical"></label>
+    <label class="field"><span class="field-label">When</span>
+      <input type="datetime-local" name="at" required></label>
+    <label class="field"><span class="field-label">Where</span>
+      <input type="text" name="place" placeholder="Clinic, bldg 4"></label>
+    <label class="field field-grow"><span class="field-label">Notes</span>
+      <input type="text" name="notes" placeholder="Optional"></label>
+    <button type="submit" class="primary">Add</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Appointments</h2>
+  {{if .Items}}
+  <table>
+    <thead><tr><th>When</th><th>What</th><th>Where</th><th>Notes</th><th></th></tr></thead>
+    <tbody>
+    {{range .Items}}
+    <tr id="appt-{{.ID}}">
+      <td class="nowrap"><b>{{atdate .At}}</b>{{with attime .At}} · {{.}}{{end}}</td><td><b>{{.Title}}</b></td><td>{{.Place}}</td><td>{{.Notes}}</td>
+      <td><form method="post" action="/appointments/{{.ID}}/delete"><button class="danger">Delete</button></form></td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{else}}<p class="hint">Nothing scheduled yet.</p>{{end}}
+</section>
+{{template "foot" .}}

@@ -1,0 +1,25 @@
+# docker compose up -d, then open http://localhost:5252
+#
+# The port is published on 127.0.0.1 only: the app has no login, so it must
+# not be reachable from your network. Your data lives in the named volume
+# "workbench-data" and survives `docker compose down` and image upgrades.
+# `docker compose down -v` deletes it.
+services:
+  workbench:
+    build: .
+    image: arw:local
+    ports:
+      - "127.0.0.1:5252:5252"
+    volumes:
+      - workbench-data:/data
+    environment:
+      TZ: America/Chicago # your time zone, so due dates flip at your midnight
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+volumes:
+  workbench-data:

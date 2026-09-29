@@ -1,0 +1,952 @@
+/* Army Retirement Workbench design tokens and base styles.
+   Fonts: Geist and Geist Mono (SIL Open Font License 1.1, see fonts/OFL.txt),
+   self-hosted so the app works offline. Paths are relative to this file. */
+@font-face { font-family:"Geist"; src:url("fonts/geist.woff2") format("woff2"); font-weight:100 900; font-display:swap; }
+@font-face { font-family:"Geist Mono"; src:url("fonts/geist-mono.woff2") format("woff2"); font-weight:100 900; font-display:swap; }
+
+/* Tokens come in two layers:
+     1. Primitives (--c-*): raw values. Reference them only from the
+        semantic layer below.
+     2. Semantic (--bg-*, --fg-*, --status-*): what page styles use. */
+
+:root {
+  /* -------- Primitive: Neutral scale ---------------- */
+  /* Neutral near-black. Each step
+     ~6-8% lightness so borders and panels read distinctly under
+     low ambient light. */
+  --c-ink-0:    #09090b;   /* page bg, deepest */
+  --c-ink-1:    #0e0e11;   /* surface bg */
+  --c-ink-2:    #131317;   /* raised panel */
+  --c-ink-3:    #17171b;   /* card / row */
+  --c-ink-4:    #1e1e23;   /* hovered row, well */
+  --c-ink-5:    #2a2a31;   /* divider strong */
+
+  --c-line:     #26262c;   /* hairline border (default) */
+  --c-line-2:   #3a474e;   /* visible border */
+  --c-line-3:   #4e5d66;   /* focus / selected border */
+
+  --c-fog-0:    #f4f4f5;   /* high-emphasis text */
+  --c-fog-1:    #d9d9de;   /* primary body */
+  --c-fog-2:    #a8a8b0;   /* secondary / labels */
+  --c-fog-3:    #7a7a83;   /* faint / placeholder */
+  --c-fog-4:    #5e5e66;   /* disabled (kept readable on bg-page) */
+
+  /* -------- Primitive: Accent (Army gold) -------------- */
+  /* Army gold. Mid is the brand. Hi is the
+     "phosphor glow" used sparingly for live data + focus rings. */
+  --c-accent-deep:  #2b2207;   /* tint, fills */
+  --c-accent-mid:   #b8860b;   /* brand, primary action */
+  --c-accent-hi:    #f4c542;   /* glow, active state */
+  --c-accent-flare: #ffd86b;   /* peak - links, scanlines, cursor */
+
+  /* -------- Primitive: Semantic signal ---------------------- */
+  /* Status colors are desaturated to sit on dark surfaces without
+     vibrating. No reds-as-buttons. Failure is information. */
+  --c-amber:    #d9a834;
+  --c-amber-hi: #f4c860;
+  --c-amber-bg: #2a2110;
+
+  --c-red:      #d95e4b;
+  --c-red-hi:   #ff7c69;
+  --c-red-bg:   #2a1410;
+
+  --c-blue:     #4fb2d9;
+  --c-blue-hi:  #7ed1f0;
+  --c-blue-bg:  #0e1f28;
+
+  --c-violet:   #9d7fe0;   /* used for "experimental" / pre-1.0 */
+  --c-violet-bg:#1a1430;
+
+  /* ============================================================
+     SEMANTIC COLOR TOKENS - use these in components
+     ============================================================ */
+
+  /* Surfaces, top-down: page → panel → card → well */
+  --bg-page:      var(--c-ink-0);
+  --bg-surface:   var(--c-ink-1);
+  --bg-panel:     var(--c-ink-2);
+  --bg-card:      var(--c-ink-3);
+  --bg-well:      var(--c-ink-4);
+  /* Inputs recess INTO the card: one step darker than the panel they sit on,
+     for subtle contrast (user call, 2026-08-31). */
+  --bg-input:     var(--c-ink-1);
+  --bg-hover:     #1a2226;
+  --bg-active:    #222d33;
+
+  /* Foreground */
+  --fg-primary:   var(--c-fog-0);
+  --fg-body:      var(--c-fog-1);
+  --fg-muted:     var(--c-fog-2);
+  --fg-faint:     var(--c-fog-3);
+  --fg-disabled:  var(--c-fog-4);
+  --fg-hairline:  #3b423f;     /* below disabled - rule strokes only, never text */
+  --fg-on-accent: #06120a;     /* text on a filled gold button */
+  --fg-accent:    var(--c-accent-hi);
+  --fg-link:      var(--c-accent-flare);
+
+  /* Borders */
+  --border:        1px solid var(--c-line);
+  --border-strong: 1px solid var(--c-line-2);
+  --border-focus:  1px solid var(--c-accent-hi);
+  --border-color:        var(--c-line);
+  --border-color-strong: var(--c-line-2);
+  --border-color-focus:  var(--c-accent-hi);
+
+  /* Accent */
+  /* The action color. Theme-aware via --fg-accent (hi on dark, mid on
+     light), so a filled control pairs with --fg-on-accent in BOTH themes.
+     Never key a control on a --c-accent-* rung directly: that is how the
+     an earlier build ended up with mismatched button colors. --c-accent-mid remains the BRAND primitive (marks, borders,
+     badges). */
+  --accent:       var(--fg-accent);
+  --accent-hi:    var(--c-accent-hi);
+  --accent-flare: var(--c-accent-flare);
+  --accent-deep:  var(--c-accent-deep);
+
+  /* Status semantic (foreground + ambient bg + border) */
+  --status-ok-fg:      #4ade80;   /* success is green, never the gold accent */
+  --status-ok-bg:      #0f2a1a;
+  --done-bg:           #16a34a;   /* a finished action: green button, white text */
+  --status-warn-fg:    var(--c-amber-hi);
+  --status-warn-bg:    var(--c-amber-bg);
+  --status-err-fg:     var(--c-red-hi);
+  --status-err-bg:     var(--c-red-bg);
+  --status-info-fg:    var(--c-blue-hi);
+  --status-info-bg:    var(--c-blue-bg);
+  --status-exp-fg:     var(--c-violet);
+  --status-exp-bg:     var(--c-violet-bg);
+
+  /* Glow - used on focus, live data, links on hover. Sparingly. */
+  --glow-accent:   0 0 0 1px var(--c-accent-hi),
+                   0 0 12px -2px rgba(52, 217, 126, 0.55);
+  --glow-soft:     0 0 16px -4px rgba(52, 217, 126, 0.4);
+  --glow-text:     0 0 6px rgba(52, 217, 126, 0.6);
+
+  /* Scanline / grid overlays (for hero & live-data surfaces) */
+  --scanline:      repeating-linear-gradient(
+                     to bottom,
+                     transparent 0 2px,
+                     rgba(108, 245, 168, 0.03) 2px 3px
+                   );
+  --grid-overlay:  linear-gradient(rgba(108, 245, 168, 0.04) 1px, transparent 1px) 0 0/100% 24px,
+                   linear-gradient(90deg, rgba(108, 245, 168, 0.04) 1px, transparent 1px) 0 0/24px 100%;
+
+  /* ============================================================
+     TYPE SYSTEM
+     ============================================================
+     Two families. No serif - this is not a marketing site.
+       --font-sans  Geist            - UI, labels, prose
+       --font-mono  Geist Mono       - data, IDs, code, status
+
+     If Geist is unavailable, system-ui is an acceptable fallback;
+     the system holds up at IBM Plex Sans + JetBrains Mono.
+     ============================================================ */
+
+  --font-sans: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+
+  /* Type scale - modular, but compressed for high information density */
+  --t-12: 13px;
+  --t-13: 14px;
+  --t-14: 15px;
+  --t-15: 16px;
+  --t-16: 16px;
+  --t-18: 18px;
+  --t-20: 20px;
+  --t-24: 24px;
+  --t-28: 28px;
+  --t-32: 32px;
+  --t-40: 40px;
+  --t-56: 56px;
+  --t-72: 72px;
+
+  /* Tracking */
+  --track-tight:  -0.02em;
+  --track-normal: 0;
+  --track-wide:   0.04em;
+  --track-mono:   0.06em;   /* uppercase mono labels */
+
+  /* Line heights */
+  --lh-tight: 1.08;
+  --lh-snug:  1.25;
+  --lh-text:  1.62;
+
+  /* ============================================================
+     SPACING - 4px base. Use these tokens in component CSS.
+     ============================================================ */
+  --s-0:   0;
+  --s-1:   2px;
+  --s-2:   4px;
+  --s-3:   8px;
+  --s-4:   12px;
+  --s-5:   16px;
+  --s-6:   24px;
+  --s-7:   32px;
+  --s-8:   48px;
+  --s-9:   64px;
+  --s-10:  96px;
+  --s-11:  128px;
+
+  /* ============================================================
+     SHAPE - one radius language, modern-soft (2026). Cards,
+     panels, and popovers take --r-0; inputs, buttons, and menu
+     items take --r-1; pill is reserved for status chips. Change
+     these two values and every page re-shapes at once.
+     ============================================================ */
+  /* The one content-frame width for every page. Tune it here and every
+     page reflows. Full-bleed canvases are the only exception. */
+  --frame: 1200px;
+
+  --r-0:   10px;    /* cards, panels, popovers */
+  --r-1:   6px;     /* inputs, buttons, menu items */
+  --r-pill: 999px;  /* status chip only */
+
+  /* ============================================================
+     ELEVATION - layered, low-alpha shadows (never harsh). Resting
+     surfaces use --shadow-1; raised popovers/menus use --shadow-2.
+     Light theme swaps in softer values below.
+     ============================================================ */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -16px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.4), 0 16px 40px -16px rgba(0, 0, 0, 0.6);
+
+  /* ============================================================
+     TIMING - linear, short, never bouncy.
+     ============================================================ */
+  --dur-fast:   90ms;
+  --dur-base:   140ms;
+  --dur-slow:   240ms;
+  --ease:       cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+/* ============================================================
+   LIGHT MODE - clean neutral white.
+   Apply via <html data-theme="light"> or <body data-theme="light">.
+   Auto-applies via prefers-color-scheme: light if no explicit theme.
+
+   Only background, foreground, and border tokens shift. The brand
+   accent, status colors, and spacing stay constant.
+   ============================================================ */
+
+:root[data-theme="light"],
+[data-theme="light"] {
+  /* Elevation - soft in light mode. */
+  --shadow-1: 0 1px 2px rgba(17, 17, 19, 0.05), 0 1px 3px rgba(17, 17, 19, 0.04);
+  --shadow-2: 0 2px 6px rgba(31, 29, 26, 0.10), 0 16px 40px -18px rgba(31, 29, 26, 0.30);
+
+  --bg-input:   #ffffff;   /* a shade deeper than the panel paper */
+
+  
+  --c-ink-0:    #f7f7f8;   /* page bg - paper */
+  --c-ink-1:    #ffffff;   /* surface */
+  --c-ink-2:    #ffffff;   /* panel - paper-soft */
+  --c-ink-3:    #ffffff;   /* card */
+  --c-ink-4:    #f3f3f5;   /* well */
+  --c-ink-5:    #dcdce1;   /* divider strong */
+
+  
+  --c-line:     #e4e4e8;
+  --c-line-2:   #d4d4da;   
+  --c-line-3:   #b8860b;   /* focus - gold for contrast */
+
+  
+  --c-fog-0:    #111113;   
+  --c-fog-1:    #27272a;   /* body */
+  --c-fog-2:    #4a4a52;   
+  --c-fog-3:    #71717a;   /* faint */
+  --c-fog-4:    #a1a1aa;   
+
+  /* Semantic surfaces - explicit so they cascade through theme override */
+  --bg-page:      #f7f7f8;
+  --bg-surface:   #ffffff;
+  --bg-panel:     #ffffff;
+  --bg-card:      #ffffff;
+  --bg-well:      #f4f4f6;
+  --bg-hover:     #eeeef1;
+  --bg-active:    #e7e7eb;
+
+  --fg-primary:   #111113;
+  --fg-body:      #27272a;
+  --fg-muted:     #4a4a52;
+  --fg-faint:     #71717a;
+  --fg-disabled:  #a1a1aa;
+  --fg-hairline:  #d4d4da;
+  --fg-on-accent: #ffffff;   /* paper-white on a filled gold button */
+  --fg-accent:    #8a6d00;   /* mid, not hi, for light contrast */
+  --fg-link:      #8a6d00;
+
+  --border-color:        #e4e4e8;
+  --border-color-strong: #d4d4da;
+  --border-color-focus:  #8a6d00;
+  --border:        1px solid #e4e4e8;
+  --border-strong: 1px solid #d4d4da;
+  --border-focus:  1px solid #8a6d00;
+
+  /* Status - light tints, deeper foreground for contrast */
+  --status-ok-fg:   #176e3a;
+  --status-ok-bg:   #d6efde;
+  --done-bg:        #15803d;
+  --status-warn-fg: #8a5f12;
+  --status-warn-bg: #f5e6c8;
+  --status-err-fg:  #a83b2a;
+  --status-err-bg:  #f5d8d2;
+  --status-info-fg: #2a6fa3;
+  --status-info-bg: #d8eaf2;
+  --status-exp-fg:  #5d4bb0;
+  --status-exp-bg:  #ebe3f5;
+
+  /* Glow - toned down for light bg */
+  --glow-accent:   0 0 0 1px #8a6d00,
+                   0 0 12px -2px rgba(184, 134, 11, 0.4);
+  --glow-soft:     0 0 16px -4px rgba(184, 134, 11, 0.28);
+  --glow-text:     0 0 6px rgba(184, 134, 11, 0.35);
+
+  /* Scanline / grid overlays - green still, lower opacity */
+  --scanline:      repeating-linear-gradient(
+                     to bottom,
+                     transparent 0 2px,
+                     rgba(184, 134, 11, 0.04) 2px 3px
+                   );
+  --grid-overlay:  linear-gradient(rgba(184, 134, 11, 0.05) 1px, transparent 1px) 0 0/100% 24px,
+                   linear-gradient(90deg, rgba(184, 134, 11, 0.05) 1px, transparent 1px) 0 0/24px 100%;
+
+  color-scheme: light;
+}
+
+/* Auto-apply light mode if the OS prefers light AND no explicit theme is set */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]):not([data-theme="light"]) {
+    --bg-page: #fbf8f3; --bg-surface: #f6efe1; --bg-panel: #f0eade;
+    --bg-card: #e8dec5; --bg-well: #ddd0b1;
+    --bg-hover: #ebe3cc; --bg-active: #e1d6b8;
+    --fg-primary: #1f1d1a; --fg-body: #2e2b27; --fg-muted: #4a4744;
+    --fg-faint: #6e6a63; --fg-disabled: #807c76; --fg-hairline: #b3a991;
+    --fg-on-accent: #fbf8f3; --fg-accent: #8a6d00; --fg-link: #8a6d00;
+    --c-line: #d4cab2; --c-line-2: #c8bfb0; --c-line-3: #8a6d00;
+    --border: 1px solid #d4cab2;
+    --border-strong: 1px solid #c8bfb0;
+    --border-focus:  1px solid #8a6d00;
+    --status-ok-fg: #176e3a;  --status-ok-bg:  #d6efde;
+    --status-warn-fg:#8a5f12;  --status-warn-bg:#f5e6c8;
+    --status-err-fg: #a83b2a;  --status-err-bg: #f5d8d2;
+    --status-info-fg:#2a6fa3;  --status-info-bg:#d8eaf2;
+    --status-exp-fg: #5d4bb0;  --status-exp-bg: #ebe3f5;
+    --glow-accent: 0 0 0 1px #8a6d00, 0 0 12px -2px rgba(32,150,79,0.4);
+    --glow-soft:   0 0 16px -4px rgba(32,150,79,0.28);
+    --glow-text:   0 0 6px rgba(32,150,79,0.35);
+    color-scheme: light;
+  }
+}
+
+/* ============================================================
+   SEMANTIC TYPOGRAPHY CLASSES
+   Use these as utility classes OR copy the rule into component CSS.
+   ============================================================ */
+
+.t-display {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--t-72);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--track-tight);
+  color: var(--fg-primary);
+}
+.t-h1 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--t-40);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--track-tight);
+  color: var(--fg-primary);
+}
+.t-h2 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--t-28);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--track-tight);
+  color: var(--fg-primary);
+}
+.t-h3 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--t-20);
+  line-height: var(--lh-snug);
+  color: var(--fg-primary);
+}
+.t-h4 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--t-16);
+  line-height: var(--lh-snug);
+  color: var(--fg-primary);
+}
+
+.t-body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: var(--t-15);
+  line-height: var(--lh-text);
+  color: var(--fg-body);
+}
+.t-body-sm {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: var(--t-13);
+  line-height: var(--lh-text);
+  color: var(--fg-body);
+}
+.t-lead {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: var(--t-18);
+  line-height: var(--lh-text);
+  color: var(--fg-body);
+}
+
+/* Mono - data, identifiers, code, keys, IDs, durations, IPs */
+.t-mono {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: var(--t-13);
+  letter-spacing: 0;
+  color: var(--fg-body);
+  font-variant-numeric: tabular-nums;
+}
+.t-mono-sm {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: var(--t-12);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+}
+
+/* Uppercase mono - used for system labels: SECTOR, PEER, STATUS */
+.t-label {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--t-12);
+  text-transform: uppercase;
+  letter-spacing: var(--track-mono);
+  color: var(--fg-muted);
+}
+.t-label-strong {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: var(--t-12);
+  text-transform: uppercase;
+  letter-spacing: var(--track-mono);
+  color: var(--fg-primary);
+}
+
+/* Eyebrow above section titles - green, mono, very small */
+.t-eyebrow {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--t-12);
+  text-transform: uppercase;
+  letter-spacing: var(--track-mono);
+  color: var(--fg-accent);
+}
+
+/* Inline code */
+.t-code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  padding: 1px 6px;
+  background: var(--bg-well);
+  border: 1px solid var(--c-line);
+  color: var(--fg-primary);
+  border-radius: 0;
+}
+
+/* Reset / base */
+html { background: var(--bg-page); color-scheme: dark light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }
+body {
+  font-family: var(--font-sans);
+  font-size: var(--t-15);
+  line-height: var(--lh-text);
+  font-weight: 450; /* Geist is variable: a touch heavier than 400 reads easier */
+  letter-spacing: 0.005em;
+  color: var(--fg-body);
+  background: var(--bg-page);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";   /* Geist alternates */
+}
+
+/* ============================================================
+   Base layer: modern element defaults. Everything here is
+   low-specificity (bare elements and pseudo classes), so page
+   styles in app.css load after it and win where they are more
+   specific. All values come from the tokens above.
+   ============================================================ */
+
+/* One box model: border-box everywhere, so widths mean outer widths. */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Reserve the scrollbar gutter on every page, scrolling or not: without
+   this a tall page's scrollbar steals ~15px and the masthead visibly
+   shifts left as you navigate between short and long pages. */
+html { scrollbar-gutter: stable; }
+
+/* A cell's TITLE always sits on its own line; controls never share it.
+   Cells are often flex/grid rows (toolbars), which would otherwise pull a
+   leading heading inline with the controls. Harmless in block containers. */
+section > h2:first-child, section > h3:first-child,
+.card > h2:first-child, .card > h3:first-child {
+  display: block; width: 100%; flex-basis: 100%; grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+/* Micro-interactions: quick, subtle, and OFF for reduced motion. */
+a, button, summary, input, select, textarea, [role="button"] {
+  transition:
+    background-color var(--dur-base) var(--ease),
+    border-color     var(--dur-base) var(--ease),
+    color            var(--dur-base) var(--ease),
+    box-shadow       var(--dur-base) var(--ease),
+    opacity          var(--dur-base) var(--ease);
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Links: ONE modern treatment app-wide. Kills the UA blue/purple-visited
+   underlined-hypertext look for good: accent-colored, quiet at rest,
+   underline only on hover. Page styles may still scope their own. */
+a { color: var(--fg-link); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 2px; }
+a:visited { color: var(--fg-link); }
+
+/* One focus language everywhere: a visible ring, only for keyboard focus. */
+:focus-visible {
+  outline: 2px solid var(--accent-hi, var(--fg-accent));
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* Form controls: filled wells with a soft ring on focus (never bare boxes). */
+/* ONE input format on every page: same fill, border, radius, height, and
+   padding app-wide. Pages do not restyle inputs; they only size widths. */
+input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]):not([type=color]):not([type=submit]):not([type=button]),
+select, textarea {
+  background: var(--bg-input, var(--bg-well));
+  color: var(--fg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--r-1);
+  font: inherit;
+  font-size: var(--t-13);
+}
+input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]):not([type=color]):not([type=submit]):not([type=button]), select {
+  min-height: 32px;
+  padding: 0 10px;
+}
+textarea { padding: 8px 10px; line-height: 1.5; }
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--border-color-focus, var(--fg-accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fg-accent) 22%, transparent);
+}
+input::placeholder, textarea::placeholder { color: var(--fg-faint); }
+
+/* Buttons: ONE size app-wide. Every <button> is 32px tall with 14px side
+   padding and a 13px/500 label; pages only choose the COLOR (primary/secondary/
+   danger). Segmented switches and filter chips are not buttons; a page may
+   reset min-height for those specific controls only. */
+button, .btn, a.btn {
+  font: inherit; border-radius: var(--r-1); cursor: pointer; font-weight: 500;
+  min-height: 34px; padding: 0 16px; font-size: var(--t-13); line-height: 1;
+  /* A label never wraps and a button never shrinks below it: in a crowded
+     table row, "Mark Paid" was squeezed to 64px and broke onto two lines
+     that pressed against the border. */
+  white-space: nowrap; flex-shrink: 0; min-width: max-content;
+  /* inline-FLEX with centered alignment: label text must sit dead center
+     vertically in every button, including <a class="btn"> link-buttons
+     (inline-block there leaves the text riding the top edge). */
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  /* Default = the SECONDARY look, so an unstyled <button> is never a UA-grey
+     slab; a page marks its one primary action with the accent explicitly. */
+  background: var(--bg-well); color: var(--fg-primary);
+  border: 1px solid var(--border-color);
+}
+a.btn { text-decoration: none; }
+a.btn:hover { text-decoration: none; }
+button:hover, .btn:hover { background: var(--bg-hover); border-color: var(--border-color-strong, var(--border-color)); }
+button:active { transform: translateY(0.5px); }
+@media (prefers-reduced-motion: reduce) { button:active { transform: none; } }
+
+/* Disclosures: ONE arrow everywhere. Native markers are killed; every
+   summary gets the same 18px accent chevron (pointing right when closed,
+   rotating down when open), regardless of the summary's own font size. */
+summary { list-style: none; cursor: pointer; }
+summary::-webkit-details-marker { display: none; }
+summary { display: flex; align-items: center; gap: 10px; }
+summary::before {
+  content: "";
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background-color: var(--fg-accent);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5l7 7-7 7'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5l7 7-7 7'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform var(--dur-base) var(--ease);
+}
+details[open] > summary::before { transform: rotate(90deg); }
+
+/* Tables: ONE contract app-wide. Headers bold, left, flush along the top
+   (with any explanatory sub-label as a quiet second line); row content is
+   never bold and never a bulleted list; controls inside cells keep their own
+   button weight. */
+th { font-weight: 600; text-align: left; vertical-align: top; }
+td { vertical-align: top; }
+td strong, td b { font-weight: 650; color: var(--fg-primary); }
+td ul, td ol { list-style: none; margin: 0; padding: 0; }
+
+/* Brand-tinted text selection. */
+::selection { background: color-mix(in srgb, var(--fg-accent) 30%, transparent); color: var(--fg-primary); }
+
+/* Quiet, modern scrollbars. */
+* { scrollbar-width: thin; scrollbar-color: var(--c-line-2) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--c-line-2); border-radius: var(--r-pill); border: 3px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* ============================================================
+   Components
+   ----------------------------------------------------------
+   Concrete component classes, built on tokens from
+   colors_and_type.css. Import that file first.
+   ============================================================ */
+
+/* -------- Buttons ------------------------------------------ */
+.btn {
+  font-family: var(--font-sans);
+  font-size: var(--t-13);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  height: 32px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--c-line-2);
+  background: var(--bg-card);
+  color: var(--fg-primary);
+  border-radius: var(--r-1);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease),
+              border-color var(--dur-fast) var(--ease),
+              box-shadow var(--dur-fast) var(--ease);
+}
+.btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--c-line-3);
+}
+.btn:active {
+  background: var(--bg-active);
+}
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--glow-accent);
+  border-color: var(--c-accent-hi);
+}
+.btn[disabled],
+.btn.is-disabled {
+  color: var(--fg-disabled);
+  background: var(--bg-card);
+  border-color: var(--c-line);
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--c-accent-mid);
+  border-color: var(--c-accent-hi);
+  color: var(--fg-on-accent);
+  font-weight: 600;
+}
+.btn--primary:hover {
+  background: var(--c-accent-hi);
+  border-color: var(--c-accent-flare);
+  box-shadow: var(--glow-soft);
+}
+.btn--primary:active { background: var(--c-accent-mid); }
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--fg-body);
+}
+.btn--ghost:hover {
+  background: var(--bg-hover);
+  border-color: var(--c-line);
+  color: var(--fg-primary);
+}
+
+.btn--danger {
+  border-color: var(--c-red);
+  color: var(--c-red-hi);
+  background: var(--c-red-bg);
+}
+.btn--danger:hover {
+  background: #381810;
+  border-color: var(--c-red-hi);
+}
+
+
+/* -------- Inputs ------------------------------------------- */
+.input {
+  font-family: var(--font-sans);
+  font-size: var(--t-14);
+  height: 32px;
+  padding: 0 10px;
+  background: var(--bg-well);
+  border: 1px solid var(--c-line-2);
+  border-radius: var(--r-1);
+  color: var(--fg-primary);
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color var(--dur-fast) var(--ease),
+              box-shadow var(--dur-fast) var(--ease);
+}
+.input::placeholder { color: var(--fg-faint); }
+.input:focus {
+  outline: none;
+  border-color: var(--c-accent-hi);
+  box-shadow: var(--glow-accent);
+}
+.input--mono {
+  font-family: var(--font-mono);
+  font-size: var(--t-13);
+  letter-spacing: 0;
+}
+
+/* -------- Status chips ------------------------------------- */
+.chip {
+  font-family: var(--font-mono);
+  font-size: var(--t-12);
+  font-weight: 500;
+  letter-spacing: var(--track-mono);
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 10px;
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: var(--r-pill);
+  border: 1px solid currentColor;
+  background: transparent;
+  flex-shrink: 0;
+}
+.chip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.chip--ok     { color: var(--status-ok-fg);   background: var(--status-ok-bg); }
+.chip--ok .chip__dot { box-shadow: var(--glow-text); }
+.chip--warn   { color: var(--status-warn-fg); background: var(--status-warn-bg); }
+.chip--err    { color: var(--status-err-fg);  background: var(--status-err-bg); }
+.chip--info   { color: var(--status-info-fg); background: var(--status-info-bg); }
+.chip--exp    { color: var(--status-exp-fg);  background: var(--status-exp-bg); }
+.chip--muted  { color: var(--fg-muted);       background: var(--bg-well); }
+
+/* -------- Cards & panels ----------------------------------- */
+/* THE cell-shape contract, app-wide. Every content cell on every page is
+   one of exactly two shapes:
+     OUTER card/section: bg panel/elev · 1px var(--border-color) · var(--r-0)
+                         · padding 1.25rem 1.5rem · box-shadow var(--shadow-1)
+     INNER cell (card-in-card, callouts, code panes, list tiles):
+                         bg var(--bg-well) or --bg-panel · 1px border ·
+                         var(--r-1) · padding 0.9rem 1.1rem
+   No page invents a third shape. */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--c-line);
+  padding: 1.4rem 1.65rem;
+  border-radius: var(--r-0);
+  box-shadow: var(--shadow-1);
+}
+.cell {
+  background: var(--bg-well);
+  border: 1px solid var(--c-line);
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--r-1);
+}
+
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--c-line);
+}
+
+/* -------- Key-value rows (the workhorse) ------------------- */
+.kv {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 4px 16px;
+  font-family: var(--font-mono);
+  font-size: var(--t-13);
+}
+.kv dt {
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--track-mono);
+  font-size: var(--t-12);
+}
+.kv dd {
+  margin: 0;
+  color: var(--fg-primary);
+}
+
+/* -------- Kbd ---------------------------------------------- */
+.kbd {
+  font-family: var(--font-mono);
+  font-size: var(--t-12);
+  padding: 2px 6px;
+  background: var(--bg-well);
+  border: 1px solid var(--c-line-2);
+  border-bottom-width: 2px;
+  border-radius: var(--r-1);
+  color: var(--fg-primary);
+}
+
+/* -------- Toolbar / top bar --------------------------------- */
+.bar {
+  height: 56px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--c-line);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--s-7);
+  gap: var(--s-6);
+}
+
+/* -------- Tabs --------------------------------------------- */
+.tabs {
+  display: flex;
+  gap: var(--s-6);
+  border-bottom: 1px solid var(--c-line);
+}
+.tab {
+  font-family: var(--font-mono);
+  font-size: var(--t-13);
+  letter-spacing: var(--track-mono);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  padding: 14px 0;
+  border-bottom: 1px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  background: none;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+}
+.tab:hover { color: var(--fg-primary); }
+.tab.is-active {
+  color: var(--fg-accent);
+  border-bottom-color: var(--c-accent-hi);
+}
+
+/* -------- Live indicator (blinking dot) -------------------- */
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fg-accent);
+  box-shadow: var(--glow-text);
+  display: inline-block;
+  animation: pulse 1.8s var(--ease) infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+/* -------- Mono cursor blink -------------------------------- */
+.cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  background: var(--fg-link);
+  vertical-align: -0.12em;
+  margin-left: 0.05em;
+  animation: blink 1.0s steps(2, end) infinite;
+  box-shadow: var(--glow-text);
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* -------- Table -------------------------------------------- */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--t-13);
+}
+.table th {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: var(--t-12);
+  text-transform: uppercase;
+  letter-spacing: var(--track-mono);
+  color: var(--fg-muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--c-line-2);
+  background: var(--bg-panel);
+}
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--c-line);
+  color: var(--fg-primary);
+  font-variant-numeric: tabular-nums;
+}
+.table tr:hover td { background: var(--bg-hover); }
+
+/* -------- Banner ------------------------------------------- */
+/* A tinted INNER cell. No side accent strips anywhere in this system: the
+   tint + a normal 1px border carry the status; thick colored edges are
+   banned (they read as decoration, not information). */
+.banner {
+  display: flex;
+  gap: 12px;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--c-line-2);
+  border-radius: var(--r-1);
+  background: var(--bg-panel);
+  font-family: var(--font-sans);
+  font-size: var(--t-13);
+  color: var(--fg-body);
+}
+.banner--warn { background: var(--status-warn-bg); color: var(--status-warn-fg); }
+.banner--err  { background: var(--status-err-bg);  color: var(--status-err-fg); }
+.banner__strip, .banner--warn .banner__strip, .banner--err .banner__strip { display: none; }
+
+/* -------- Code block --------------------------------------- */
+.code-block {
+  font-family: var(--font-mono);
+  font-size: var(--t-13);
+  line-height: 1.55;
+  background: var(--bg-page);
+  border: 1px solid var(--c-line);
+  color: var(--fg-body);
+  padding: 14px 16px;
+  white-space: pre;
+  overflow-x: auto;
+}
+.code-block .c-comment { color: var(--fg-faint); font-style: italic; }
+.code-block .c-key     { color: var(--c-blue-hi); }
+.code-block .c-str     { color: var(--c-amber-hi); }
+.code-block .c-ok      { color: var(--c-accent-hi); }
+.code-block .c-err     { color: var(--c-red-hi); }

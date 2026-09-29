@@ -1,0 +1,61 @@
+{{template "head" .}}
+<section class="card">
+  <h2>Add a To-Do</h2>
+  <form method="post" action="/todos" class="field-row">
+    <label class="field field-grow"><span class="field-label">What</span>
+      <input type="text" name="title" required placeholder="Order a copy of my medical records"></label>
+    <label class="field"><span class="field-label">Starts (Optional)</span>
+      <input type="date" name="start"></label>
+    <label class="field"><span class="field-label">Due</span>
+      <input type="date" name="due"></label>
+    <label class="field"><span class="field-label">Lane</span>
+      <input type="text" name="phase" list="lanes" placeholder="My Tasks">
+      <datalist id="lanes">{{range .Lanes}}<option value="{{.}}">{{end}}</datalist></label>
+    <label class="field field-grow"><span class="field-label">Notes</span>
+      <input type="text" name="notes" placeholder="Optional"></label>
+    <button type="submit" class="primary">Add</button>
+  </form>
+  <p class="hint">A due date and a lane put it on the <a href="/timeline">Timeline</a> chart; add a start date to make it a bar instead of a single point.</p>
+</section>
+
+<section class="card">
+  <h2>Everything, One List</h2>
+  <p class="hint">The whole checklist lives here: timeline items, document actions, and your own entries on one list, sorted by date. This list drives the Timeline - change an item's <b>Starts</b>, <b>Due</b>, or <b>Lane</b> and its bar moves on the chart. Checking an item off dims it there.</p>
+  {{if .Items}}
+  <ul class="plain">
+    {{range .Items}}
+    <li class="rowline cat cat-{{.Class}} {{if .Done}}done{{end}}" id="todo-{{.ID}}">
+      <form method="post" action="/todos/{{.ID}}/toggle"><button class="tick" title="Toggle">✓</button></form>
+      <div>
+        <b>{{.Title}}</b>
+        {{if .Urgency}}<span class="upill upill-{{.UClass}}">{{.Urgency}}</span>{{end}}
+        {{if .Due}}<span class="due">{{nicedate .Due}}</span>{{end}}
+        <span class="chip chip-{{.Class}}">{{.Cat}}</span>
+        {{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}
+      </div>
+      <span class="row-actions">
+        <button type="button" class="btn-edit" onclick="toggleEdit({{.ID}})">Edit</button>
+        <form method="post" action="/todos/{{.ID}}/delete"><button class="danger">Delete</button></form>
+      </span>
+    </li>
+    <li class="edit-row cat cat-{{.Class}}" id="edit-{{.ID}}" hidden>
+      <form method="post" action="/todos/{{.ID}}/update" class="field-row">
+        <label class="field field-grow"><span class="field-label">Title</span>
+          <input type="text" name="title" value="{{.Title}}"></label>
+        <label class="field"><span class="field-label">Starts</span>
+          <input type="date" name="start" value="{{.Start}}"></label>
+        <label class="field"><span class="field-label">Due</span>
+          <input type="date" name="due" value="{{.Due}}"></label>
+        <label class="field"><span class="field-label">Lane</span>
+          <input type="text" name="phase" value="{{.Phase}}"></label>
+        <label class="field field-grow"><span class="field-label">Notes</span>
+          <input type="text" name="notes" value="{{.Notes}}"></label>
+        <button type="submit" class="primary">Save</button>
+      </form>
+    </li>
+    {{end}}
+  </ul>
+  <script>function toggleEdit(id){var e=document.getElementById('edit-'+id);if(e){e.hidden=!e.hidden;if(!e.hidden){var f=e.querySelector('input');if(f)f.focus();}}}</script>
+  {{else}}<p class="hint">The list is empty. Add the first item above.</p>{{end}}
+</section>
+{{template "foot" .}}

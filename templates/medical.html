@@ -1,0 +1,207 @@
+{{template "head" .}}
+{{if .Err}}<section class="card"><p class="status-line err">{{.Err}}</p></section>{{end}}
+
+<section class="card">
+  <h2>Estimated Rating</h2>
+  <details class="how-to"><summary>How This Works</summary>
+    <p class="hint">The Advisor reads your DBQs and medical records, plus the condition notes and symptom log, and rates each condition under 38 CFR Part 4 the way a C&amp;P examiner would. The combined percentage is computed with the VA's own combined-ratings math and bilateral factor, then rounded to the nearest ten. It is a planning estimate, not a decision - an accredited VSO files the claim. Re-run it after you upload new evidence.</p>
+  </details>
+  <div class="rating-wrap">
+    {{if .Analysis}}
+    <div class="rating-col">
+      <div class="rating-square r-{{.Analysis.Color}}">
+        <span class="rating-num"{{if .JustAnalyzed}} data-countup="{{.Analysis.Combined}}" data-suffix="%"{{end}}>{{.Analysis.Combined}}%</span>
+        <span class="rating-cap">possible</span>
+      </div>
+      <form method="post" action="/medical/analyze" class="analyze-form"><button type="submit" class="primary rating-reanalyze">Re-analyze</button></form>
+    </div>
+    <div class="rating-body">
+      <p class="rating-summary">{{.Analysis.Summary}}</p>
+      <p class="hint">Analyzed {{.Analysis.At}} · via {{.Analysis.Provider}}. Mirrors the Potential VA Rating box on the Dashboard.</p>
+      <div class="rating-actions">
+        <button type="button" class="btn" onclick="openBreakdown()">Learn More - Per-Condition Breakdown</button>
+      </div>
+    </div>
+    {{else}}
+    <div class="rating-square r-none"><span class="rating-num">-</span><span class="rating-cap">not run</span></div>
+    <div class="rating-body">
+      {{if .AdvisorReady}}
+      <p class="hint">Add the conditions you intend to claim, upload your DBQs and records below, then run the analysis. The Advisor rates each condition and computes the combined estimate.</p>
+      <form method="post" action="/medical/analyze" class="analyze-form"><button type="submit" class="primary">Analyze the Claim</button></form>
+      {{else}}
+      <p class="hint">Set up an Advisor provider in <a href="/settings">Settings</a> first - the analysis runs through it, on this machine.</p>
+      {{end}}
+    </div>
+    {{end}}
+  </div>
+</section>
+
+{{if .Analysis}}
+<div id="breakdown" class="bd-overlay" hidden>
+  <div class="bd-panel">
+    <div class="bd-head">
+      <div><span class="bd-pct r-{{.Analysis.Color}}-fg"{{if .JustAnalyzed}} data-countup="{{.Analysis.Combined}}" data-suffix="%"{{end}}>{{.Analysis.Combined}}%</span> <span class="bd-cap">Possible rating: how it breaks down</span></div>
+      <button type="button" class="bd-close" onclick="closeBreakdown()">Close ✕</button>
+    </div>
+    <p class="rating-summary">{{.Analysis.Summary}}</p>
+    <table class="bd-table">
+      <thead><tr><th>Condition</th><th>Diagnostic Code</th><th>Estimate</th><th>Why</th></tr></thead>
+      <tbody>
+      {{range .Analysis.Items}}
+      <tr>
+        <td><b>{{.Name}}</b>{{if .Bilateral}} <span class="chip">Bilateral</span>{{end}}</td>
+        <td class="nowrap">{{if .Code}}DC {{.Code}}{{else}}-{{end}}</td>
+        <td class="num"><b>{{.Percent}}%</b></td>
+        <td>{{.Rationale}}</td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+    <p class="hint">The combined percentage uses the VA's own combined-ratings math and bilateral factor. This is a planning estimate, not a decision - an accredited VSO files the claim.</p>
+  </div>
+</div>
+<script>
+function openBreakdown(){document.getElementById('breakdown').hidden=false;document.body.style.overflow='hidden';}
+function closeBreakdown(){document.getElementById('breakdown').hidden=true;document.body.style.overflow='';}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBreakdown();});
+</script>
+{{end}}
+
+<section class="card">
+  <h2>Conditions for the Claim</h2>
+  <details class="how-to"><summary>How to Use</summary>
+    <p class="hint">One row per condition you intend to claim. Documented means the condition appears in your medical record; DBQ means you studied the questionnaire for it before the exams. Both need to be true before the BDD claim files. The claim is built from the record, so keep the symptom log below current and get every condition into the record at the retirement physical.</p>
+  </details>
+  <form method="post" action="/medical/conditions" class="field-row">
+    <label class="field field-grow"><span class="field-label">Condition</span>
+      <input type="text" name="name" required placeholder="Right knee, chronic pain"></label>
+    <label class="field field-grow"><span class="field-label">Notes</span>
+      <input type="text" name="notes" placeholder="First documented 2019, Bragg"></label>
+    <button type="submit" class="primary">Add</button>
+  </form>
+  {{if .Conditions}}
+  <table>
+    <thead><tr><th>Condition</th><th>In the Record</th><th>DBQ Studied</th><th>Notes</th><th></th></tr></thead>
+    <tbody>
+    {{range .Conditions}}
+    <tr>
+      <td><b>{{.Name}}</b></td>
+      <td><form method="post" action="/medical/conditions/{{.ID}}/toggle"><input type="hidden" name="field" value="documented">
+        <button class="{{if .Documented}}tick{{end}}">{{if .Documented}}✓ Documented{{else}}Not Yet{{end}}</button></form></td>
+      <td><form method="post" action="/medical/conditions/{{.ID}}/toggle"><input type="hidden" name="field" value="dbq">
+        <button class="{{if .DBQ}}tick{{end}}">{{if .DBQ}}✓ Studied{{else}}Not Yet{{end}}</button></form></td>
+      <td>{{.Notes}}</td>
+      <td><form method="post" action="/medical/conditions/{{.ID}}/delete"><button class="danger">Delete</button></form></td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{else}}<p class="hint">No conditions yet. Every ache you have normalized belongs on this list.</p>{{end}}
+</section>
+
+<section class="card">
+  <h2>Medications</h2>
+  <details class="how-to"><summary>How to Use</summary>
+    <p class="hint">Your prescriptions in one place - hand this list to a new doctor or pharmacy at the destination. Keeping it current also helps the VA claim. Not medical advice; confirm doses with your provider.</p>
+  </details>
+  <form method="post" action="/medical/meds" class="field-row">
+    <label class="field"><span class="field-label">Medication</span>
+      <input type="text" name="name" required placeholder="Propranolol"></label>
+    <label class="field"><span class="field-label">Dose</span>
+      <input type="text" name="dose" placeholder="60 mg daily"></label>
+    <label class="field"><span class="field-label">For</span>
+      <input type="text" name="for" placeholder="migraines"></label>
+    <label class="field"><span class="field-label">Prescriber</span>
+      <input type="text" name="prescriber" placeholder="Dr. Leber"></label>
+    <label class="field field-grow"><span class="field-label">Notes / Refill Status</span>
+      <input type="text" name="notes" placeholder="90-day home delivery"></label>
+    <button type="submit" class="primary">Add</button>
+  </form>
+  {{if .Meds}}
+  <table>
+    <thead><tr><th>Medication</th><th>Dose</th><th>For</th><th>Prescriber</th><th>Notes</th><th></th></tr></thead>
+    <tbody>
+    {{range .Meds}}
+    <tr><td><b>{{.Name}}</b></td><td>{{.Dose}}</td><td>{{.For}}</td><td>{{.Prescriber}}</td><td>{{.Notes}}</td>
+      <td><form method="post" action="/medical/meds/{{.ID}}/delete"><button class="danger">Delete</button></form></td></tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{else}}<p class="hint">No medications listed yet. Add each prescription so the list is ready for a new doctor at the destination.</p>{{end}}
+</section>
+
+<div class="grid2">
+  <section class="card">
+    <h2>DBQs</h2>
+    <p class="hint">Disability Benefits Questionnaires - blank forms to bring to your exams, or ones your doctor completed. A completed DBQ is the strongest evidence a condition can have.</p>
+    <form method="post" action="/docs" enctype="multipart/form-data" class="field-row">
+      <input type="hidden" name="kind" value="dbq">
+      <label class="field field-grow"><span class="field-label">File</span>
+        <input type="file" name="file" required></label>
+      <label class="field field-grow"><span class="field-label">Notes</span>
+        <input type="text" name="notes" placeholder="Sleep Apnea DBQ, blank"></label>
+      <button type="submit" class="primary">Upload</button>
+    </form>
+    {{if .DBQs}}
+    <ul class="plain">
+      {{range .DBQs}}
+      <li class="rowline"><div>
+        <b><a href="/docs/{{.ID}}/file">{{.Name}}</a></b>
+        <span class="due">{{atdate .UploadedAt}}</span>
+        {{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}
+      </div></li>
+      {{end}}
+    </ul>
+    {{else}}<p class="hint">No DBQs yet. Grab the ones for your conditions and bring them to the C&amp;P exams.</p>{{end}}
+  </section>
+
+  <section class="card">
+    <h2>Medical Records</h2>
+    <p class="hint">STR copies, clinic notes, imaging, referrals, VA letters. These are the evidence the rating rests on.</p>
+    <form method="post" action="/docs" enctype="multipart/form-data" class="field-row">
+      <input type="hidden" name="kind" value="medical">
+      <label class="field field-grow"><span class="field-label">File</span>
+        <input type="file" name="file" required></label>
+      <label class="field field-grow"><span class="field-label">Notes</span>
+        <input type="text" name="notes" placeholder="MRI lumbar spine, Feb 2025"></label>
+      <button type="submit" class="primary">Upload</button>
+    </form>
+    {{if .Records}}
+    <ul class="plain">
+      {{range .Records}}
+      <li class="rowline"><div>
+        <b><a href="/docs/{{.ID}}/file">{{.Name}}</a></b>
+        <span class="due">{{atdate .UploadedAt}}</span>
+        {{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}
+      </div></li>
+      {{end}}
+    </ul>
+    {{else}}<p class="hint">No records filed yet. The full STR copy request is on your timeline for spring 2027.</p>{{end}}
+  </section>
+</div>
+
+<section class="card">
+  <h2>Symptom Log</h2>
+  <form method="post" action="/medical/symptoms" class="field-row">
+    <label class="field"><span class="field-label">Date</span>
+      <input type="date" name="date"></label>
+    <label class="field"><span class="field-label">Condition</span>
+      <input type="text" name="condition" list="cond-list" placeholder="Right knee">
+      <datalist id="cond-list">{{range .Conditions}}<option value="{{.Name}}">{{end}}</datalist></label>
+    <label class="field field-grow"><span class="field-label">What Happened</span>
+      <input type="text" name="note" required placeholder="Locked up on the stairs; took 800mg"></label>
+    <button type="submit" class="primary">Log It</button>
+  </form>
+  {{if .Symptoms}}
+  <table>
+    <thead><tr><th>Date</th><th>Condition</th><th>Entry</th><th></th></tr></thead>
+    <tbody>
+    {{range .Symptoms}}
+    <tr><td class="nowrap">{{.Date}}</td><td>{{.Condition}}</td><td>{{.Note}}</td>
+      <td><form method="post" action="/medical/symptoms/{{.ID}}/delete"><button class="danger">Delete</button></form></td></tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{else}}<p class="hint">Empty. The habit matters more than the wording: date, condition, what happened.</p>{{end}}
+</section>
+{{template "foot" .}}

@@ -1,0 +1,28 @@
+# Personal data - NEVER commit. This is where your real life lives.
+/data/
+data/state.json
+data/state.backup.json
+data/homes.json*
+data/docs/
+
+# Compiled binary and build artifacts
+/retirement-ready
+/retirement-workbench
+/arw
+/arw.exe
+/retirement-workbench.exe
+/dist/
+/build/
+/retirement-ready.new
+*.bak
+*.tmp
+
+# Credentials - must never be tracked
+*.envrc
+.env
+*sa-key*.json
+*service-account*.json
+*credentials*.json
+
+# OS cruft
+.DS_Store

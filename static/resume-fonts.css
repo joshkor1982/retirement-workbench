@@ -1,0 +1,42 @@
+/* Resume fonts and color schemes. The fonts ship with the app (SIL Open
+   Font License 1.1, licenses in fonts/resume/) so the preview and the PDF
+   look the same on every computer. */
+@font-face { font-family: "RW Inter"; src: url("fonts/resume/inter.ttf") format("truetype"); font-weight: 100 900; font-display: block; }
+@font-face { font-family: "RW Plex Sans"; src: url("fonts/resume/plexsans.ttf") format("truetype"); font-weight: 100 700; font-display: block; }
+@font-face { font-family: "RW Source Sans"; src: url("fonts/resume/sourcesans.ttf") format("truetype"); font-weight: 200 900; font-display: block; }
+@font-face { font-family: "RW Source Serif"; src: url("fonts/resume/sourceserif.ttf") format("truetype"); font-weight: 200 900; font-display: block; }
+@font-face { font-family: "RW Lora"; src: url("fonts/resume/lora.ttf") format("truetype"); font-weight: 400 700; font-style: normal; font-display: block; }
+@font-face { font-family: "RW Lora"; src: url("fonts/resume/lora-italic.ttf") format("truetype"); font-weight: 400 700; font-style: italic; font-display: block; }
+@font-face { font-family: "RW Garamond"; src: url("fonts/resume/garamond.ttf") format("truetype"); font-weight: 400 800; font-style: normal; font-display: block; }
+@font-face { font-family: "RW Garamond"; src: url("fonts/resume/garamond-italic.ttf") format("truetype"); font-weight: 400 800; font-style: italic; font-display: block; }
+
+.resume-paper.rp-f-inter { font-family: "RW Inter", system-ui, sans-serif; }
+.resume-paper.rp-f-plex { font-family: "RW Plex Sans", system-ui, sans-serif; }
+.resume-paper.rp-f-sourcesans { font-family: "RW Source Sans", system-ui, sans-serif; }
+.resume-paper.rp-f-sourceserif { font-family: "RW Source Serif", Georgia, serif; }
+.resume-paper.rp-f-lora { font-family: "RW Lora", Georgia, serif; }
+.resume-paper.rp-f-garamond { font-family: "RW Garamond", Garamond, Georgia, serif; font-size: 14.5px; }
+.resume-paper[class*="rp-f-"] .r-contact, .resume-paper[class*="rp-f-"] h2 { font-family: inherit; }
+/* The app turns on Geist's alternate glyphs (ss01, cv11) for its own text.
+   Other fonts map those features to different glyphs, EB Garamond to small
+   caps, so a picked font starts from its own defaults. */
+.resume-paper[class*="rp-f-"], .resume-paper[class*="rp-f-"] * { font-feature-settings: normal; }
+
+/* Color schemes: one accent for headings, markers, and rules; a dark shade
+   for the Sidebar column. Dark paper gets a lighter accent to stay readable. */
+.resume-paper.rp-c-navy     { --rp-accent: #1f3a5f; --rp-side: #14233a; --rp-side-accent: #c9d7ea; }
+.resume-paper.rp-c-gold     { --rp-accent: #8a6700; --rp-side: #13233a; --rp-side-accent: #e3b441; }
+.resume-paper.rp-c-forest   { --rp-accent: #2f5d43; --rp-side: #1b3528; --rp-side-accent: #b9dcc6; }
+.resume-paper.rp-c-burgundy { --rp-accent: #7a2331; --rp-side: #3a1219; --rp-side-accent: #f0c2ca; }
+.resume-paper.rp-c-charcoal { --rp-accent: #3a414b; --rp-side: #22272e; --rp-side-accent: #d5d9df; }
+.resume-paper.rp-c-teal     { --rp-accent: #0f6b6b; --rp-side: #0d3b3d; --rp-side-accent: #a6e3e0; }
+.resume-paper.rp-dark.rp-c-navy     { --rp-accent: #8fb3e6; }
+.resume-paper.rp-dark.rp-c-gold     { --rp-accent: #e3b441; }
+.resume-paper.rp-dark.rp-c-forest   { --rp-accent: #86c7a0; }
+.resume-paper.rp-dark.rp-c-burgundy { --rp-accent: #e39aa6; }
+.resume-paper.rp-dark.rp-c-charcoal { --rp-accent: #c2c8d0; }
+.resume-paper.rp-dark.rp-c-teal     { --rp-accent: #6fd1cc; }
+.resume-paper[class*="rp-c-"] h2 { color: var(--rp-accent); }
+.resume-paper[class*="rp-c-"] .r-headline { color: var(--rp-accent); }
+.resume-paper.rp-sidebar[class*="rp-c-"] .r-headline { color: var(--rp-side-accent); }
+.resume-paper[class*="rp-c-"] li::before { background: var(--rp-accent); opacity: 1; }

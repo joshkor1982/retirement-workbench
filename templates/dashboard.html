@@ -1,0 +1,105 @@
+{{template "head" .}}
+{{if not .Settings.RetirementDate}}
+<section class="card">
+  <h2>Set Your Retirement Date</h2>
+  <p class="hint">Everything here counts down to one day. Set it once and the app builds your transition timeline around it.</p>
+  <a class="btn primary" href="/settings">Open Settings</a>
+</section>
+{{end}}
+
+<section class="card">
+  <h2>By the Numbers</h2>
+  <div class="gist">
+    {{if .DaysToR}}
+    <div class="gist-item"><span class="gist-label">Days to Retirement</span>
+      <span class="gist-num">{{.DaysToR}}</span><span class="gist-sub">{{.RDay}}</span></div>
+    {{end}}
+    {{if ge .DaysToLeave 0}}
+    <div class="gist-item"><span class="gist-label">Days to Terminal Leave</span>
+      <span class="gist-num">{{.DaysToLeave}}</span><span class="gist-sub">Last day in uniform comes first</span></div>
+    {{end}}
+    {{if ge .DaysToPTDY 0}}
+    <div class="gist-item"><span class="gist-label">Days to PTDY</span>
+      <span class="gist-num">{{.DaysToPTDY}}</span><span class="gist-sub">House and job hunting at your destination</span></div>
+    {{end}}
+    <div class="gist-item"><span class="gist-label">Days to SkillBridge</span>
+      {{if ge .SB.Days 0}}<span class="gist-num">{{.SB.Days}}</span><span class="gist-sub">{{if .SB.Plan.Company}}{{.SB.Plan.Company}} · {{end}}<a href="/skillbridge">SkillBridge</a></span>
+      {{else}}<span class="gist-num">·</span><span class="gist-sub">Set your start date on <a href="/skillbridge#program">SkillBridge</a></span>{{end}}</div>
+    <div class="gist-item"><span class="gist-label">Leave Days</span>
+      {{if .Leave.Set}}<span class="gist-num">{{.Leave.Balance}}</span>
+      <span class="gist-sub">As of {{.Leave.AsOf}}{{if .Leave.AtTerminal}} · about {{.Leave.AtTerminal}} by terminal leave{{end}}</span>
+      {{if .Leave.Forfeit}}<span class="gist-sub gist-short">{{.Leave.Forfeit}} days lost at the 1 Oct cap unless you take leave first</span>{{end}}
+      {{else}}<span class="gist-num">·</span><span class="gist-sub">Enter your balance in <a href="/settings">Settings</a></span>{{end}}</div>
+    <div class="gist-item"><span class="gist-label">Tasks Complete</span>
+      <span class="gist-num">{{.TasksPct}}%</span><span class="gist-sub">{{.TasksDone}} of {{.TasksTotal}} done</span></div>
+    <div class="gist-item"><span class="gist-label">Debt Paid Off</span>
+      <span class="gist-num">{{.DebtPct}}%</span><span class="gist-sub">{{money .OpenDebt}} still open · <a href="/budget">Budget</a></span></div>
+    <div class="gist-item"><span class="gist-label">Money Saved</span>
+      <span class="gist-num">{{money .Sav.Saved}}</span>
+      {{if ge .Sav.Pct 0}}<span class="gist-sub">{{.Sav.Pct}}% of the {{money .Sav.Goal}} {{or .Sav.GoalName "goal"}} · <a href="/budget#savings">Savings</a></span>
+      {{else}}<span class="gist-sub">{{money .Sav.ThisMonth}} this month · <a href="/budget#savings">Set a goal</a></span>{{end}}</div>
+    <div class="gist-item"><span class="gist-label">VA Claim Readiness</span>
+      {{if ge .VaPct 0}}<span class="gist-num">{{.VaPct}}%</span><span class="gist-sub">{{.CondReady}} of {{.CondTotal}} conditions documented + DBQ</span>
+      {{else}}<span class="gist-num">·</span><span class="gist-sub">Add conditions on <a href="/medical">Medical / VA</a></span>{{end}}</div>
+    <div class="gist-item">
+      <span class="gist-label">Potential VA Rating</span>
+      {{if gt .VaEst 0}}<span class="gist-num">{{.VaEst}}%</span><span class="gist-sub">Working estimate &middot; tune it in <a href="/settings">Settings</a> as evidence lands</span>
+      {{else}}<span class="gist-num">-</span><span class="gist-sub">Set the working estimate in <a href="/settings">Settings</a></span>{{end}}
+    </div>
+    <div class="gist-item"><span class="gist-label">Resume Score</span>
+      <span class="gist-num">{{.ResumePct}}%</span><span class="gist-sub">Six strong sections is a full resume</span></div>
+    <div class="gist-item"><span class="gist-label">Job Prospects</span>
+      <span class="gist-num">{{.Prospects}}</span><span class="gist-sub">Openings you are chasing &middot; <a href="/jobs">Track them on Jobs</a></span></div>
+  </div>
+</section>
+
+{{if .Week}}
+<section class="card week-banner">
+  <h2>This Week</h2>
+  <ul class="plain">
+    {{range .Week}}
+    <li class="rowline cat {{if .Appt}}cat-appt{{else}}cat-{{.Class}}{{end}}"><div>
+      <b>{{.Title}}</b><span class="due">{{.Label}}</span>
+      {{if .Appt}}<span class="chip chip-appt">appointment</span>{{end}}
+    </div></li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
+
+<div class="grid2">
+<section class="card">
+  <h2>Next Up</h2>
+  <p class="status-line"><span>{{.OpenCount}} open to-dos across everything.</span></p>
+  {{if .OpenTodos}}
+  <ul class="plain">
+    {{range .OpenTodos}}
+    <li class="rowline cat cat-{{.Class}}">
+      <form method="post" action="/todos/{{.ID}}/toggle"><button class="tick" title="Mark done">✓</button></form>
+      <div><b>{{.Title}}</b>{{if .Due}}<span class="due">{{nicedate .Due}}</span>{{end}}</div>
+    </li>
+    {{end}}
+  </ul>
+  <p><a href="/todos">See every to-do</a></p>
+  {{else}}<p class="hint">Nothing open. Add to-dos or seed the timeline in Settings.</p>{{end}}
+</section>
+
+<section class="card">
+  <h2>Appointments</h2>
+  {{if .Appts}}
+  <ul class="plain">
+    {{range .Appts}}<li class="rowline"><div><b>{{.Title}}</b><span class="due"><b>{{atdate .At}}</b>{{with attime .At}} {{.}}{{end}}{{if .Place}} · {{.Place}}{{end}}</span></div></li>{{end}}
+  </ul>
+  <p><a href="/appointments">All appointments</a></p>
+  {{else}}<p class="hint">No upcoming appointments. Add them on the Appointments page.</p>{{end}}
+</section>
+
+<section class="card">
+  <h2>This Month's Money</h2>
+  <p class="status-line"><span>In {{money .MonthIn}}</span><span>Out {{money .MonthOut}}</span></p>
+  <p><a href="/budget">Open the budget</a></p>
+</section>
+
+
+</div>
+{{template "foot" .}}

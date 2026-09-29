@@ -1,0 +1,91 @@
+{{template "head" .}}
+{{if .Err}}<section class="card"><p class="status-line err">{{.Err}}</p></section>{{end}}
+
+<section class="card">
+  <h2>Submit Your Retirement Packet</h2>
+  <p class="hint">Upload the documents your packet needs, combine them into one PDF, then submit the PAR in IPPS-A. Files stay on this machine; the only thing that leaves is you, going to the IPPS-A login when you click Submit.</p>
+  <div class="packet-actions">
+    <a class="btn primary" href="/packet/full.pdf">Create Full Packet PDF</a>
+    <a class="btn" href="/packet/supporting.pdf">Create Supporting Doc</a>
+    <a class="btn packet-submit" href="{{.IppsaURL}}" target="_blank" rel="noopener">Submit in IPPS-A ↗</a>
+  </div>
+  <p class="hint">Full Packet adds a PAR guidance cover sheet in front of your documents. Supporting Doc is just your files merged into one PDF, for attaching in IPPS-A. Both merge in the order below.</p>
+</section>
+
+<section class="card">
+  <h2>Packet Files</h2>
+  <p class="hint">Upload orders, DD 214s and prior-service documents, DD 93, SGLI/SOES, the signed questionnaire, your STP, and the DD 2648. PDFs and images (JPG, PNG) both work. Drag them into order - that is the order they merge.</p>
+  <form method="post" action="/packet/upload" enctype="multipart/form-data" class="field-row">
+    <label class="field field-grow"><span class="field-label">File</span>
+      <input type="file" name="file" required></label>
+    <label class="field field-grow"><span class="field-label">Notes</span>
+      <input type="text" name="notes" placeholder="DD 214, 2011 deployment"></label>
+    <button type="submit" class="primary">Upload</button>
+  </form>
+  {{if .Files}}
+  <ul class="plain">
+    {{range .Files}}
+    <li class="rowline">
+      <div>
+        <b><a href="/docs/{{.ID}}/file">{{.Name}}</a></b>
+        <span class="due">{{atdate .UploadedAt}}</span>
+        {{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}
+      </div>
+      <span class="row-actions">
+        <form method="post" action="/packet/{{.ID}}/up"><button title="Move up">↑</button></form>
+        <form method="post" action="/packet/{{.ID}}/down"><button title="Move down">↓</button></form>
+        <form method="post" action="/packet/{{.ID}}/delete"><button class="danger">Delete</button></form>
+      </span>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}<p class="hint">No files yet. Upload the first document above.</p>{{end}}
+</section>
+
+<section class="card">
+  <h2>How to Complete the PAR</h2>
+  <p class="hint">The Personnel Action Request (PAR) in IPPS-A formally starts your voluntary retirement. S-1 initiates it from your signed DA Form 2339 and routes it through G-1 to HRC. Mark each card complete as you finish it.</p>
+  <div class="par-progress">
+    <div class="par-progress-label"><b>{{.PAR.Done}} of {{.PAR.Total}}</b> complete</div>
+    <div class="par-track"><div class="par-fill" style="width: {{if .PAR.Total}}{{printf "%d" (div100 .PAR.Done .PAR.Total)}}{{else}}0{{end}}%"></div></div>
+  </div>
+  {{if .PAR.WindowOpen}}
+  <div class="cell par-window par-window-{{.PAR.WindowState}}">
+    <b>Your Submission Window:</b> {{.PAR.WindowOpen}} to {{.PAR.WindowClose}}.
+    {{if eq .PAR.WindowState "open"}}Open now. Earlier is better; orders can take months.
+    {{else if eq .PAR.WindowState "before"}}Not open yet.
+    {{else}}Past the 9-month mark. You need a Letter of Lateness.{{end}}
+  </div>
+  {{end}}
+  <details class="how-to"><summary>Two Checklists, Do Not Confuse Them</summary>
+    <p class="hint">The <b>Transitions checklist</b> (the Retirement Application Questionnaire and its documents) goes to the Transition Center to get your DA Form 2339. The <b>Enlisted Retirement Checklist</b> is the PAR checklist: the documents the PAR needs once S-1 initiates it.</p>
+  </details>
+
+  <h3 class="phase">Steps</h3>
+  <div class="par-list">{{range .PAR.Steps}}{{template "par-card" .}}{{end}}</div>
+
+  <h3 class="phase">PAR Checklist (Enlisted Retirement Checklist, March 2024)</h3>
+  <div class="par-list">{{range .PAR.Checklist}}{{template "par-card" .}}{{end}}</div>
+  <p class="hint">Consolidate all documents into one PDF. This is planning guidance, not official policy; confirm every step and deadline with your Transition Center and unit S-1.</p>
+</section>
+{{template "foot" .}}
+
+{{define "par-card"}}
+<div class="par-card{{if .Status}} par-{{.Status}}{{end}}" id="{{.Key}}">
+  <div class="par-num">{{if eq .Status "done"}}✓{{else if eq .Status "na"}}-{{else}}{{.N}}{{end}}</div>
+  <div class="par-body">
+    <div class="par-title">{{.Title}}{{if .Optional}}<span class="chip">If Applicable</span>{{end}}</div>
+    <p class="par-detail">{{.Detail}}</p>
+    {{if .Sub}}<ul class="par-sub">{{range .Sub}}<li>{{.}}</li>{{end}}</ul>{{end}}
+  </div>
+  <div class="par-actions">
+    {{if .Status}}
+      <span class="par-when">{{if eq .Status "done"}}Completed{{else}}Not Needed{{end}} {{atdate .On}}</span>
+      <form method="post" action="/packet-par/{{.Key}}"><input type="hidden" name="status" value=""><button>Undo</button></form>
+    {{else}}
+      <form method="post" action="/packet-par/{{.Key}}"><input type="hidden" name="status" value="done"><button class="primary">Mark Complete</button></form>
+      {{if .Optional}}<form method="post" action="/packet-par/{{.Key}}"><input type="hidden" name="status" value="na"><button>Not Needed</button></form>{{end}}
+    {{end}}
+  </div>
+</div>
+{{end}}

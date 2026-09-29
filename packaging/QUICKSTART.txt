@@ -1,0 +1,26 @@
+ARW (Army Retirement Workbench)
+================================
+
+1. Open ARW:
+     Mac:     double-click ARW.app. The first time, right-click it,
+              choose Open, then choose Open again.
+     Windows: double-click arw.exe. If a blue SmartScreen box appears,
+              choose More info, then Run anyway.
+     Linux:   run ./arw in a terminal.
+
+2. ARW opens in your web browser at http://127.0.0.1:5252.
+   If it does not, type that address into your browser.
+
+3. Go to Settings. Enter your name, branch, and retirement date, then
+   click Save. Click Generate My Timeline.
+
+4. To stop ARW, go to Settings and click Quit ARW.
+   Your data is saved on your computer the whole time.
+
+5. Back up often: Settings > Back Up Everything. Keep the zip on a USB drive.
+
+Use a personal computer, not a government computer.
+This is a planning tool, not official guidance. Confirm every date and form
+with your transition counselor, your unit S-1, and an accredited VSO.
+
+Free and open source under the MIT license.

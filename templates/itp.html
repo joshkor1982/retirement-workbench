@@ -1,0 +1,198 @@
+{{template "head" .}}
+<section class="card">
+  <h2>Individual Transition Plan</h2>
+  <p class="hint">Your digital ITP - a full copy of the SFL-TAP workbook. Fill it in before the class so you walk in ready, then copy your answers onto the real packet. It saves as you go and stays on this machine; print it with Cmd-P to bring a copy. Verify service-specific items with your counselor.</p>
+  {{if .WorkbookID}}<p><a class="btn" href="/docs/{{.WorkbookID}}/file" target="_blank" rel="noopener">View Your Scanned ITP Workbook ↗</a></p>{{end}}
+  {{if .Saved}}<p class="status-line ok">Saved.</p>{{end}}
+</section>
+
+<form method="post" action="/itp">
+<section class="card">
+  <h2>Header</h2>
+  <div class="field-row">
+    <label class="field field-grow"><span class="field-label">Full Name</span><input type="text" name="name" value="{{index .A "name"}}"></label>
+    <label class="field"><span class="field-label">Rank</span><input type="text" name="rank" value="{{index .A "rank"}}"></label>
+    <label class="field field-grow"><span class="field-label">Unit</span><input type="text" name="unit" value="{{index .A "unit"}}"></label>
+    <label class="field"><span class="field-label">Tier</span><input type="text" name="tier" value="{{index .A "tier"}}"></label>
+  </div>
+  <div class="field-row">
+    <label class="field"><span class="field-label">Anticipated Transition Date</span><input type="date" name="transition_date" value="{{index .A "transition_date"}}"></label>
+    <label class="field"><span class="field-label">Initial Counseling Date</span><input type="date" name="ic_date" value="{{index .A "ic_date"}}"></label>
+    <label class="field"><span class="field-label">Pre-Separation Counseling Date</span><input type="date" name="presep_date" value="{{index .A "presep_date"}}"></label>
+  </div>
+  <label class="field field-grow"><span class="field-label">Short-Term Transition Goals</span><textarea name="short_goals" rows="3" spellcheck="true">{{index .A "short_goals"}}</textarea></label>
+  <label class="field field-grow"><span class="field-label">Long-Term Transition Goals</span><textarea name="long_goals" rows="3" spellcheck="true">{{index .A "long_goals"}}</textarea></label>
+</section>
+
+<section class="card">
+  <h2>Career Readiness Standards</h2>
+  <p class="hint">Meet these before your transition date; show documentation to your counselor and commander.</p>
+  <ul class="itp-checks">
+    <li><label><input type="checkbox" name="crs_ic" {{if index .A "crs_ic"}}checked{{end}}> Met with a Transition Counselor for Initial Counseling</label></li>
+    <li><label><input type="checkbox" name="crs_selfassess" {{if index .A "crs_selfassess"}}checked{{end}}> Completed the Self-Assessment and been assigned a Tier</label></li>
+    <li><label><input type="checkbox" name="crs_presep" {{if index .A "crs_presep"}}checked{{end}}> Attended Pre-Separation Counseling</label></li>
+    <li><label><input type="checkbox" name="crs_2648" {{if index .A "crs_2648"}}checked{{end}}> Completed the DD Form 2648 eForm (signed by commander)</label></li>
+    <li><label><input type="checkbox" name="crs_armyday" {{if index .A "crs_armyday"}}checked{{end}}> Attended Army Day (MY Transition, MOC Crosswalk, Financial Planning)</label></li>
+    <li><label><input type="checkbox" name="crs_dolday" {{if index .A "crs_dolday"}}checked{{end}}> Attended DOL Employment Day</label></li>
+    <li><label><input type="checkbox" name="crs_vaday" {{if index .A "crs_vaday"}}checked{{end}}> Attended VA Day; registered for VA Benefits (eBenefits)</label></li>
+    <li><label><input type="checkbox" name="crs_itp" {{if index .A "crs_itp"}}checked{{end}}> Completed this ITP</label></li>
+    <li><label><input type="checkbox" name="crs_reserve" {{if index .A "crs_reserve"}}checked{{end}}> Evaluated continuing service in a Reserve Component (AC only)</label></li>
+    <li><label><input type="checkbox" name="crs_gap" {{if index .A "crs_gap"}}checked{{end}}> Completed a Gap Analysis</label></li>
+    <li><label><input type="checkbox" name="crs_finplan" {{if index .A "crs_finplan"}}checked{{end}}> Prepared a post-transition financial plan</label></li>
+    <li><label><input type="checkbox" name="crs_capstone" {{if index .A "crs_capstone"}}checked{{end}}> Attended Capstone; CRS documented for my Tier</label></li>
+  </ul>
+  <p class="itp-sub">Track deliverable</p>
+  <ul class="itp-checks">
+    <li><label><input type="checkbox" name="crs_del_emp" {{if index .A "crs_del_emp"}}checked{{end}}> Employment: completed a resume or verification of employment</label></li>
+    <li><label><input type="checkbox" name="crs_del_edu" {{if index .A "crs_del_edu"}}checked{{end}}> Education/Vocational: completed a comparison of schools/programs</label></li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Section I - Post-Transition Personal & Family Requirements</h2>
+  <p class="itp-sub">A. Taking care of individual and family member needs</p>
+  <ul class="itp-checks">
+    <li><label><input type="checkbox" name="ia_medical" {{if index .A "ia_medical"}}checked{{end}}> Identified medical needs, expenses, and providers at the destination</label></li>
+    <li><label><input type="checkbox" name="ia_physical" {{if index .A "ia_physical"}}checked{{end}}> Scheduled the final physical (SHPE/SHA) and dental checkups</label></li>
+    <li><label><input type="checkbox" name="ia_tricare" {{if index .A "ia_tricare"}}checked{{end}}> Spoke to TRICARE about Transitional Healthcare Benefits</label></li>
+    <li><label><input type="checkbox" name="ia_healthcare" {{if index .A "ia_healthcare"}}checked{{end}}> Compared insurance costs at healthcare.gov</label></li>
+    <li><label><input type="checkbox" name="ia_extenuating" {{if index .A "ia_extenuating"}}checked{{end}}> Identified extenuating circumstances (elderly parents, family business, EFMP)</label></li>
+    <li><label><input type="checkbox" name="ia_relocation" {{if index .A "ia_relocation"}}checked{{end}}> Assessed relocation impact (schools, medical care, spouse employment)</label></li>
+    <li><label><input type="checkbox" name="ia_housing" {{if index .A "ia_housing"}}checked{{end}}> Evaluated housing; contacted the housing referral office</label></li>
+    <li><label><input type="checkbox" name="ia_hhg" {{if index .A "ia_hhg"}}checked{{end}}> Contacted the transportation office about HHG movement/storage</label></li>
+    <li><label><input type="checkbox" name="ia_valoan" {{if index .A "ia_valoan"}}checked{{end}}> Reviewed the VA home loan guaranty program</label></li>
+    <li><label><input type="checkbox" name="ia_transport" {{if index .A "ia_transport"}}checked{{end}}> Planned transportation and costs (VA adaptive equipment if disabled)</label></li>
+    <li><label><input type="checkbox" name="ia_support" {{if index .A "ia_support"}}checked{{end}}> Identified my support system; assessed transition stress</label></li>
+  </ul>
+  <label class="field field-grow"><span class="field-label">Notes</span><textarea name="ia_notes" rows="2" spellcheck="true">{{index .A "ia_notes"}}</textarea></label>
+
+  <p class="itp-sub">B. Assessing benefits and entitlements</p>
+  <ul class="itp-checks">
+    <li><label><input type="checkbox" name="ib_reserve" {{if index .A "ib_reserve"}}checked{{end}}> Evaluated Reserve/National Guard continued-service benefits</label></li>
+    <li><label><input type="checkbox" name="ib_entitlements" {{if index .A "ib_entitlements"}}checked{{end}}> Considered the impact of continued entitlements (medical/dental, life insurance, exchange, commissary, clubs, recreation)</label></li>
+    <li><label><input type="checkbox" name="ib_recruiter" {{if index .A "ib_recruiter"}}checked{{end}}> Contacted a recruiter for an informational counseling session</label></li>
+  </ul>
+  <label class="field field-grow"><span class="field-label">Would this financial impact be beneficial? Notes</span><textarea name="ib_notes" rows="2" spellcheck="true">{{index .A "ib_notes"}}</textarea></label>
+
+  <p class="itp-sub">C. Getting financially ready</p>
+  <ul class="itp-checks">
+    <li><label><input type="checkbox" name="ic_obligations" {{if index .A "ic_obligations"}}checked{{end}}> Identified anticipated financial obligations (deposits, car, fuel, insurance, savings)</label></li>
+    <li><label><input type="checkbox" name="ic_wardrobe" {{if index .A "ic_wardrobe"}}checked{{end}}> Listed and priced civilian workforce wardrobe items</label></li>
+    <li><label><input type="checkbox" name="ic_debt" {{if index .A "ic_debt"}}checked{{end}}> Built a debt reduction plan (powerpay.org / the Budget page)</label></li>
+    <li><label><input type="checkbox" name="ic_spend" {{if index .A "ic_spend"}}checked{{end}}> Built a spend plan and checked it against expected income</label></li>
+  </ul>
+  <label class="field"><span class="field-label">Estimated Annual Civilian Salary Needed</span><input type="text" name="ic_salary" value="{{index .A "ic_salary"}}" placeholder="$"></label>
+</section>
+
+<section class="card">
+  <h2>Section II - Evaluate Military & Civilian Experience</h2>
+  <ul class="itp-checks">
+    <li><label><input type="checkbox" name="ii_docs" {{if index .A "ii_docs"}}checked{{end}}> Gathered documentation (certs, diplomas, transcripts, licenses); contacted former schools</label></li>
+    <li><label><input type="checkbox" name="ii_vmet" {{if index .A "ii_vmet"}}checked{{end}}> Verified my VMET at dodtap.mil</label></li>
+    <li><label><input type="checkbox" name="ii_moc" {{if index .A "ii_moc"}}checked{{end}}> Attended the MOS Crosswalk Course; listed schools missing from VMET</label></li>
+    <li><label><input type="checkbox" name="ii_crosswalk" {{if index .A "ii_crosswalk"}}checked{{end}}> Crosswalked skills; verified licensure/certification/apprenticeship eligibility</label></li>
+    <li><label><input type="checkbox" name="ii_research" {{if index .A "ii_research"}}checked{{end}}> Researched career fields, salaries, prerequisites, and locations (usajobs, CareerOneStop, BLS)</label></li>
+  </ul>
+  <label class="field field-grow"><span class="field-label">Career fields I am qualified to enter</span><textarea name="ii_fields" rows="2" spellcheck="true">{{index .A "ii_fields"}}</textarea></label>
+</section>
+
+<section class="card">
+  <h2>Section III - Determine Post-Transition Career Track</h2>
+  <div class="field-row">
+    <label class="field field-grow"><span class="field-label">Desired Career Field(s)</span><input type="text" name="iii_field" value="{{index .A "iii_field"}}" spellcheck="true"></label>
+    <label class="field field-grow"><span class="field-label">Desired Relocation Destination(s)</span><input type="text" name="iii_destination" value="{{index .A "iii_destination"}}" spellcheck="true"></label>
+  </div>
+  <p class="itp-sub">Track(s) selected</p>
+  <ul class="itp-checks itp-checks-wide">
+    <li><label><input type="checkbox" name="iii_employment" {{if index .A "iii_employment"}}checked{{end}}> Employment</label></li>
+    <li><label><input type="checkbox" name="iii_education" {{if index .A "iii_education"}}checked{{end}}> Education</label></li>
+    <li><label><input type="checkbox" name="iii_vocational" {{if index .A "iii_vocational"}}checked{{end}}> Vocational</label></li>
+    <li><label><input type="checkbox" name="iii_entrepreneur" {{if index .A "iii_entrepreneur"}}checked{{end}}> Entrepreneurship</label></li>
+    <li><label><input type="checkbox" name="iii_other" {{if index .A "iii_other"}}checked{{end}}> Other (already qualified/hired/enrolled)</label></li>
+  </ul>
+  <p class="itp-sub">Check-in</p>
+  <ul class="itp-checks">
+    <li><label><input type="checkbox" name="iii_tier" {{if index .A "iii_tier"}}checked{{end}}> I have been assigned a Tier</label></li>
+    <li><label><input type="checkbox" name="iii_crs" {{if index .A "iii_crs"}}checked{{end}}> I understand my Career Readiness Standards and deliverables</label></li>
+    <li><label><input type="checkbox" name="iii_scheduled" {{if index .A "iii_scheduled"}}checked{{end}}> Scheduled for additive classes / follow-up counseling; received appointment slips</label></li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Section IV - Employment Track</h2>
+  <p class="itp-sub">A. Build a resume and references</p>
+  <ul class="itp-checks">
+    <li><label><input type="checkbox" name="iv_resume" {{if index .A "iv_resume"}}checked{{end}}> Started a private and/or federal master resume; identified hard and soft skills</label></li>
+  </ul>
+  <div class="field-row">
+    <label class="field field-grow"><span class="field-label">Professional reference 1 (name · title · org · contact)</span><input type="text" name="iv_pro1" value="{{index .A "iv_pro1"}}" spellcheck="true"></label>
+    <label class="field field-grow"><span class="field-label">Professional reference 2</span><input type="text" name="iv_pro2" value="{{index .A "iv_pro2"}}" spellcheck="true"></label>
+    <label class="field field-grow"><span class="field-label">Professional reference 3</span><input type="text" name="iv_pro3" value="{{index .A "iv_pro3"}}" spellcheck="true"></label>
+  </div>
+  <div class="field-row">
+    <label class="field field-grow"><span class="field-label">Personal reference 1 (name · relationship · contact)</span><input type="text" name="iv_per1" value="{{index .A "iv_per1"}}" spellcheck="true"></label>
+    <label class="field field-grow"><span class="field-label">Personal reference 2</span><input type="text" name="iv_per2" value="{{index .A "iv_per2"}}" spellcheck="true"></label>
+    <label class="field field-grow"><span class="field-label">Personal reference 3</span><input type="text" name="iv_per3" value="{{index .A "iv_per3"}}" spellcheck="true"></label>
+  </div>
+  <label class="field field-grow"><span class="field-label">Volunteer / community service (organization · dates · role)</span><textarea name="iv_volunteer" rows="2" spellcheck="true">{{index .A "iv_volunteer"}}</textarea></label>
+  <p class="itp-sub">B. Strengthen your employment prospects</p>
+  <ul class="itp-checks">
+    <li><label><input type="checkbox" name="iv_packet" {{if index .A "iv_packet"}}checked{{end}}> Developed an application packet and cover letter; reviewed with my counselor</label></li>
+    <li><label><input type="checkbox" name="iv_network" {{if index .A "iv_network"}}checked{{end}}> Built a job-search network; joined a professional organization</label></li>
+    <li><label><input type="checkbox" name="iv_credentials" {{if index .A "iv_credentials"}}checked{{end}}> Sought additional education/training/licenses/certifications</label></li>
+    <li><label><input type="checkbox" name="iv_interviews" {{if index .A "iv_interviews"}}checked{{end}}> Scheduled informational (practice) interviews</label></li>
+    <li><label><input type="checkbox" name="iv_usajobs" {{if index .A "iv_usajobs"}}checked{{end}}> Established a USAJOBS account; researched federal jobs</label></li>
+    <li><label><input type="checkbox" name="iv_ajc" {{if index .A "iv_ajc"}}checked{{end}}> Registered with the local American Job Center / Vet Rep</label></li>
+    <li><label><input type="checkbox" name="iv_dol" {{if index .A "iv_dol"}}checked{{end}}> Attended the DOL Employment Track workshop</label></li>
+  </ul>
+  <label class="field field-grow"><span class="field-label">Follow-up questions and actionable next steps</span><textarea name="iv_notes" rows="3" spellcheck="true">{{index .A "iv_notes"}}</textarea></label>
+</section>
+
+<section class="card">
+  <h2>Section V - Education / Vocational Track</h2>
+  <p class="itp-sub">A. Education needs assessment</p>
+  <ul class="itp-checks">
+    <li><label><input type="checkbox" name="v_assess" {{if index .A "v_assess"}}checked{{end}}> Completed an Education Needs Assessment / Interest Profiler</label></li>
+    <li><label><input type="checkbox" name="v_docs" {{if index .A "v_docs"}}checked{{end}}> Gathered education docs (VMET, JST, MOS Crosswalk); requested official transcripts</label></li>
+    <li><label><input type="checkbox" name="v_ace" {{if index .A "v_ace"}}checked{{end}}> Calculated ACE credits earned for military training</label></li>
+    <li><label><input type="checkbox" name="v_skillbridge" {{if index .A "v_skillbridge"}}checked{{end}}> Explored DoD SkillBridge and the Army Career Skills Program</label></li>
+  </ul>
+  <div class="field-row">
+    <label class="field field-grow"><span class="field-label">Field of study / degree</span><input type="text" name="v_field" value="{{index .A "v_field"}}" spellcheck="true"></label>
+    <label class="field"><span class="field-label">Target completion date</span><input type="date" name="v_target" value="{{index .A "v_target"}}"></label>
+  </div>
+  <p class="itp-sub">B. Financing</p>
+  <ul class="itp-checks">
+    <li><label><input type="checkbox" name="v_gibill" {{if index .A "v_gibill"}}checked{{end}}> Reviewed GI Bill benefits and eligibility</label></li>
+    <li><label><input type="checkbox" name="v_funding" {{if index .A "v_funding"}}checked{{end}}> Researched Credentialing Assistance, Tuition Assistance, Army COOL, USMAP, scholarships</label></li>
+  </ul>
+  <p class="itp-sub">C. Identify the academic institution</p>
+  <ul class="itp-checks">
+    <li><label><input type="checkbox" name="v_compare" {{if index .A "v_compare"}}checked{{end}}> Compared institutions (cost, accreditation, grad rates, transfer, GI Bill, admissions)</label></li>
+    <li><label><input type="checkbox" name="v_testing" {{if index .A "v_testing"}}checked{{end}}> Researched required standardized testing (SAT/GRE/GMAT/MCAT/LSAT/CLEP)</label></li>
+    <li><label><input type="checkbox" name="v_apply" {{if index .A "v_apply"}}checked{{end}}> Submitted applications; recorded each deadline</label></li>
+    <li><label><input type="checkbox" name="v_svo" {{if index .A "v_svo"}}checked{{end}}> Contacted the Student Veteran Org / VA Rep at my school</label></li>
+  </ul>
+  <label class="field field-grow"><span class="field-label">Top three schools / programs, locations, and application deadlines</span><textarea name="v_schools" rows="3" spellcheck="true">{{index .A "v_schools"}}</textarea></label>
+  <label class="field field-grow"><span class="field-label">Acceptance status / notes</span><textarea name="v_notes" rows="2" spellcheck="true">{{index .A "v_notes"}}</textarea></label>
+</section>
+
+<section class="card">
+  <h2>Section VI - Entrepreneurship Track</h2>
+  <ul class="itp-checks">
+    <li><label><input type="checkbox" name="vi_skills" {{if index .A "vi_skills"}}checked{{end}}> Evaluated my entrepreneurial skills</label></li>
+    <li><label><input type="checkbox" name="vi_sba" {{if index .A "vi_sba"}}checked{{end}}> Scheduled a session with an SBA advisor (sba.gov)</label></li>
+    <li><label><input type="checkbox" name="vi_b2b" {{if index .A "vi_b2b"}}checked{{end}}> Enrolled in Boots to Business</label></li>
+    <li><label><input type="checkbox" name="vi_market" {{if index .A "vi_market"}}checked{{end}}> Researched customers, demographics, location/zoning, and competitors</label></li>
+    <li><label><input type="checkbox" name="vi_suppliers" {{if index .A "vi_suppliers"}}checked{{end}}> Identified suppliers, marketing, operations, staffing, and insurance/registration</label></li>
+    <li><label><input type="checkbox" name="vi_financials" {{if index .A "vi_financials"}}checked{{end}}> Worked the financials (loans, balance sheet, breakeven, profit and loss)</label></li>
+  </ul>
+  <label class="field field-grow"><span class="field-label">Business idea and next steps</span><textarea name="vi_idea" rows="3" spellcheck="true">{{index .A "vi_idea"}}</textarea></label>
+</section>
+
+<section class="card">
+  <p><button type="submit" class="primary">Save ITP</button>
+  <span class="hint">Print with Cmd-P to bring a copy to class.</span></p>
+</section>
+</form>
+{{template "foot" .}}

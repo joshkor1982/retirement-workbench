@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key><string>ARW</string>
+  <key>CFBundleDisplayName</key><string>ARW</string>
+  <key>CFBundleIdentifier</key><string>org.arw.workbench</string>
+  <key>CFBundleExecutable</key><string>arw</string>
+  <key>CFBundleIconFile</key><string>arw</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>@VERSION@</string>
+  <key>CFBundleVersion</key><string>@VERSION@</string>
+  <key>LSMinimumSystemVersion</key><string>11.0</string>
+  <!-- ARW runs as a small background server and opens in your browser, so it
+       has no Dock icon. Quit it from Settings > Quit ARW. -->
+  <key>LSUIElement</key><true/>
+  <key>NSHighResolutionCapable</key><true/>
+</dict>
+</plist>

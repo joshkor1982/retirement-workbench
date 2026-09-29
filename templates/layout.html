@@ -1,0 +1,127 @@
+{{define "head"}}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{{.PageTitle}} · ARW</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23d4a017' d='M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 21.2l1.6-7L2 9.5l7.1-.6z'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/design-system.css">
+  <link rel="stylesheet" href="/static/shell.css">
+  <link rel="stylesheet" href="/static/app.css">
+  {{if eq .Page "resume"}}<link rel="stylesheet" href="/static/resume-fonts.css">{{end}}
+  <script src="/static/theme-boot.js"></script>
+  <script src="/static/shell.js" defer></script>
+</head>
+<body data-page-icon="{{pageIcon .Page}}">
+<script type="application/json" id="rw-icons">{{navIconSet}}</script>
+<a class="skip" href="#main">Skip to content</a>
+<div class="app">
+<aside class="sidenav" id="sidenav" aria-label="Main">
+  <a class="brand" href="/">
+    <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 21.2l1.6-7L2 9.5l7.1-.6z"/></svg>
+    <span class="brand-text"><b>ARW</b><small>Army Retirement Workbench</small></span>
+  </a>
+  {{if .DaysToR}}<div class="countdown-chip"><b>{{.DaysToR}}</b> days to go</div>{{end}}
+  <nav>
+    {{range navGroups}}
+    <div class="nav-group">
+      {{if .Label}}<div class="nav-label">{{.Label}}</div>{{end}}
+      {{range .Items}}
+      <a class="nav-item{{if eq .Page $.Page}} active{{end}}" href="{{.Href}}"{{if eq .Page $.Page}} aria-current="page"{{end}}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">{{navIcon .Icon}}</svg><span>{{.Label}}</span></a>
+      {{end}}
+    </div>
+    {{end}}
+  </nav>
+  <div class="sidenav-foot">
+    <a class="nav-item{{if eq .Page "settings"}} active{{end}}" href="/settings"{{if eq .Page "settings"}} aria-current="page"{{end}}>
+      <svg viewBox="0 0 24 24" aria-hidden="true">{{navIcon "settings"}}</svg><span>Settings</span></a>
+  </div>
+</aside>
+<div class="scrim" id="scrim" hidden></div>
+<div class="app-main">
+  <header class="topbar">
+    <button type="button" class="menu-btn" id="menu-btn" aria-label="Open menu" aria-controls="sidenav" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <h1 class="page-title">{{.PageTitle}}</h1>
+    <div class="topbar-art" aria-hidden="true">
+      <svg class="topbar-star" viewBox="0 0 24 24"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 21.2l1.6-7L2 9.5l7.1-.6z"/></svg>
+      <span class="topbar-line"></span>
+    </div>
+    <button type="button" class="search-btn" id="search-btn" aria-label="Search everything">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <span>Search</span><kbd id="search-kbd">⌘K</kbd></button>
+    <div class="theme-seg" role="group" aria-label="Theme">
+      <button type="button" data-mode="light" title="Light">Light</button><button type="button" data-mode="system" title="Match your computer">Auto</button><button type="button" data-mode="dark" title="Dark">Dark</button>
+    </div>
+    {{if .RDay}}<span class="topbar-meta">Retiring {{.RDay}}</span>{{end}}
+  </header>
+<div class="layout">
+<main id="main">
+{{end}}
+
+{{define "foot"}}
+</main>
+{{if .Settings.AdvisorProvider}}
+<aside class="adv-side" id="adv-side">
+  <div class="adv-head"><span class="adv-title"><svg class="h-icon" viewBox="0 0 24 24" aria-hidden="true">{{navIcon "sparkle"}}</svg>Advisor</span><button id="adv-collapse" class="icon-btn" title="Hide the Advisor" aria-label="Hide the Advisor"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div>
+  <div id="adv-out" class="adv-out">
+    {{if .AdvisorRecent}}
+      {{range .AdvisorRecent}}
+      <div class="adv-turn"><p class="adv-you">{{.Q}}</p><div class="adv-a">{{.A}}</div></div>
+      {{end}}
+    {{else}}
+      <p class="hint">Ask me to add or change anything on this app - a task, an appointment, a bill, a symptom. I can also draft resume bullets and analyze your claim.</p>
+    {{end}}
+  </div>
+  <form id="adv-form" class="adv-form">
+    <textarea id="adv-q" rows="3" placeholder="Ask anything, or say what to change" required></textarea>
+    <button type="submit" id="adv-send">Ask</button>
+  </form>
+</aside>
+</div>
+<button id="adv-reopen" class="adv-reopen" hidden>Advisor</button>
+<script>
+(function(){
+  var form=document.getElementById('adv-form'),q=document.getElementById('adv-q'),
+      out=document.getElementById('adv-out'),send=document.getElementById('adv-send'),
+      collapse=document.getElementById('adv-collapse'),reopen=document.getElementById('adv-reopen');
+  function hide(h){document.body.classList.toggle('adv-hidden',h);reopen.hidden=!h;try{localStorage.setItem('advHidden',h?'1':'0')}catch(e){}}
+  collapse.onclick=function(){hide(true)};
+  reopen.onclick=function(){hide(false);q.focus()};
+  if(localStorage.getItem('advHidden')==='1')hide(true);
+  function scrollOut(){out.scrollTop=out.scrollHeight;}
+  scrollOut();
+  form.onsubmit=function(e){
+    e.preventDefault();
+    var text=q.value.trim(); if(!text)return;
+    send.disabled=true; var old=send.textContent; send.textContent='…';
+    var hint=out.querySelector('.hint'); if(hint)hint.remove();
+    var turn=document.createElement('div'); turn.className='adv-turn';
+    var you=document.createElement('p'); you.className='adv-you'; you.textContent=text; turn.appendChild(you);
+    var work=document.createElement('p'); work.className='hint adv-working'; work.textContent='Working… this can take up to a minute.'; turn.appendChild(work);
+    out.appendChild(turn); scrollOut();
+    var fd=new URLSearchParams(); fd.set('q',text); fd.set('panel','1');
+    fetch('/advisor/ask',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
+     .then(function(r){return r.json()})
+     .then(function(d){
+        send.disabled=false; send.textContent=old; q.value='';
+        work.remove();
+        if(d.error){var er=document.createElement('p');er.className='status-line err';er.textContent=d.error;turn.appendChild(er);scrollOut();return;}
+        var ans=document.createElement('div'); ans.className='adv-a'; ans.textContent=d.answer||'Done.'; turn.appendChild(ans);
+        if(d.changed){var n=document.createElement('p');n.className='hint';n.textContent='Applied. Refreshing the page…';turn.appendChild(n);}
+        scrollOut();
+        if(d.changed)setTimeout(function(){location.reload()},1400);
+     })
+     .catch(function(err){send.disabled=false;send.textContent=old;work.remove();var er=document.createElement('p');er.className='status-line err';er.textContent=String(err);turn.appendChild(er);scrollOut();});
+  };
+})();
+</script>
+{{else}}
+</div>
+{{end}}
+</div>
+</div>
+</body>
+</html>{{end}}

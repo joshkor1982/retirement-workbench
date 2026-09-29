@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Formatting
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+      - name: Vet
+        run: go vet ./...
+      - name: Tests (with the race detector)
+        run: go test -race -count=1 ./...
+      - name: No personal data or credentials tracked
+        run: |
+          if git ls-files | grep -E '^data/|state\.json|homes\.json|sa-key|credentials|\.env$'; then
+            echo "Personal data or credentials are tracked. Remove them." && exit 1
+          fi
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [darwin/arm64, darwin/amd64, windows/amd64, linux/amd64, linux/arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Build ${{ matrix.target }}
+        run: |
+          GOOS=${TARGET%/*} GOARCH=${TARGET#*/} CGO_ENABLED=0 go build -trimpath -o /dev/null .
+        env:
+          TARGET: ${{ matrix.target }}
+
+  container:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image
+        run: docker build -t arw:ci .
+      - name: Start it and check health
+        run: |
+          docker run -d --name wb -p 127.0.0.1:5252:5252 arw:ci
+          for i in $(seq 1 20); do curl -fs http://127.0.0.1:5252/healthz && exit 0; sleep 1; done
+          docker logs wb; exit 1

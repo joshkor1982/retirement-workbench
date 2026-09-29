@@ -1,0 +1,86 @@
+{{template "head" .}}
+<section class="card">
+  <h2>File a Document</h2>
+  <details class="how-to"><summary>How to Use</summary>
+    <p class="hint">Upload anything the transition throws at you: orders, checklists, VA letters, benefit guides. Each upload lands on the to-do list as a review item, and the row below lets you add each action a document demands as its own dated to-do, so everything funnels into one list.</p>
+  </details>
+  <form method="post" action="/docs" enctype="multipart/form-data" class="field-row">
+    <label class="field field-grow"><span class="field-label">File</span>
+      <input type="file" name="file" required></label>
+    <label class="field field-grow"><span class="field-label">Notes</span>
+      <input type="text" name="notes" placeholder="What is this?"></label>
+    <label class="field"><span class="field-label">Shelf</span>
+      <select name="kind"><option value="">General</option><option value="form">Form to Fill Out</option><option value="medical">Medical</option></select></label>
+    <button type="submit" class="primary">Upload</button>
+  </form>
+  <details class="how-to" style="margin-top:12px"><summary>Bulk Upload - Many Files at Once</summary>
+    <p class="hint">Drop in a whole stack of scans to keep for reference. These are filed straight to the shelf with no review to-do created for each.</p>
+    <form method="post" action="/docs/bulk" enctype="multipart/form-data" class="field-row">
+      <label class="field field-grow"><span class="field-label">Files (select several)</span>
+        <input type="file" name="files" multiple required></label>
+      <label class="field"><span class="field-label">Shelf</span>
+        <select name="kind"><option value="">General</option><option value="form">Form to Fill Out</option><option value="medical">Medical</option><option value="dbq">DBQ</option><option value="resume">Resume Source</option><option value="packet">Packet</option></select></label>
+      <label class="field field-grow"><span class="field-label">Notes (applied to all)</span>
+        <input type="text" name="notes" placeholder="TAP scans, Sep 2026"></label>
+      <button type="submit" class="primary">Upload All</button>
+    </form>
+  </details>
+</section>
+
+<section class="card">
+  <h2>Forms to Fill Out</h2>
+  <p class="hint">Everything you owe finance and the transition office, in one place. Flag any document below as a form, then check it off when it is done. Click a name to open it.</p>
+  {{if .Forms}}
+  <ul class="plain">
+    {{range .Forms}}
+    <li class="rowline form-row {{if .Filled}}done{{end}}">
+      <form method="post" action="/docs/{{.ID}}/filled"><button class="tick" title="Toggle filled">✓</button></form>
+      <div>
+        <b><a href="/docs/{{.ID}}/file">{{.Name}}</a></b>
+        {{if .Filled}}<span class="chip chip-ok">Filled</span>{{else}}<span class="chip">To Do</span>{{end}}
+        {{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}
+      </div>
+      <form method="post" action="/docs/{{.ID}}/form"><button title="Remove from forms">Unflag</button></form>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}<p class="hint">No forms flagged yet. Upload with the "Form to Fill Out" shelf, or flag any document below with "Flag as Form".</p>{{end}}
+</section>
+
+<section class="card">
+  <h2>Documents</h2>
+  {{if .Items}}
+  <ul class="plain">
+    {{range .Items}}
+    <li class="docrow">
+      <div class="rowline"><div>
+        <b><a href="/docs/{{.ID}}/file">{{.Name}}</a></b>
+        <span class="due">{{atdate .UploadedAt}}</span>
+        {{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}
+      </div></div>
+      <form method="post" action="/docs/{{.ID}}/todo" class="field-row subform">
+        <label class="field field-grow"><span class="field-label">Action This Document Demands</span>
+          <input type="text" name="title" placeholder="Submit DD-2648 to the transition office"></label>
+        <label class="field"><span class="field-label">Due</span>
+          <input type="date" name="due"></label>
+        <button type="submit">Add to the List</button>
+        {{if ne .Kind "form"}}<button type="submit" formaction="/docs/{{.ID}}/form" formmethod="post">Flag as Form</button>{{end}}
+      </form>
+      <details class="row-edit"><summary>Rename or Delete</summary>
+        <form method="post" action="/docs/{{.ID}}/rename" class="field-row">
+          <label class="field field-grow"><span class="field-label">Name</span>
+            <input type="text" name="name" value="{{.Name}}"></label>
+          <label class="field field-grow"><span class="field-label">Notes</span>
+            <input type="text" name="notes" value="{{.Notes}}"></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
+        <form method="post" action="/docs/{{.ID}}/delete" class="doc-delete" onsubmit="return confirm('Delete {{.Name}} and its file? This cannot be undone.')">
+          <button type="submit" class="danger">Delete Document</button>
+        </form>
+      </details>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}<p class="hint">No documents yet.</p>{{end}}
+</section>
+{{template "foot" .}}

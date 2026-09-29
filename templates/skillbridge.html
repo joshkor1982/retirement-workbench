@@ -1,0 +1,141 @@
+{{template "head" .}}
+<section class="card">
+  <h2>SkillBridge</h2>
+  <p class="hint">DoD SkillBridge lets you train or intern with a civilian employer during your last 180 days of service, on full pay. Find a program, track your leads, and build the approval packet here. Rules differ by installation, so confirm each step with your Career Skills Program (CSP) office.</p>
+  <div class="gist">
+    <div class="gist-item"><span class="gist-label">Days to Start</span>
+      {{if ge .SB.Days 0}}<span class="gist-num">{{.SB.Days}}</span><span class="gist-sub">{{.SB.Plan.Company}}{{if .SB.Plan.Program}} · {{.SB.Plan.Program}}{{end}}</span>
+      {{else}}<span class="gist-num">·</span><span class="gist-sub">Set dates under Your Program</span>{{end}}</div>
+    <div class="gist-item"><span class="gist-label">Program Length</span>
+      {{if .SB.Length}}<span class="gist-num">{{.SB.Length}}</span><span class="gist-sub">Days, up to 180 allowed</span>{{else}}<span class="gist-num">·</span><span class="gist-sub">Start and end dates</span>{{end}}</div>
+    <div class="gist-item"><span class="gist-label">Earliest Start</span>
+      {{if .SB.WindowOpen}}<span class="gist-num gist-date">{{.SB.WindowOpen}}</span><span class="gist-sub">180 days before retirement</span>{{else}}<span class="gist-num">·</span><span class="gist-sub">Set your retirement date in <a href="/settings">Settings</a></span>{{end}}</div>
+    <div class="gist-item"><span class="gist-label">Leads</span>
+      <span class="gist-num">{{len .Leads}}</span><span class="gist-sub">Programs you are tracking</span></div>
+  </div>
+  {{range .SB.Warnings}}<p class="warntext">{{.}}</p>{{end}}
+</section>
+
+<section class="card">
+  <h2>Find a Program</h2>
+  <form method="get" action="/skillbridge" class="field-row">
+    <label class="field field-grow"><span class="field-label">Keywords</span>
+      <input type="text" name="q" value="{{.JQ.Q}}" placeholder="project management, cybersecurity, logistics"></label>
+    <label class="field"><span class="field-label">ZIP Code</span>
+      <input type="text" name="zip" value="{{.JQ.Zip}}" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" size="7" placeholder="80903"></label>
+    <label class="field"><span class="field-label">Radius</span>
+      <select name="radius">{{range .Radii}}<option value="{{.}}"{{if eq . $.JQ.Radius}} selected{{end}}>{{.}} miles</option>{{end}}</select></label>
+    <label class="field"><span class="field-label">Work Type</span>
+      <select name="mode">
+        <option value="both"{{if eq .JQ.Mode "both"}} selected{{end}}>Near Me and Remote</option>
+        <option value="near"{{if eq .JQ.Mode "near"}} selected{{end}}>Near Me Only</option>
+        <option value="remote"{{if eq .JQ.Mode "remote"}} selected{{end}}>Remote Only</option>
+      </select></label>
+    <button type="submit" class="primary">Search</button>
+  </form>
+  {{range .LinkRows}}
+  <div class="job-sites">
+    <span class="field-label">{{.Label}}</span>
+    <div class="job-site-list">{{range .Links}}<a class="job-site" href="{{.URL}}" target="_blank" rel="noopener">{{.Name}}{{if .Note}} <span>{{.Note}}</span>{{end}} ↗</a>{{end}}</div>
+  </div>
+  {{end}}
+  <p class="hint">The official catalog only opens on skillbridge.mil. Many partners also post their SkillBridge openings on LinkedIn and Indeed, so the job-board links search for "SkillBridge" plus your keywords.{{if not .HaveSearch}} Add a USAJOBS or Adzuna key in <a href="/settings">Settings</a> to see those results here too.{{end}}</p>
+  {{if .JQ.Q}}
+  {{range .Errs}}<p class="warntext">{{.}}</p>{{end}}
+  {{if .Hits}}
+  <ul class="job-list">
+    {{range .Hits}}
+    <li class="job-row">
+      <div class="job-main">
+        <a class="job-title" href="{{.URL}}" target="_blank" rel="noopener">{{.Title}} ↗</a>
+        <div class="job-meta">{{if .Org}}<span>{{.Org}}</span>{{end}}{{if .Location}}<span>{{.Location}}</span>{{end}}</div>
+      </div>
+      <div class="job-side">
+        {{if .Remote}}<span class="chip job-remote">Remote</span>{{end}}<span class="chip job-src">{{.Source}}</span>
+        <form method="post" action="/skillbridge/leads">
+          <input type="hidden" name="company" value="{{or .Org .Title}}"><input type="hidden" name="program" value="{{.Title}}">
+          <input type="hidden" name="location" value="{{.Location}}"><input type="hidden" name="url" value="{{.URL}}">
+          <input type="hidden" name="notes" value="Found on {{.Source}}">
+          <button type="submit">Track It</button>
+        </form>
+      </div>
+    </li>
+    {{end}}
+  </ul>
+  {{end}}
+  {{end}}
+</section>
+
+<section class="card" id="leads">
+  <h2>Leads</h2>
+  <form method="post" action="/skillbridge/leads" class="field-row">
+    <label class="field"><span class="field-label">Company</span><input type="text" name="company" required placeholder="Acme Defense"></label>
+    <label class="field field-grow"><span class="field-label">Program</span><input type="text" name="program" placeholder="Operations Intern"></label>
+    <label class="field"><span class="field-label">Location</span><input type="text" name="location" placeholder="Remote"></label>
+    <label class="field field-grow"><span class="field-label">Link</span><input type="text" name="url" placeholder="https://..."></label>
+    <label class="field field-grow"><span class="field-label">Notes</span><input type="text" name="notes" placeholder="Met their recruiter at TAP"></label>
+    <button type="submit" class="primary">Track It</button>
+  </form>
+  {{if .Leads}}
+  <table>
+    <thead><tr><th>Company</th><th>Program</th><th>Location</th><th>Status</th><th>Notes</th><th></th></tr></thead>
+    <tbody>
+    {{range .Leads}}
+    <tr>
+      <td>{{if .URL}}<a href="{{.URL}}" target="_blank" rel="noopener"><b>{{.Company}} ↗</b></a>{{else}}<b>{{.Company}}</b>{{end}}</td>
+      <td>{{.Program}}</td><td>{{.Location}}</td>
+      <td><span class="chip sb-{{.Status}}">{{.Status}}</span></td>
+      <td>{{.Notes}}</td>
+      <td class="row-actions">
+        {{if ne .Status "approved"}}<form method="post" action="/skillbridge/leads/{{.ID}}/advance"><button>Advance</button></form>{{end}}
+        <form method="post" action="/skillbridge/leads/{{.ID}}/delete" onsubmit="return confirm('Stop tracking {{.Company}}?')"><button class="danger">Delete</button></form>
+      </td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{else}}<p class="hint">No leads yet. Track programs from the search above, or add one you heard about.</p>{{end}}
+</section>
+
+<section class="card" id="program">
+  <h2>Your Program</h2>
+  <p class="hint">The program you are applying for. These details fill in your request memorandum.</p>
+  <form method="post" action="/skillbridge/plan">
+    <div class="field-row">
+      <label class="field field-grow"><span class="field-label">Company</span><input type="text" name="company" value="{{.SB.Plan.Company}}" placeholder="Acme Defense"></label>
+      <label class="field field-grow"><span class="field-label">Program</span><input type="text" name="program" value="{{.SB.Plan.Program}}" placeholder="Operations Management Fellowship"></label>
+      <label class="field field-grow"><span class="field-label">Location</span><input type="text" name="location" value="{{.SB.Plan.Location}}" placeholder="Colorado Springs, CO, or Remote"></label>
+    </div>
+    <div class="field-row">
+      <label class="field"><span class="field-label">Start</span><input type="date" name="start" value="{{.SB.Plan.Start}}"></label>
+      <label class="field"><span class="field-label">End</span><input type="date" name="end" value="{{.SB.Plan.End}}"></label>
+      <label class="field field-grow"><span class="field-label">Hours</span><input type="text" name="hours" value="{{.SB.Plan.Hours}}" placeholder="Monday to Friday, 0800 to 1700"></label>
+      <label class="field field-grow"><span class="field-label">Partner Point of Contact</span><input type="text" name="poc" value="{{.SB.Plan.POC}}" placeholder="Jane Smith, jane@example.com, (555) 010-0100"></label>
+    </div>
+    <label class="field"><span class="field-label">What You Will Learn and Do</span>
+      <textarea name="duties" rows="3" placeholder="Project management fundamentals, vendor coordination, and a PMP study plan">{{.SB.Plan.Duties}}</textarea></label>
+    <h3 class="phase">For the Memo</h3>
+    <div class="field-row">
+      <label class="field"><span class="field-label">Your Rank</span><input type="text" name="rank" value="{{.SB.Plan.Rank}}" placeholder="SFC"></label>
+      <label class="field field-grow"><span class="field-label">Your Unit</span><input type="text" name="unit" value="{{.SB.Plan.Unit}}" placeholder="HHC, 1st Battalion, 1st Infantry Regiment"></label>
+      <label class="field"><span class="field-label">Office Symbol</span><input type="text" name="office" value="{{.SB.Plan.Office}}" placeholder="ABCD-EF"></label>
+    </div>
+    <div class="field-row">
+      <label class="field field-grow"><span class="field-label">Unit Address</span><input type="text" name="address" value="{{.SB.Plan.Address}}" placeholder="Building 123, Fort Example, ST 12345"></label>
+      <label class="field field-grow"><span class="field-label">Memorandum For</span><input type="text" name="commander" value="{{.SB.Plan.Commander}}" placeholder="Commander, HHC, 1-1 IN"></label>
+      <label class="field field-grow"><span class="field-label">Your Email and Phone</span><input type="text" name="contact" value="{{.SB.Plan.Contact}}" placeholder="john.doe@army.mil, (555) 010-0100"></label>
+    </div>
+    <div class="settings-action">
+      <button type="submit" class="primary">Save Program</button>
+      <a class="btn" href="/skillbridge/memo.pdf">Download Request Memo (PDF)</a>
+      <span class="hint">Save first. Use your installation's own template instead if it has one.</span>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Application Packet</h2>
+  <p class="hint">What most SkillBridge packets need. Mark each item as you finish it. Your installation CSP office has the final list.</p>
+  <div class="par-list">{{range .Checklist}}{{template "par-card" .}}{{end}}</div>
+</section>
+{{template "foot" .}}

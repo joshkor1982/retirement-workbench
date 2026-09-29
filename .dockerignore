@@ -1,0 +1,7 @@
+data/
+*.pdf
+retirement-workbench
+.git/
+docs/
+*.md
+!README.md

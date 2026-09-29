@@ -1,0 +1,140 @@
+{{template "head" .}}
+<section class="card">
+  <h2>Find a Home</h2>
+  <details class="how-to"><summary>How to Use</summary>
+    <p class="hint">Set a ZIP code, a radius, and a price range. The app checks realtor.com every 30 minutes and updates this page on its own. A house that sells, goes pending, or comes off the market drops out on the next check. Click a card to open the full listing.</p>
+  </details>
+  <form method="post" action="/housing/search" class="field-row">
+    <label class="field"><span class="field-label">ZIP Code</span>
+      <input type="text" name="zip" value="{{.HS.Zip}}" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" size="6" placeholder="e.g. 80903" required></label>
+    <label class="field"><span class="field-label">Radius</span>
+      <select name="radius">
+        {{range .Radii}}<option value="{{.}}"{{if eq . $.HS.Radius}} selected{{end}}>{{.}} miles</option>{{end}}
+      </select></label>
+    <label class="field"><span class="field-label">Min Price</span>
+      <input type="text" name="min_price" value="{{if .HS.MinPrice}}{{.HS.MinPrice}}{{end}}" inputmode="numeric" placeholder="No min" size="10"></label>
+    <label class="field"><span class="field-label">Max Price</span>
+      <input type="text" name="max_price" value="{{if .HS.MaxPrice}}{{.HS.MaxPrice}}{{end}}" inputmode="numeric" placeholder="No max" size="10"></label>
+    <label class="field"><span class="field-label">Beds</span>
+      <select name="min_beds">
+        <option value="0"{{if eq .HS.MinBeds 0}} selected{{end}}>Any</option>
+        <option value="2"{{if eq .HS.MinBeds 2}} selected{{end}}>2+</option>
+        <option value="3"{{if eq .HS.MinBeds 3}} selected{{end}}>3+</option>
+        <option value="4"{{if eq .HS.MinBeds 4}} selected{{end}}>4+</option>
+        <option value="5"{{if eq .HS.MinBeds 5}} selected{{end}}>5+</option>
+      </select></label>
+    <fieldset class="field home-types"><span class="field-label">Home Type</span>
+      <div>{{range .Types}}<label><input type="checkbox" name="type" value="{{.Key}}"{{if .On}} checked{{end}}> {{.Label}}</label>{{end}}</div>
+    </fieldset>
+    <button type="submit" class="primary">Search</button>
+  </form>
+</section>
+
+<section class="card">
+  <div class="home-bar">
+    <label class="field"><span class="field-label">Sort</span>
+      <select id="home-sort">
+        <option value="new">Newest</option>
+        <option value="low">Price: Low to High</option>
+        <option value="high">Price: High to Low</option>
+        <option value="size">Largest</option>
+      </select></label>
+    <label class="field"><span class="field-label">City</span>
+      <select id="home-city"><option value="">All Cities</option></select></label>
+    <label class="home-only-new"><input type="checkbox" id="home-new"> New Only</label>
+    <form method="post" action="/housing/refresh" class="home-refresh"><button type="submit">Check Now</button></form>
+  </div>
+  <div id="home-grid">{{template "housing-grid" .}}</div>
+</section>
+
+<script>
+(function(){
+  var grid=document.getElementById('home-grid'),sort=document.getElementById('home-sort'),
+      city=document.getElementById('home-city'),onlyNew=document.getElementById('home-new');
+  function load(k,d){try{return localStorage.getItem(k)||d}catch(e){return d}}
+  function save(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+  sort.value=load('homeSort','new'); onlyNew.checked=load('homeNew','0')==='1';
+  function cities(){
+    var keep=city.value||load('homeCity',''),seen={},list=[];
+    grid.querySelectorAll('.home-card').forEach(function(c){var n=c.dataset.city;if(n&&!seen[n]){seen[n]=1;list.push(n)}});
+    list.sort();
+    city.length=1;
+    list.forEach(function(n){var o=document.createElement('option');o.value=o.textContent=n;city.appendChild(o)});
+    city.value=seen[keep]?keep:'';
+  }
+  function apply(){
+    var box=grid.querySelector('.home-grid'); if(!box)return;
+    var cards=[].slice.call(box.children),by=sort.value,shown=0;
+    cards.sort(function(a,b){
+      var pa=+a.dataset.price,pb=+b.dataset.price;
+      if(by==='low')return pa-pb; if(by==='high')return pb-pa;
+      if(by==='size')return (+b.dataset.sqft)-(+a.dataset.sqft);
+      return (b.dataset.listed>a.dataset.listed)?1:(b.dataset.listed<a.dataset.listed?-1:0);
+    });
+    cards.forEach(function(c){
+      var ok=(!city.value||c.dataset.city===city.value)&&(!onlyNew.checked||c.dataset.new==='1');
+      c.hidden=!ok; if(ok)shown++; box.appendChild(c);
+    });
+    var n=grid.querySelector('#home-shown'); if(n)n.textContent=shown.toLocaleString();
+  }
+  sort.onchange=function(){save('homeSort',sort.value);apply()};
+  city.onchange=function(){save('homeCity',city.value);apply()};
+  onlyNew.onchange=function(){save('homeNew',onlyNew.checked?'1':'0');apply()};
+  cities(); apply();
+
+  // Live updates: poll the cheap stamp, swap the grid only when it moves.
+  var stamp={{.Stamp}},busy={{.Busy}};
+  function tick(){
+    fetch('/housing/stamp').then(function(r){return r.json()}).then(function(d){
+      if(d.stamp!==stamp||(busy&&!d.busy)){
+        stamp=d.stamp; busy=d.busy;
+        return fetch('/housing?frag=1').then(function(r){return r.text()}).then(function(html){grid.innerHTML=html;cities();apply()});
+      }
+      busy=d.busy;
+    }).catch(function(){}).finally(function(){setTimeout(tick,busy?4000:60000)});
+  }
+  setTimeout(tick,busy?4000:60000);
+})();
+</script>
+{{template "foot" .}}
+
+{{define "housing-grid"}}
+<p class="status-line home-status">
+  {{if .Busy}}<span>Checking realtor.com for listings…</span>{{end}}
+  {{if .Fetched}}<span><b id="home-shown">{{len .Cards}}</b> for sale{{if .NewCount}} · <b class="home-new-count">{{.NewCount}} new</b>{{end}}</span>
+  <span>Updated {{.Fetched}}</span>{{end}}
+  {{if .Capped}}<span class="warntext">Showing the newest {{len .Cards}} of {{.Total}}. Narrow the search to see the rest.</span>{{end}}
+</p>
+{{if .Err}}<p class="warntext">Last check failed: {{.Err}}. The listings below are from the last good check.</p>{{end}}
+{{if .Cards}}
+<div class="home-grid">
+  {{range .Cards}}
+  <a class="home-card" href="{{.URL}}" target="_blank" rel="noopener" data-price="{{.Price}}" data-sqft="{{.Sqft}}" data-listed="{{.Listed}}" data-city="{{.City}}" data-new="{{if .New}}1{{else}}0{{end}}">
+    <div class="home-photo">
+      {{if .Photo}}<img src="{{.Photo}}" alt="" loading="lazy" referrerpolicy="no-referrer">{{end}}
+      <div class="home-badges">
+        {{if .New}}<span class="home-badge home-badge-new">New</span>{{end}}
+        {{if .CutText}}<span class="home-badge home-badge-cut">Price Cut {{.CutText}}</span>{{end}}
+      </div>
+    </div>
+    <div class="home-body">
+      <div class="home-price">{{.PriceText}}</div>
+      <div class="home-facts">
+        {{if .Beds}}<span><b>{{.Beds}}</b> bd</span>{{end}}
+        {{if .Baths}}<span><b>{{.Baths}}</b> ba</span>{{end}}
+        {{if .SqftText}}<span><b>{{.SqftText}}</b> sqft</span>{{end}}
+        <span>{{.TypeLabel}}</span>
+      </div>
+      <div class="home-addr">{{.Address}}</div>
+      <div class="home-city">{{.City}}, {{.State}} {{.Zip}}</div>
+      <div class="home-age">{{.Age}}{{if .Year}} · Built {{.Year}}{{end}}</div>
+    </div>
+  </a>
+  {{end}}
+</div>
+{{else if .NeedZip}}
+<p class="hint">Enter the ZIP code you are moving to and a radius, then click Search. Listings start showing up within a minute.</p>
+{{else if not .Busy}}
+<p class="hint">No homes for sale match this search. Widen the radius or the price range.</p>
+{{end}}
+{{end}}

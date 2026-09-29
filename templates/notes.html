@@ -1,0 +1,88 @@
+{{template "head" .}}
+<section class="card">
+  <h2>New Note</h2>
+  <form method="post" action="/notes" class="field-row">
+    <label class="field field-grow"><span class="field-label">Topic</span>
+      <input type="text" name="topic" required placeholder="Call with the Transition Center" autofocus></label>
+    <label class="field"><span class="field-label">Date</span>
+      <input type="date" name="date" value="{{.Today}}" required></label>
+    <button type="submit" class="primary">Create Note</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Notes</h2>
+  {{if .Notes}}
+  <div class="note-list">
+    {{range .Notes}}
+    <div class="note-card{{if eq .ID $.Open}} note-open{{end}}" id="note-{{.ID}}">
+      <button type="button" class="note-head" aria-expanded="{{if eq .ID $.Open}}true{{else}}false{{end}}">
+        <span class="note-date">{{atdate .Date}}</span>
+        <span class="note-topic">{{.Topic}}</span>
+        <span class="note-caret" aria-hidden="true">›</span>
+      </button>
+      <form method="post" action="/notes/{{.ID}}/update" class="note-edit"{{if ne .ID $.Open}} hidden{{end}}>
+        <div class="field-row">
+          <label class="field field-grow"><span class="field-label">Topic</span>
+            <input type="text" name="topic" value="{{.Topic}}" required></label>
+          <label class="field"><span class="field-label">Date</span>
+            <input type="date" name="date" value="{{.Date}}" required></label>
+        </div>
+        <textarea name="body" rows="10" placeholder="Type your note">{{.Body}}</textarea>
+        <div class="note-btns">
+          <button type="submit" class="primary">Save</button>
+          <button type="button" class="note-cancel">Cancel</button>
+          <span class="hint">Cmd+Enter saves, Esc cancels</span>
+          <button type="submit" class="danger note-delete" formaction="/notes/{{.ID}}/delete" formnovalidate>Delete</button>
+        </div>
+      </form>
+    </div>
+    {{end}}
+  </div>
+  {{else}}<p class="hint">No notes yet. Give one a topic above and start typing.</p>{{end}}
+</section>
+
+<script>
+(function(){
+  document.querySelectorAll('.note-card').forEach(function(card){
+    var head=card.querySelector('.note-head'),form=card.querySelector('.note-edit'),
+        body=form.querySelector('textarea'),topic=form.querySelector('[name=topic]'),
+        date=form.querySelector('[name=date]'),saved=null;
+    function snap(){saved={t:topic.value,d:date.value,b:body.value};}
+    function setOpen(on){
+      form.hidden=!on; card.classList.toggle('note-open',on); head.setAttribute('aria-expanded',on);
+      if(on){snap();body.focus();body.setSelectionRange(body.value.length,body.value.length);}
+    }
+    function cancel(){if(saved){topic.value=saved.t;date.value=saved.d;body.value=saved.b;}setOpen(false);}
+    head.onclick=function(){
+      if(!form.hidden){cancel();return;}
+      document.querySelectorAll('.note-open').forEach(function(c){if(c!==card)c.querySelector('.note-cancel').click();});
+      setOpen(true);
+    };
+    card.querySelector('.note-cancel').onclick=cancel;
+    form.onkeydown=function(e){
+      if(e.key==='Escape'){e.preventDefault();cancel();}
+      if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();form.requestSubmit();}
+    };
+    card.querySelector('.note-delete').onclick=function(e){
+      if(!confirm('Delete the note "'+topic.value+'"?'))e.preventDefault();
+    };
+    form.onsubmit=function(e){
+      if(e.submitter&&e.submitter.classList.contains('note-delete'))return;
+      e.preventDefault();
+      var fd=new URLSearchParams(new FormData(form));
+      fetch(form.action,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'fetch'},body:fd.toString()})
+        .then(function(r){
+          if(!r.ok)throw new Error(r.status);
+          card.querySelector('.note-topic').textContent=topic.value;
+          card.querySelector('.note-date').textContent=new Date(date.value+'T00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+          setOpen(false);
+        })
+        .catch(function(){form.submit();});
+    };
+    if(card.classList.contains('note-open')){setOpen(true);card.scrollIntoView({block:'center'});}
+  });
+  if(location.search)history.replaceState(null,'',location.pathname+location.hash);
+})();
+</script>
+{{template "foot" .}}

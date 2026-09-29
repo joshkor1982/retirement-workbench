@@ -1,0 +1,40 @@
+{{define "sb_memo.html"}}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SkillBridge Request Memorandum</title>
+  <style>
+    @page { size: Letter; margin: 1in; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 12pt; line-height: 1.35; color: #000; background: #fff; max-width: 6.5in; margin: 0 auto; }
+    @media screen { body { margin: 1in auto; } }
+    .head { text-align: center; line-height: 1.25; margin-bottom: 18pt; }
+    .head b { display: block; font-size: 12pt; }
+    .meta { display: flex; justify-content: space-between; margin-bottom: 18pt; }
+    p { margin: 0 0 12pt; }
+    ol { margin: 0 0 12pt; padding-left: 0; list-style: none; counter-reset: para; }
+    ol > li { counter-increment: para; margin-bottom: 12pt; }
+    ol > li::before { content: counter(para) ". "; }
+    .sig { margin-left: 3.25in; margin-top: 42pt; line-height: 1.25; }
+    .bar { position: fixed; top: 12px; right: 12px; }
+    @media print { .bar { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="head"><b>DEPARTMENT OF THE ARMY</b>{{.Unit}}{{if .P.Address}}<br>{{.P.Address}}{{end}}</div>
+  <div class="meta"><span>{{.Office}}</span><span>{{.Today}}</span></div>
+  <p>MEMORANDUM FOR {{.Commander}}</p>
+  <p>SUBJECT: Request to Participate in the DoD SkillBridge Program</p>
+  <ol>
+    <li>I request approval to participate in the Department of Defense SkillBridge program with {{.Company}} in the {{.Program}} program, located at {{.Location}}, from {{.Start}} through {{.End}}{{if .Length}} ({{.Length}} days){{end}}.</li>
+    <li>My approved retirement date is {{.Retire}}. The program falls within my final 180 days of service and ends before my retirement date.</li>
+    <li>The program will provide training in {{if .P.Duties}}{{.P.Duties}}{{else}}____________{{end}}. {{if .P.Hours}}My schedule will be {{.P.Hours}}. {{end}}The industry partner point of contact is {{if .P.POC}}{{.P.POC}}{{else}}____________{{end}}.</li>
+    <li>I understand that I remain on active duty and subject to the Uniform Code of Military Justice throughout the program, that I will receive no pay or benefits from the industry partner, and that my command may recall me at any time to meet mission requirements. I will complete all out-processing and transition requirements as directed.</li>
+    <li>The point of contact for this memorandum is the undersigned{{if .P.Contact}} at {{.P.Contact}}{{end}}.</li>
+  </ol>
+  <div class="sig">{{.NameUpper}}<br>{{if .P.Rank}}{{.P.Rank}}, {{end}}{{.Branch}}</div>
+  {{if .Manual}}
+  <div class="bar"><button class="primary" onclick="window.print()">Save as PDF</button></div>
+  <script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 300); });</script>
+  {{end}}
+</body>
+</html>{{end}}

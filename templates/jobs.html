@@ -1,0 +1,150 @@
+{{template "head" .}}
+<section class="card">
+  <h2>Find Jobs</h2>
+  <form method="get" action="/jobs" class="field-row">
+    <label class="field field-grow"><span class="field-label">Keywords</span>
+      <input type="text" name="q" value="{{.JQ.Q}}" placeholder="logistics manager, project manager, systems engineer" required></label>
+    <label class="field"><span class="field-label">ZIP Code</span>
+      <input type="text" name="zip" value="{{.JQ.Zip}}" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" size="7" placeholder="80903"></label>
+    <label class="field"><span class="field-label">Radius</span>
+      <select name="radius">{{range .Radii}}<option value="{{.}}"{{if eq . $.JQ.Radius}} selected{{end}}>{{.}} miles</option>{{end}}</select></label>
+    <label class="field"><span class="field-label">Work Type</span>
+      <select name="mode">
+        <option value="both"{{if eq .JQ.Mode "both"}} selected{{end}}>Near Me and Remote</option>
+        <option value="near"{{if eq .JQ.Mode "near"}} selected{{end}}>Near Me Only</option>
+        <option value="remote"{{if eq .JQ.Mode "remote"}} selected{{end}}>Remote Only</option>
+      </select></label>
+    <button type="submit" class="primary">Search</button>
+  </form>
+  {{if .JQ.Where}}<p class="hint">Searching near "{{.JQ.Where}}" from a saved search. Enter a ZIP code to search by distance.</p>{{end}}
+  {{range .LinkRows}}
+  <div class="job-sites">
+    <span class="field-label">Search on the sites: {{.Label}}</span>
+    <div class="job-site-list">
+      {{range .Links}}<a class="job-site" href="{{.URL}}" target="_blank" rel="noopener">{{.Name}}{{if .Note}} <span>{{.Note}}</span>{{end}} ↗</a>{{end}}
+    </div>
+  </div>
+  {{end}}
+  <p class="hint">Leave the ZIP code blank to search remote jobs only. Results below come from {{if and .HaveUSAJobs .HaveAdzuna}}USAJOBS and Adzuna{{else if .HaveUSAJobs}}USAJOBS only. Add a free Adzuna key in <a href="/settings">Settings</a> for private-sector jobs too{{else if .HaveAdzuna}}Adzuna only. Add a free USAJOBS key in <a href="/settings">Settings</a> for federal jobs too{{else}}USAJOBS (federal) and Adzuna (everything else) once you add their free keys in <a href="/settings">Settings</a>{{end}}. LinkedIn and Indeed have no public search, so the links above open your search on their sites.</p>
+</section>
+
+{{if .JQ.Q}}
+<section class="card">
+  <div class="job-results-head">
+    <h2>{{if .Hits}}{{len .Hits}} Openings{{else}}Openings{{end}}</h2>
+    <form method="post" action="/jobs/searches">
+      <input type="hidden" name="keyword" value="{{.JQ.Q}}"><input type="hidden" name="zip" value="{{.JQ.Zip}}">
+      <input type="hidden" name="radius" value="{{.JQ.Radius}}"><input type="hidden" name="mode" value="{{.JQ.Mode}}">
+      <input type="hidden" name="location" value="{{.JQ.Where}}">
+      <button type="submit" class="primary">Save This Search</button>
+    </form>
+  </div>
+  {{range .Errs}}<p class="warntext">{{.}}</p>{{end}}
+  {{if .Hits}}
+  <ul class="job-list">
+    {{range .Hits}}
+    <li class="job-row">
+      <div class="job-main">
+        <a class="job-title" href="{{.URL}}" target="_blank" rel="noopener">{{.Title}} ↗</a>
+        <div class="job-meta">
+          {{if .Org}}<span>{{.Org}}</span>{{end}}{{if .Location}}<span>{{.Location}}</span>{{end}}{{if .Pay}}<span class="job-pay">{{.Pay}}</span>{{end}}
+        </div>
+      </div>
+      <div class="job-side">
+        {{if .Remote}}<span class="chip job-remote">Remote</span>{{end}}
+        <span class="chip job-src">{{.Source}}</span>
+        <span class="job-date">{{if .Posted}}Posted {{atdate .Posted}}{{end}}{{if .Closes}}{{if .Posted}} · {{end}}Closes {{atdate .Closes}}{{end}}</span>
+        <form method="post" action="/jobs/prospects">
+          <input type="hidden" name="title" value="{{.Title}}"><input type="hidden" name="org" value="{{.Org}}">
+          <input type="hidden" name="url" value="{{.URL}}"><input type="hidden" name="notes" value="Found on {{.Source}}">
+          <button type="submit">Track It</button>
+        </form>
+      </div>
+    </li>
+    {{end}}
+  </ul>
+  {{else if not .Errs}}
+  <p class="hint">{{if or .HaveUSAJobs .HaveAdzuna}}No openings match. Try broader keywords, or use the links above.{{else}}No in-app sources are on yet. Use the links above, or add the free keys in Settings.{{end}}</p>
+  {{end}}
+</section>
+{{end}}
+
+<section class="card">
+  <h2>Prospects</h2>
+  <details class="how-to"><summary>How to Use</summary>
+    <p class="hint">One row per real opening you are chasing, from any source: USAJOBS, a contractor board, a handshake at TAP. Advance moves it found, applied, interview, offer. The dashboard counts these.</p>
+  </details>
+  <form method="post" action="/jobs/prospects" class="field-row">
+    <label class="field field-grow"><span class="field-label">Position</span>
+      <input type="text" name="title" required placeholder="Systems Engineer II"></label>
+    <label class="field"><span class="field-label">Organization</span>
+      <input type="text" name="org" placeholder="Local contractor"></label>
+    <label class="field field-grow"><span class="field-label">Link</span>
+      <input type="text" name="url" placeholder="https://..."></label>
+    <label class="field field-grow"><span class="field-label">Notes</span>
+      <input type="text" name="notes" placeholder="Referred by..."></label>
+    <button type="submit" class="primary">Track It</button>
+  </form>
+  {{if .Prospects}}
+  <table>
+    <thead><tr><th>Position</th><th>Organization</th><th>Status</th><th>Added</th><th>Notes</th><th></th><th></th></tr></thead>
+    <tbody>
+    {{range .Prospects}}
+    <tr>
+      <td>{{if .URL}}<a href="{{.URL}}" target="_blank" rel="noopener"><b>{{.Title}} ↗</b></a>{{else}}<b>{{.Title}}</b>{{end}}</td>
+      <td>{{.Org}}</td>
+      <td><span class="chip p-{{.Status}}">{{.Status}}</span></td>
+      <td class="nowrap">{{.Added}}</td>
+      <td>{{.Notes}}</td>
+      <td>{{if ne .Status "offer"}}<form method="post" action="/jobs/prospects/{{.ID}}/advance"><button>Advance</button></form>{{end}}</td>
+      <td><form method="post" action="/jobs/prospects/{{.ID}}/delete"><button class="danger">Delete</button></form></td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{else}}<p class="hint">Nothing tracked yet. Every opening you would actually take belongs here.</p>{{end}}
+</section>
+
+<section class="card">
+  <h2>Contacts</h2>
+  <form method="post" action="/jobs/contacts" class="field-row">
+    <label class="field"><span class="field-label">Name</span>
+      <input type="text" name="name" required placeholder="Dana Reyes"></label>
+    <label class="field"><span class="field-label">Organization</span>
+      <input type="text" name="org" placeholder="SAIC"></label>
+    <label class="field"><span class="field-label">Role</span>
+      <input type="text" name="role" placeholder="Hiring manager"></label>
+    <label class="field field-grow"><span class="field-label">Reach Them At</span>
+      <input type="text" name="info" placeholder="email, phone, LinkedIn"></label>
+    <label class="field field-grow"><span class="field-label">Notes</span>
+      <input type="text" name="notes" placeholder="Met at TAP; follow up in October"></label>
+    <button type="submit" class="primary">Add</button>
+  </form>
+  {{if .Contacts}}
+  <table>
+    <thead><tr><th>Name</th><th>Organization</th><th>Role</th><th>Reach Them At</th><th>Notes</th><th></th></tr></thead>
+    <tbody>
+    {{range .Contacts}}
+    <tr><td><b>{{.Name}}</b></td><td>{{.Org}}</td><td>{{.Role}}</td><td>{{.Info}}</td><td>{{.Notes}}</td>
+      <td><form method="post" action="/jobs/contacts/{{.ID}}/delete"><button class="danger">Delete</button></form></td></tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{else}}<p class="hint">Empty. The people you meet at TAP and beyond go here before their cards get lost.</p>{{end}}
+</section>
+
+<section class="card">
+  <h2>Saved Searches</h2>
+  {{if .Searches}}
+  <ul class="plain">
+    {{range .Searches}}
+    <li class="rowline">
+      <div><a href="/jobs?q={{.Keyword}}&zip={{.Zip}}&radius={{.Radius}}&mode={{.Mode}}&where={{.Location}}"><b>{{.Keyword}}</b>
+        {{if eq .Mode "remote"}} · remote only{{else}}{{if .Zip}} · within {{.Radius}} miles of {{.Zip}}{{else if .Location}} · {{.Location}}{{end}}{{if eq .Mode "both"}} and remote{{end}}{{end}}</a></div>
+      <form method="post" action="/jobs/searches/{{.ID}}/delete"><button class="danger">Delete</button></form>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}<p class="hint">Run a search, then click Save This Search to keep it here for next week.</p>{{end}}
+</section>
+{{template "foot" .}}

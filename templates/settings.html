@@ -1,0 +1,95 @@
+{{template "head" .}}
+{{if .Err}}<section class="card"><p class="status-line err">{{.Err}}</p></section>{{end}}
+<section class="card">
+  <h2>About You</h2>
+  <form method="post" action="/settings">
+    <div class="field-row">
+      <label class="field field-grow"><span class="field-label">Name</span>
+        <input type="text" name="name" value="{{.Settings.Name}}"></label>
+      <label class="field"><span class="field-label">Branch</span>
+        <input type="text" name="branch" value="{{.Settings.Branch}}" placeholder="Army"></label>
+      <label class="field"><span class="field-label">Retirement Date</span>
+        <input type="date" name="retirement_date" value="{{.Settings.RetirementDate}}"></label>
+      <label class="field"><span class="field-label">Leave Balance (Days)</span>
+        <input type="number" name="leave_days" step="0.5" min="-30" max="200" value="{{if .Settings.LeaveSet}}{{.Settings.LeaveDays}}{{end}}" placeholder="From your LES"></label>
+      <label class="field"><span class="field-label">Balance As Of</span>
+        <input type="date" name="leave_as_of" value="{{.Settings.LeaveAsOf}}"></label>
+      <label class="field"><span class="field-label">Monthly Budget Target</span>
+        <input type="text" name="monthly_budget" value="" placeholder="6500.00"></label>
+    </div>
+    <div class="field-row">
+      <label class="field field-grow"><span class="field-label">USAJOBS Email</span>
+        <input type="text" name="usajobs_email" value="{{.Settings.USAJobsEmail}}" placeholder="you@example.com"></label>
+      <label class="field field-grow"><span class="field-label">USAJOBS API Key</span>
+        <input type="password" name="usajobs_key" value="" autocomplete="off" placeholder="{{if .Settings.USAJobsKey}}Saved. Type a new key to replace it.{{else}}Paste your key{{end}}"></label>
+      {{if .Settings.USAJobsKey}}<label class="field inline-check"><input type="checkbox" name="usajobs_key_clear" value="1"> Remove Saved Key</label>{{end}}
+    </div>
+    <div class="field-row">
+      <label class="field field-grow"><span class="field-label">Adzuna App ID</span>
+        <input type="text" name="adzuna_id" value="{{.Settings.AdzunaID}}" autocomplete="off" placeholder="From developer.adzuna.com (free)"></label>
+      <label class="field field-grow"><span class="field-label">Adzuna App Key</span>
+        <input type="password" name="adzuna_key" value="" autocomplete="off" placeholder="{{if .Settings.AdzunaKey}}Saved. Type a new key to replace it.{{else}}Paste your key{{end}}"></label>
+      {{if .Settings.AdzunaKey}}<label class="field inline-check"><input type="checkbox" name="adzuna_key_clear" value="1"> Remove Adzuna</label>{{end}}
+      <label class="field"><span class="field-label">Potential VA Rating (%)</span>
+        <input type="number" name="va_estimate" min="0" max="100" value="{{.Settings.VaEstimate}}"></label>
+    </div>
+    <h3 class="phase">Advisor</h3>
+    <p class="hint">The Advisor runs on the AI plan you already have, through that company's official app on this computer. No API keys and no business account. Your question and a summary of your app data go to the company you pick; nothing else leaves this machine.</p>
+    <div class="ai-pick">
+      <label class="ai-opt"><input type="radio" name="advisor_provider" value=""{{if not .Settings.AdvisorProvider}} checked{{end}}>
+        <span><b>Off</b><span class="hint">No Advisor. Nothing is sent anywhere.</span></span></label>
+      {{range .AIProviders}}
+      <label class="ai-opt"><input type="radio" name="advisor_provider" value="{{.Key}}"{{if eq .Key $.Settings.AdvisorProvider}} checked{{end}}>
+        <span><b>{{.Label}}</b><span class="hint">Needs {{.Plan}}. {{.Status}}.</span>
+          <span class="ai-steps">Install: <code>{{.Install}}</code><br>Sign in once: <code>{{.SignIn}}</code></span></span></label>
+      {{end}}
+    </div>
+    <div class="field-row">
+      <button type="submit" class="primary">Save</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Generate the Timeline</h2>
+  {{if .Settings.TimelineSeeded}}
+  <p class="hint">Done: the transition timeline is on your list. Edit any item on the To-Dos page.</p>
+  {{else if .Settings.RetirementDate}}
+  <p class="hint">This adds the standard transition milestones to your to-do list, dated from {{.RDay}}: TAP, the VA claim window, SBP, terminal leave, and the post-retirement clocks.</p>
+  <form method="post" action="/settings/seed"><button type="submit" class="primary">Generate My Timeline</button></form>
+  {{else}}
+  <p class="hint">Set your retirement date above first.</p>
+  {{end}}
+</section>
+
+<section class="card">
+  <h2>Your Data</h2>
+  <p class="hint">Everything the app knows about you lives in one folder on this computer, never in the app's code:</p>
+  <p class="data-path"><code>{{.DataDir}}</code></p>
+  <p class="hint">Back that folder up and you have backed up everything. The app only reaches the internet for the features you turn on: the Advisor (the AI company you pick above), job searches (USAJOBS), and housing listings (realtor.com, once you enter a ZIP code).</p>
+  <div class="settings-action">
+    <a class="btn primary" href="/settings/backup">Back Up Everything</a>
+    <span class="hint">Downloads one zip with all your data and documents. Keep it somewhere safe, like a USB drive.</span>
+  </div>
+  <form method="post" action="/settings/restore" enctype="multipart/form-data" class="settings-action"
+        onsubmit="return confirm('Restore this backup? It replaces what is in the app now. Your current data is kept in a before-restore folder.');">
+    <input type="file" name="backup" accept=".zip,application/zip" required>
+    <button type="submit">Restore a Backup</button>
+  </form>
+  {{if not .Settings.Name}}
+  <form method="post" action="/settings/demo" class="settings-action">
+    <button type="submit">Load Example Data</button>
+    <span class="hint">Fills the app with a fictional soldier (SFC John Doe) so you can look around. Loads only into an empty app.</span>
+  </form>
+  {{end}}
+  <form method="post" action="/settings/quit" class="settings-action">
+    <button type="submit">Quit ARW</button>
+    <span class="hint">Stops the app. Your data is already saved. Open ARW again to come back.</span>
+  </form>
+  <form method="post" action="/settings/erase" class="settings-action"
+        onsubmit="return confirm('Erase everything and start fresh? This deletes every task, appointment, budget entry, medical entry, and uploaded document. It cannot be undone.');">
+    <button type="submit" class="danger">Erase Everything and Start Fresh</button>
+    <span class="hint">Deletes all your data, uploaded documents included. Back up the folder above first if you might want it later.</span>
+  </form>
+</section>
+{{template "foot" .}}

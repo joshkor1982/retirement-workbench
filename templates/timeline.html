@@ -1,0 +1,64 @@
+{{template "head" .}}
+
+{{if .Rows}}
+<section class="card tl-bleed">
+  <h2>The Glide</h2>
+  <p class="hint">Every task on its own row, time running left to right. Bars are task windows; diamonds are single dates; blue diamonds are appointments. The green line is today; the flag line is retirement. Check things off on the <a href="/todos">To-Dos</a> page.</p>
+  <div class="tl-scroll">
+    <div class="gantt">
+      <div class="g-axis">
+        <span class="g-axis-label"></span>
+        <div class="g-axis-lane">
+          {{range .Ticks}}<span class="g-tick" style="left:{{printf "%.2f" .Left}}%">{{.Label}}</span>{{end}}
+        </div>
+      </div>
+      {{range .Rows}}
+      <div class="g-row {{if .Done}}g-done{{end}}">
+        <span class="g-label" title="{{.Label}}">{{.Title}}</span>
+        <div class="g-lane">
+          {{range $.Ticks}}<i class="g-grid" style="left:{{printf "%.2f" .Left}}%"></i>{{end}}
+          {{if ge $.TodayPct 0.0}}<i class="g-today" style="left:{{printf "%.2f" $.TodayPct}}%"></i>{{end}}
+          {{if ge $.RDayPct 0.0}}<i class="g-rday" style="left:{{printf "%.2f" $.RDayPct}}%"></i>{{end}}
+          {{if .Point}}
+          <span class="g-point g-c{{.Color}} {{if eq .Kind "appt"}}g-appt{{end}} {{if .Overdue}}g-overdue{{end}}" style="left:{{printf "%.2f" .Left}}%" title="{{.Label}}"></span>
+          {{else}}
+          <span class="g-bar g-c{{.Color}} {{if .Overdue}}g-overdue{{end}}" style="left:{{printf "%.2f" .Left}}%;width:{{printf "%.2f" .Width}}%" title="{{.Label}}"></span>
+          {{end}}
+          <span class="g-when {{if .Overdue}}g-when-over{{end}}" style="left:{{printf "%.2f" .LabelLeft}}%">{{.Start}}{{if .End}} → {{.End}}{{end}}</span>
+        </div>
+      </div>
+      {{end}}
+      <div class="g-axis g-axis-bottom">
+        <span class="g-axis-label"></span>
+        <div class="g-axis-lane">
+          {{range .Ticks}}<span class="g-tick" style="left:{{printf "%.2f" .Left}}%">{{.Label}}</span>{{end}}
+          {{if ge .RDayPct 0.0}}<span class="g-tick g-tick-r" style="left:{{printf "%.2f" .RDayPct}}%">Retired</span>{{end}}
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="tl-legend">
+    {{range .Legend}}<span class="tl-key"><span class="tl-dot tl-c{{.Color}}"></span>{{.Phase}}</span>{{end}}
+    <span class="tl-key"><span class="tl-dot tl-appt"></span>Appointments</span>
+  </p>
+  <p class="hint">To add or change what is on this chart, use the <a href="/todos">To-Dos</a> page - every dated to-do with a lane shows here.</p>
+</section>
+<script>
+(function(){
+  document.querySelectorAll('.gantt .g-row').forEach(function(row){
+    row.addEventListener('click', function(){
+      var on = row.classList.contains('g-sel');
+      document.querySelectorAll('.gantt .g-row.g-sel').forEach(function(r){r.classList.remove('g-sel');});
+      if(!on) row.classList.add('g-sel');
+    });
+  });
+})();
+</script>
+{{else}}
+<section class="card">
+  <h2>The Glide, Month by Month</h2>
+  <p class="hint">No timeline yet. Set your retirement date in Settings, then generate it with one click.</p>
+  <a class="btn" href="/settings">Open Settings</a>
+</section>
+{{end}}
+{{template "foot" .}}

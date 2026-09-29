@@ -1,0 +1,204 @@
+{{template "head" .}}
+<div class="resume-cols">
+
+  <div class="resume-left">
+    <section class="card">
+      <h2>Your Resumes</h2>
+      <p class="hint">One tailored resume per position. Pick one to edit, or start a new target for a job you are chasing.</p>
+      {{if .Targets}}
+      <ul class="target-list">
+        {{range .Targets}}
+        <li class="{{if and $.Active (eq .ID $.Active.ID)}}target-on{{end}}">
+          <a href="/resume?t={{.ID}}"><b>{{.Position}}</b>{{if .Company}} · {{.Company}}{{end}}</a>
+          <span class="target-meta">{{len .Sections}} sections</span>
+        </li>
+        {{end}}
+      </ul>
+      {{else}}<p class="hint">No resumes yet. Create your first target below.</p>{{end}}
+      <form method="post" action="/resume/targets" class="field-row">
+        <label class="field field-grow"><span class="field-label">Position</span>
+          <input type="text" name="position" required placeholder="Platform Engineer"></label>
+        <label class="field"><span class="field-label">Company</span>
+          <input type="text" name="company" placeholder="Acme Defense"></label>
+        <button type="submit" class="primary">New Resume</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Resume Header</h2>
+      <p class="hint">Name and contact are shared across every resume.</p>
+      <form method="post" action="/resume/header" class="field-row">
+        {{if .Active}}<input type="hidden" name="t" value="{{.Active.ID}}">{{end}}
+        <label class="field field-grow"><span class="field-label">Name</span>
+          <input type="text" name="name" value="{{.Settings.Name}}" placeholder="Jane Doe"></label>
+        <label class="field field-grow"><span class="field-label">Contact</span>
+          <input type="text" name="contact" value="{{.Settings.ResumeContact}}" placeholder="email · phone · City, ST"></label>
+        <button type="submit" class="primary">Save</button>
+      </form>
+    </section>
+
+    {{if .Active}}
+    <section class="card">
+      <h2>Target: {{.Active.Position}}{{if .Active.Company}} · {{.Active.Company}}{{end}}</h2>
+      <form method="post" action="/resume/targets/{{.Active.ID}}/save">
+        <div class="field-row">
+          <label class="field field-grow"><span class="field-label">Position</span>
+            <input type="text" name="position" value="{{.Active.Position}}"></label>
+          <label class="field"><span class="field-label">Company</span>
+            <input type="text" name="company" value="{{.Active.Company}}"></label>
+          <label class="field field-grow"><span class="field-label">Tailored Headline</span>
+            <input type="text" name="headline" spellcheck="true" value="{{.Active.Headline}}" placeholder="Logistics & Operations Leader"></label>
+        </div>
+        <label class="field"><span class="field-label">Job Posting Requirements - Paste What the Posting or Recruiter Said</span>
+          <textarea name="requirements" rows="7" spellcheck="true" placeholder="Paste the job description or the recruiter's note here. The Advisor tailors bullets to this.">{{.Active.Requirements}}</textarea></label>
+        <p><button type="submit" class="primary">Save Target</button>
+          <form method="post" action="/resume/targets/{{.Active.ID}}/delete" style="display:inline" onsubmit="return confirm('Delete this resume target and its sections?');"><button class="danger">Delete Target</button></form></p>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Add a Section</h2>
+      <p class="hint">Add a role, deployment, award, or skills block. Or ask the Advisor: "tailor a section for {{.Active.Position}} using the requirements."</p>
+      <form method="post" action="/resume/targets/{{.Active.ID}}/sections">
+        <div class="field-row">
+          <label class="field field-grow"><span class="field-label">Heading</span>
+            <input type="text" name="heading" required spellcheck="true" placeholder="Senior Logistics NCO · 2003-2027"></label>
+        </div>
+        <label class="field"><span class="field-label">Bullets, One Per Line</span>
+          <textarea name="bullets" rows="5" spellcheck="true" placeholder="Directed supply operations for a 600-person organization..."></textarea></label>
+        <p><button type="submit" class="primary">Add Section</button></p>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Sections</h2>
+      {{if .Active.Sections}}
+      {{range .Active.Sections}}
+      <div class="cell">
+        <div class="rowline">
+          <div><b>{{.Heading}}</b></div>
+          <span class="row-actions">
+            <form method="post" action="/resume/targets/{{$.Active.ID}}/sections/{{.ID}}/up"><button title="Move up">↑</button></form>
+            <form method="post" action="/resume/targets/{{$.Active.ID}}/sections/{{.ID}}/down"><button title="Move down">↓</button></form>
+            <button type="button" class="btn-edit" onclick="rEdit({{.ID}})">Edit</button>
+            <form method="post" action="/resume/targets/{{$.Active.ID}}/sections/{{.ID}}/delete"><button class="danger">Delete</button></form>
+          </span>
+        </div>
+        <ul>{{range .Bullets}}<li>{{.}}</li>{{end}}</ul>
+        <div id="redit-{{.ID}}" class="edit-row" hidden>
+          <form method="post" action="/resume/targets/{{$.Active.ID}}/sections/{{.ID}}/update">
+            <div class="field-row">
+              <label class="field field-grow"><span class="field-label">Heading</span>
+                <input type="text" name="heading" spellcheck="true" value="{{.Heading}}"></label>
+            </div>
+            <label class="field"><span class="field-label">Bullets, One Per Line</span>
+              <textarea name="bullets" rows="5" spellcheck="true">{{range .Bullets}}{{.}}
+{{end}}</textarea></label>
+            <p><button type="submit" class="primary">Save</button></p>
+          </form>
+        </div>
+      </div>
+      {{end}}
+      {{else}}<p class="hint">No sections yet. Add one, or ask the Advisor to draft the first from your requirements.</p>{{end}}
+    </section>
+
+    <section class="card">
+      <h2>Source Documents</h2>
+      <p class="hint">NCOERs, award citations, evaluations - shared across all your resumes. Paste a citation to the Advisor and ask it to turn it into civilian bullets aimed at a target.</p>
+      <form method="post" action="/docs" enctype="multipart/form-data" class="field-row">
+        <input type="hidden" name="kind" value="resume">
+        <label class="field field-grow"><span class="field-label">File</span>
+          <input type="file" name="file" required></label>
+        <label class="field field-grow"><span class="field-label">Notes</span>
+          <input type="text" name="notes" placeholder="NCOER 2023"></label>
+        <button type="submit" class="primary">Upload</button>
+      </form>
+      {{if .Docs}}
+      <ul class="plain">
+        {{range .Docs}}
+        <li class="rowline"><div>
+          <b><a href="/docs/{{.ID}}/file">{{.Name}}</a></b>
+          <span class="due">{{atdate .UploadedAt}}</span>
+          {{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}
+        </div></li>
+        {{end}}
+      </ul>
+      {{else}}<p class="hint">Nothing uploaded yet.</p>{{end}}
+    </section>
+    {{end}}
+  </div>
+
+  <div class="resume-preview">
+    {{if .Active}}
+    <div class="resume-toolbar">
+      <span class="hint">Live preview · {{.Active.Position}}</span>
+      <div class="rp-controls" data-target="{{.Active.ID}}">
+        <div class="rp-seg" role="group" aria-label="Design">
+          {{$d := or .Active.Design "classic"}}
+          {{range $k, $v := .ResumeDesigns}}<button type="button" data-design="{{index $v 0}}" aria-pressed="{{if eq $d (index $v 0)}}true{{else}}false{{end}}">{{index $v 1}}</button>{{end}}
+        </div>
+        <div class="rp-seg" role="group" aria-label="Paper">
+          <button type="button" data-dark="0" aria-pressed="{{if .Active.Dark}}false{{else}}true{{end}}">Light</button>
+          <button type="button" data-dark="1" aria-pressed="{{if .Active.Dark}}true{{else}}false{{end}}">Dark</button>
+        </div>
+        <label class="rp-pick"><span>Font</span><select id="rp-font">{{range .ResumeFonts}}<option value="{{index . 0}}"{{if eq (index . 0) $.Active.Font}} selected{{end}}>{{index . 1}}</option>{{end}}</select></label>
+        <label class="rp-pick"><span>Colors</span><select id="rp-color">{{range .ResumeColors}}<option value="{{index . 0}}"{{if eq (index . 0) $.Active.Color}} selected{{end}}>{{index . 1}}</option>{{end}}</select></label>
+        <a class="btn primary" id="rp-pdf" href="/resume/pdf?t={{.Active.ID}}">Download PDF</a>
+      </div>
+    </div>
+    <div class="{{.Active.PaperClass}}" id="resume-paper">
+      {{template "resume-doc" .}}
+    </div>
+    {{else}}
+    <div class="resume-paper"><p class="r-ghost">Create a resume target on the left - one per position you are chasing - and it previews here.</p></div>
+    {{end}}
+  </div>
+
+</div>
+<script>
+(function(){
+  var box=document.querySelector('.rp-controls'),paper=document.getElementById('resume-paper');
+  if(!box||!paper)return;
+  var design=(box.querySelector('[data-design][aria-pressed=true]')||{}).dataset.design||'classic',
+      dark=paper.classList.contains('rp-dark'),
+      font=document.getElementById('rp-font'), color=document.getElementById('rp-color');
+  function paint(){
+    paper.className='resume-paper rp-'+design+(dark?' rp-dark':'')+(font.value?' rp-f-'+font.value:'')+(color.value?' rp-c-'+color.value:'');
+    box.querySelectorAll('[data-design]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.design===design)});
+    box.querySelectorAll('[data-dark]').forEach(function(b){b.setAttribute('aria-pressed',(b.dataset.dark==='1')===dark)});
+  }
+  function save(){
+    var fd=new URLSearchParams();fd.set('design',design);fd.set('dark',dark?'1':'0');fd.set('font',font.value);fd.set('color',color.value);
+    fetch('/resume/targets/'+box.dataset.target+'/style',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()}).catch(function(){});
+  }
+  box.onclick=function(e){
+    var b=e.target.closest('button');if(!b)return;
+    if(b.dataset.design)design=b.dataset.design;
+    if(b.dataset.dark)dark=b.dataset.dark==='1';
+    paint();save();
+  };
+  font.onchange=color.onchange=function(){paint();save();};
+})();
+</script>
+<script>function rEdit(id){var e=document.getElementById('redit-'+id);if(e){e.hidden=!e.hidden;if(!e.hidden){var f=e.querySelector('input');if(f)f.focus();}}}</script>
+{{template "foot" .}}
+
+{{define "resume-doc"}}
+<header class="r-head">
+  {{if .Settings.Name}}<h1>{{.Settings.Name}}</h1>{{else}}<h1 class="r-ghost">Your Name</h1>{{end}}
+  {{if .Active.Headline}}<p class="r-headline">{{.Active.Headline}}</p>{{end}}
+  {{if .Settings.ResumeContact}}<p class="r-contact">{{.Settings.ResumeContact}}</p>{{end}}
+</header>
+<div class="r-body">
+{{if .Active.Sections}}
+  {{range .Active.Sections}}
+  <div class="r-sec">
+    <h2>{{.Heading}}</h2>
+    <ul>{{range .Bullets}}<li>{{.}}</li>{{end}}</ul>
+  </div>
+  {{end}}
+{{else}}
+  <p class="r-ghost">This resume builds here as you add sections. Add one, or ask the Advisor to draft it from the job requirements.</p>
+{{end}}
+</div>
+{{end}}

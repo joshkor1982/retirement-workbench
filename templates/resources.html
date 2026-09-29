@@ -1,0 +1,65 @@
+{{template "head" .}}
+<section class="card">
+  <h2>Retirement Resources</h2>
+  <p class="hint">Every website you need for the transition, in one place - benefits, health, education, jobs, money, and records. Seeded from the transition-center resource guide; add your own below.</p>
+  {{range .Groups}}
+  <div class="res-group">
+    <h3 class="res-cat">{{.Category}}</h3>
+    <ul class="res-links">
+      {{range .Links}}
+      <li class="res-tile">
+        <a href="{{.URL}}" target="_blank" rel="noopener" class="res-link">
+          <span class="res-title">{{.Title}} ↗</span>
+          <span class="res-host">{{if .Notes}}{{.Notes}}{{else}}{{host .URL}}{{end}}</span>
+        </a>
+        <form method="post" action="/resources/links/{{.ID}}/delete" class="res-del" onsubmit="return confirm('Remove {{.Title}} from your resources?')">
+          <button type="submit" class="icon-btn res-x" title="Remove {{.Title}}" aria-label="Remove {{.Title}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        </form>
+      </li>
+      {{end}}
+    </ul>
+  </div>
+  {{end}}
+  <form method="post" action="/resources/links" class="field-row">
+    <label class="field field-grow"><span class="field-label">Add a Site</span>
+      <input type="text" name="title" required placeholder="Veterans Crisis Line"></label>
+    <label class="field field-grow"><span class="field-label">URL</span>
+      <input type="text" name="url" required placeholder="veteranscrisisline.net"></label>
+    <label class="field"><span class="field-label">Category</span>
+      <input type="text" name="category" list="cats" placeholder="VA & Benefits">
+      <datalist id="cats">{{range .Categories}}<option value="{{.}}">{{end}}</datalist></label>
+    <label class="field field-grow"><span class="field-label">Notes</span>
+      <input type="text" name="notes" placeholder="Optional"></label>
+    <button type="submit" class="primary">Add</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Who to Call</h2>
+  <details class="how-to"><summary>How to Use</summary>
+    <p class="hint">The offices and hotlines you actually pick up the phone for - from the transition-center handouts, plus any you collect. One row per door you might need to knock on.</p>
+  </details>
+  <form method="post" action="/resources/contacts" class="field-row">
+    <label class="field"><span class="field-label">Office or Program</span>
+      <input type="text" name="name" required placeholder="SFL-TAP Center"></label>
+    <label class="field"><span class="field-label">Agency</span>
+      <input type="text" name="org" placeholder="Army"></label>
+    <label class="field field-grow"><span class="field-label">Phone / Email / Site</span>
+      <input type="text" name="info" placeholder="DSN 548-xxxx"></label>
+    <label class="field field-grow"><span class="field-label">Notes</span>
+      <input type="text" name="notes" placeholder="Walk-ins 0900 to 1100"></label>
+    <button type="submit" class="primary">Add</button>
+  </form>
+  {{if .Contacts}}
+  <table>
+    <thead><tr><th>Office or Program</th><th>Agency</th><th>Phone / Email / Site</th><th>Notes</th><th></th></tr></thead>
+    <tbody>
+    {{range .Contacts}}
+    <tr><td><b>{{.Name}}</b></td><td>{{.Org}}</td><td>{{.Info}}</td><td>{{.Notes}}</td>
+      <td><form method="post" action="/resources/contacts/{{.ID}}/delete"><button class="danger">Delete</button></form></td></tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{else}}<p class="hint">Empty. Numbers land here as the handouts get processed.</p>{{end}}
+</section>
+{{template "foot" .}}

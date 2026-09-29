@@ -1,0 +1,30 @@
+{{define "resume_print.html"}}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/static/design-system.css">
+  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/resume-fonts.css">
+  <style>
+    @page { size: Letter; margin: 0; }
+    html, body { margin: 0; padding: 0; }
+    html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body.resume-paper { max-height: none; overflow: visible; border-radius: 0; box-shadow: none; border: 0;
+      min-height: 11in; width: 8.5in; margin: 0 auto; padding: 0.6in 0.65in; }
+    body.rp-sidebar { padding: 0; }
+    .r-sec { break-inside: avoid; }
+    .print-bar { position: fixed; top: 12px; right: 12px; display: flex; gap: 8px; }
+    @media print { .print-bar { display: none; } }
+    @media screen { html { background: #52525b; } body.resume-paper { margin: 24px auto; } }
+  </style>
+</head>
+<body class="{{.Active.PaperClass}}">
+{{template "resume-doc" .}}
+{{if .Manual}}
+<div class="print-bar"><button class="primary" onclick="window.print()">Save as PDF</button></div>
+<script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 300); });</script>
+{{end}}
+</body>
+</html>{{end}}
