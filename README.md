@@ -67,6 +67,16 @@ later.
 | Find a SkillBridge program, track leads, work the packet, and download your request memo | **SkillBridge** |
 | Watch homes for sale where you are moving | **Housing** |
 
+<table><tr>
+<td><img src="docs/budget.png" alt="Budget: retired pay estimate and savings"></td>
+<td><img src="docs/skillbridge.png" alt="SkillBridge: program, leads, and packet"></td>
+</tr><tr>
+<td align="center">Budget: retired pay, savings, and debt payoff</td>
+<td align="center">SkillBridge: programs, leads, and the approval packet</td>
+</tr></table>
+
+![The resume builder](docs/resume.png)
+
 Press **⌘K** on a Mac or **Ctrl+K** on Windows from any page to search
 everything: tasks, notes, documents, contacts, and pages.
 
