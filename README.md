@@ -10,7 +10,7 @@ turn on a feature that needs the internet. Free and open source.
 separating and you are tired of tracking it all in notebooks, spreadsheets,
 and a dozen websites.
 
-![The dashboard](docs/dashboard.png)
+![The dashboard, with the Advisor answering from the numbers on screen](docs/dashboard.png)
 
 ## Get started
 
@@ -68,14 +68,14 @@ later.
 | Watch homes for sale where you are moving | **Housing** |
 
 <table><tr>
-<td><img src="docs/budget.png" alt="Budget: retired pay estimate and savings"></td>
-<td><img src="docs/skillbridge.png" alt="SkillBridge: program, leads, and packet"></td>
+<td><img src="docs/timeline.png" alt="The timeline: every milestone from packet to retirement day"></td>
+<td><img src="docs/housing.png" alt="Housing: homes for sale near your destination ZIP code"></td>
 </tr><tr>
-<td align="center">Budget: retired pay, savings, and debt payoff</td>
-<td align="center">SkillBridge: programs, leads, and the approval packet</td>
+<td align="center">Timeline: every milestone, counted back from your retirement date</td>
+<td align="center">Housing: homes for sale where you are moving, updated every 30 minutes</td>
 </tr></table>
 
-![The resume builder](docs/resume.png)
+Screenshots use the built-in example data: a fictional soldier and fictional listings.
 
 Press **⌘K** on a Mac or **Ctrl+K** on Windows from any page to search
 everything: tasks, notes, documents, contacts, and pages.
