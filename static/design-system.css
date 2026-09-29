@@ -1,7 +1,17 @@
 /* Army Retirement Workbench design tokens and base styles.
-   Fonts: Geist and Geist Mono (SIL Open Font License 1.1, see fonts/OFL.txt),
+   Fonts: Barlow and Barlow Semi Condensed for the interface (fonts/ui), Geist
+   for resumes and Geist Mono for code (SIL Open Font License 1.1; see
+   fonts/OFL.txt and fonts/ui/OFL-barlow.txt),
    self-hosted so the app works offline. Paths are relative to this file. */
 @font-face { font-family:"Geist"; src:url("fonts/geist.woff2") format("woff2"); font-weight:100 900; font-display:swap; }
+@font-face { font-family:"Barlow"; src:url("fonts/ui/Barlow-Regular.ttf") format("truetype"); font-weight:400; font-display:swap; }
+@font-face { font-family:"Barlow"; src:url("fonts/ui/Barlow-Italic.ttf") format("truetype"); font-weight:400; font-style:italic; font-display:swap; }
+@font-face { font-family:"Barlow"; src:url("fonts/ui/Barlow-Medium.ttf") format("truetype"); font-weight:500; font-display:swap; }
+@font-face { font-family:"Barlow"; src:url("fonts/ui/Barlow-SemiBold.ttf") format("truetype"); font-weight:600; font-display:swap; }
+@font-face { font-family:"Barlow"; src:url("fonts/ui/Barlow-Bold.ttf") format("truetype"); font-weight:700 900; font-display:swap; }
+@font-face { font-family:"Barlow Semi Condensed"; src:url("fonts/ui/BarlowSemiCondensed-Medium.ttf") format("truetype"); font-weight:500; font-display:swap; }
+@font-face { font-family:"Barlow Semi Condensed"; src:url("fonts/ui/BarlowSemiCondensed-SemiBold.ttf") format("truetype"); font-weight:600; font-display:swap; }
+@font-face { font-family:"Barlow Semi Condensed"; src:url("fonts/ui/BarlowSemiCondensed-Bold.ttf") format("truetype"); font-weight:700 900; font-display:swap; }
 @font-face { font-family:"Geist Mono"; src:url("fonts/geist-mono.woff2") format("woff2"); font-weight:100 900; font-display:swap; }
 
 /* Tokens come in two layers:
@@ -142,14 +152,16 @@
      the system holds up at IBM Plex Sans + JetBrains Mono.
      ============================================================ */
 
-  --font-sans: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Barlow Semi Condensed", "Barlow", system-ui, sans-serif;
+  --font-resume: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
 
   /* Type scale - modular, but compressed for high information density */
-  --t-12: 13px;
-  --t-13: 14px;
-  --t-14: 15px;
-  --t-15: 16px;
+  --t-12: 14px;
+  --t-13: 15px;
+  --t-14: 16px;
+  --t-15: 17px;
   --t-16: 16px;
   --t-18: 18px;
   --t-20: 20px;
@@ -467,13 +479,13 @@ body {
   font-family: var(--font-sans);
   font-size: var(--t-15);
   line-height: var(--lh-text);
-  font-weight: 450; /* Geist is variable: a touch heavier than 400 reads easier */
+  font-weight: 500; /* Barlow Medium: sturdier than Regular, easier to read */
   letter-spacing: 0.005em;
   color: var(--fg-body);
   background: var(--bg-page);
   margin: 0;
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: "ss01", "cv11";   /* Geist alternates */
+  font-feature-settings: normal;
 }
 
 /* ============================================================

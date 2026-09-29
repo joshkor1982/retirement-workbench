@@ -220,7 +220,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) before you open a pull request, and
 
 [MIT](LICENSE). Free for anyone to use, change, and share.
 
-The Geist and Geist Mono fonts, and the resume fonts (Inter, IBM Plex Sans,
-Source Sans 3, Source Serif 4, Lora, and EB Garamond), are included under the
-[SIL Open Font License 1.1](static/fonts/OFL.txt). Each font's license is in
-[static/fonts/resume](static/fonts/resume).
+The app's interface fonts (Barlow and Barlow Semi Condensed, license in
+[static/fonts/ui](static/fonts/ui)), Geist and Geist Mono, and the resume fonts
+(Inter, IBM Plex Sans, Source Sans 3, Source Serif 4, Lora, and EB Garamond)
+are included under the [SIL Open Font License 1.1](static/fonts/OFL.txt). Each
+resume font's license is in [static/fonts/resume](static/fonts/resume).

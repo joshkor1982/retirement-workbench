@@ -107,6 +107,7 @@ type Appointment struct {
 	At    string `json:"at"` // YYYY-MM-DDTHH:MM
 	Place string `json:"place"`
 	Notes string `json:"notes"`
+	Done  bool   `json:"done,omitempty"`
 }
 
 type Doc struct {
@@ -648,6 +649,8 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 	mux.HandleFunc("POST /notes/{id}/delete", s.noteDelete)
 	mux.HandleFunc("GET /appointments", s.appointments)
 	mux.HandleFunc("POST /appointments", s.apptAdd)
+	mux.HandleFunc("POST /appointments/{id}/done", s.apptDone)
+	mux.HandleFunc("POST /appointments/{id}/update", s.apptUpdate)
 	mux.HandleFunc("POST /appointments/{id}/delete", s.apptDelete)
 	mux.HandleFunc("GET /docs", s.docs)
 	mux.HandleFunc("POST /docs", s.docUpload)
@@ -865,7 +868,7 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().Format("2006-01-02T15:04")
 	var appts []Appointment
 	for _, a := range st.Appointments {
-		if a.At >= now {
+		if a.At >= now && !a.Done {
 			appts = append(appts, a)
 		}
 	}
@@ -969,7 +972,7 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	for _, a := range st.Appointments {
-		if len(a.At) >= 10 && a.At[:10] >= today && a.At[:10] < weekEnd {
+		if !a.Done && len(a.At) >= 10 && a.At[:10] >= today && a.At[:10] < weekEnd {
 			if d, err := parseDay(a.At[:10]); err == nil {
 				lbl := d.Format("Mon Jan 2")
 				if len(a.At) >= 16 {
@@ -1370,6 +1373,45 @@ func (s *Server) apptAdd(w http.ResponseWriter, r *http.Request) {
 			})
 		})
 	}
+	http.Redirect(w, r, "/appointments", http.StatusSeeOther)
+}
+
+// apptDone marks an appointment finished, or back to open on a second click.
+func (s *Server) apptDone(w http.ResponseWriter, r *http.Request) {
+	id := pathID(r)
+	_ = s.store.mutate(func(st *State) {
+		for i := range st.Appointments {
+			if st.Appointments[i].ID == id {
+				st.Appointments[i].Done = !st.Appointments[i].Done
+			}
+		}
+	})
+	http.Redirect(w, r, "/appointments", http.StatusSeeOther)
+}
+
+func (s *Server) apptUpdate(w http.ResponseWriter, r *http.Request) {
+	id := pathID(r)
+	at := strings.TrimSpace(r.FormValue("at"))
+	if _, err := time.ParseInLocation("2006-01-02T15:04", at, time.Local); err != nil {
+		flash(w, "err", "Pick a date and time for the appointment.")
+		http.Redirect(w, r, "/appointments", http.StatusSeeOther)
+		return
+	}
+	_ = s.store.mutate(func(st *State) {
+		for i := range st.Appointments {
+			a := &st.Appointments[i]
+			if a.ID != id {
+				continue
+			}
+			if v := strings.TrimSpace(r.FormValue("title")); v != "" {
+				a.Title = v
+			}
+			a.At = at
+			a.Place = strings.TrimSpace(r.FormValue("place"))
+			a.Notes = strings.TrimSpace(r.FormValue("notes"))
+			flash(w, "ok", "Saved "+a.Title+".")
+		}
+	})
 	http.Redirect(w, r, "/appointments", http.StatusSeeOther)
 }
 
@@ -2033,7 +2075,7 @@ func advisorDigest(st *State) string {
 	}
 	b.WriteString("\nUpcoming appointments:\n")
 	for _, a := range st.Appointments {
-		if a.At >= now.Format("2006-01-02") {
+		if a.At >= now.Format("2006-01-02") && !a.Done {
 			fmt.Fprintf(&b, "- #%d %s %s (%s) %s\n", a.ID, a.At, a.Title, a.Place, a.Notes)
 		}
 	}

@@ -854,3 +854,36 @@ func TestHigh3E8With22Years(t *testing.T) {
 		t.Error("unsupported grades must fall back to manual entry")
 	}
 }
+
+func TestJourneyAppointmentEditAndDone(t *testing.T) {
+	j := newJourney(t)
+	at := time.Now().AddDate(0, 0, 3).Format("2006-01-02") + "T09:00"
+	j.post("/appointments", url.Values{"title": {"Physical"}, "at": {at}})
+	id := j.app.store.snapshot().Appointments[0].ID
+	p := "/appointments/" + strconv.Itoa(id)
+
+	later := time.Now().AddDate(0, 0, 4).Format("2006-01-02") + "T13:30"
+	j.post(p+"/update", url.Values{"title": {"Separation physical"}, "at": {later}, "place": {"Clinic"}})
+	a := j.app.store.snapshot().Appointments[0]
+	if a.Title != "Separation physical" || a.At != later || a.Place != "Clinic" {
+		t.Fatalf("after edit: %+v", a)
+	}
+	if f := flashOf(j.postResp(p+"/update", url.Values{"title": {"X"}, "at": {"soon"}})); !strings.HasPrefix(f, "err|") {
+		t.Errorf("bad edit time flash = %q", f)
+	}
+
+	j.post(p+"/done", nil)
+	if !j.app.store.snapshot().Appointments[0].Done {
+		t.Fatal("Done did not mark the appointment finished")
+	}
+	if _, body := j.get("/appointments"); !strings.Contains(body, "btn-done") {
+		t.Error("a finished appointment should show the green Done button")
+	}
+	if _, body := j.get("/"); strings.Contains(body, "Separation physical") {
+		t.Error("the dashboard still lists a finished appointment")
+	}
+	j.post(p+"/done", nil)
+	if j.app.store.snapshot().Appointments[0].Done {
+		t.Error("a second click should reopen the appointment")
+	}
+}

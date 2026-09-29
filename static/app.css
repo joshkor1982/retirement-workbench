@@ -404,9 +404,9 @@ body.adv-hidden .adv-reopen { display: inline-block; }
 .resume-left { flex: 0 0 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
 .resume-preview { flex: 1 1 auto; min-width: 0; position: sticky; top: calc(var(--topbar-h) + 16px); }
 .resume-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.resume-paper { --rp-bg: #faf9f6; --rp-fg: #26282b; --rp-head: #0f1113; --rp-sub: #3a3d42; --rp-muted: #6b6f76;
+.resume-paper { font-family: var(--font-resume); --rp-bg: #faf9f6; --rp-fg: #26282b; --rp-head: #0f1113; --rp-sub: #3a3d42; --rp-muted: #6b6f76;
   --rp-rule: #e2dfd8; --rp-ghost: #a3a39c; --rp-accent: #0f1113;
-  background: var(--rp-bg); color: var(--rp-fg); border-radius: 10px; font-family: var(--font-sans);
+  background: var(--rp-bg); color: var(--rp-fg); border-radius: 10px; font-family: var(--font-resume);
   font-size: 13.5px; line-height: 1.55; padding: 44px 48px;
   box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 18px 50px rgba(0,0,0,.45);
   max-height: calc(100vh - 150px); overflow-y: auto; transition: background .25s, color .25s; }
@@ -449,7 +449,7 @@ body.adv-hidden .adv-reopen { display: inline-block; }
 .rp-executive h1, .rp-executive .r-headline, .rp-executive .r-contact { text-align: center; }
 .rp-executive h1 { font-size: 32px; font-weight: 400; letter-spacing: .06em; text-transform: uppercase; }
 .rp-executive .r-headline { font-style: italic; font-weight: 400; font-size: 16px; }
-.rp-executive .r-contact { padding-bottom: 16px; border-bottom: 3px double var(--rp-rule); font-family: var(--font-sans); }
+.rp-executive .r-contact { padding-bottom: 16px; border-bottom: 3px double var(--rp-rule); font-family: var(--font-resume); }
 .rp-executive h2 { font-family: inherit; font-size: 13px; letter-spacing: .2em; color: var(--rp-accent); text-align: center; border: 0; }
 .rp-executive li::before { border-radius: 0; transform: rotate(45deg); width: 4px; height: 4px; }
 
@@ -905,3 +905,24 @@ input[type="file"]:hover::file-selector-button { border-color: var(--fg-accent);
 .wx-facts, .wx-days { display: flex; flex-wrap: wrap; align-items: baseline; min-width: 0; }
 .wx-place > * { min-width: 0; }
 @container (max-width: 640px) { .wx-place { grid-template-columns: minmax(0, 1fr); } .wx-name { white-space: normal; } }
+
+/* Display type: headings, page titles, the big numbers, and caps labels use
+   Barlow Semi Condensed; body text stays Barlow. */
+h1, h2, h3, .page-title, .brand-text b, .gist-num, .count-num, .cd-money, .wx-temp, .va-amount,
+.home-price, .par-num, .gist-label, .nav-label, .field-label, .wx-role, .countdown-badge, th,
+.palette-kind, .job-title, .res-title, .note-topic, .job-site {
+  font-family: var(--font-display); }
+.gist-num, .count-num, .wx-temp, .va-amount, .home-price { letter-spacing: -.005em; font-weight: 700; }
+h2 { letter-spacing: .005em; }
+.nav-item { font-weight: 500; font-size: 15px; }
+
+/* One vertical rhythm inside every card: the same 14px between each piece
+   (heading, how-to, tiles, forms, tables), instead of each part setting its
+   own margins. */
+main .card { display: flex; flex-direction: column; gap: 14px; }
+main .card > * { margin-top: 0; margin-bottom: 0; }
+main .card > h2, main .card > .job-results-head { margin-bottom: 0; }
+main .card > details.how-to > summary { padding: 2px 0; }
+main .card > details.how-to[open] > .hint { margin: 10px 0 0; }
+/* Same width done or not, so the Edit and Delete buttons never shift. */
+.appt-done { min-width: 88px; justify-content: center; }

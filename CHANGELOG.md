@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Added
+- Appointments have a Done button that turns green when you finish one (click
+  again to reopen), and an Edit button to change the title, time, place, or
+  notes. Finished appointments drop off the dashboard.
 - VA pay per month is calculated from your estimated rating and dependents,
   using VA's rate table effective December 1, 2025.
 - High-3 is calculated from your pay grade and years of service, month by
@@ -12,6 +15,10 @@
   retire, from Open-Meteo. Works with a US ZIP code or any city worldwide.
 
 ### Changed
+- The interface font is Barlow, with Barlow Semi Condensed for headings and
+  big numbers, and the small text is a size larger.
+- Every card uses the same spacing between its parts, so the How This Works
+  panels, tiles, and forms line up.
 - The Budget page's live clock is now the Money Countdown. With debt it counts
   to your debt-free date; without debt it counts to retirement day and your
   savings goal.

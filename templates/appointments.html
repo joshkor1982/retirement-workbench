@@ -21,13 +21,33 @@
     <thead><tr><th>When</th><th>What</th><th>Where</th><th>Notes</th><th></th></tr></thead>
     <tbody>
     {{range .Items}}
-    <tr id="appt-{{.ID}}">
+    <tr id="appt-{{.ID}}"{{if .Done}} class="done"{{end}}>
       <td class="nowrap"><b>{{atdate .At}}</b>{{with attime .At}} · {{.}}{{end}}</td><td><b>{{.Title}}</b></td><td>{{.Place}}</td><td>{{.Notes}}</td>
-      <td><form method="post" action="/appointments/{{.ID}}/delete"><button class="danger">Delete</button></form></td>
+      <td><span class="row-actions">
+        <form method="post" action="/appointments/{{.ID}}/done">{{if .Done}}<button class="btn-done appt-done" title="Click to reopen">Done ✓</button>{{else}}<button class="primary appt-done">Done</button>{{end}}</form>
+        <button type="button" class="btn-edit" onclick="toggleEdit({{.ID}})">Edit</button>
+        <form method="post" action="/appointments/{{.ID}}/delete"><button class="danger">Delete</button></form>
+      </span></td>
+    </tr>
+    <tr class="edit-row" id="edit-{{.ID}}" hidden>
+      <td colspan="5">
+        <form method="post" action="/appointments/{{.ID}}/update" class="field-row">
+          <label class="field field-grow"><span class="field-label">What</span>
+            <input type="text" name="title" value="{{.Title}}" required></label>
+          <label class="field"><span class="field-label">When</span>
+            <input type="datetime-local" name="at" value="{{.At}}" required></label>
+          <label class="field"><span class="field-label">Where</span>
+            <input type="text" name="place" value="{{.Place}}"></label>
+          <label class="field field-grow"><span class="field-label">Notes</span>
+            <input type="text" name="notes" value="{{.Notes}}"></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
+      </td>
     </tr>
     {{end}}
     </tbody>
   </table>
+  <script>function toggleEdit(id){var e=document.getElementById('edit-'+id);if(e){e.hidden=!e.hidden;if(!e.hidden){var f=e.querySelector('input');if(f)f.focus();}}}</script>
   {{else}}<p class="hint">Nothing scheduled yet.</p>{{end}}
 </section>
 {{template "foot" .}}
