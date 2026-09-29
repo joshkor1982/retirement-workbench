@@ -88,7 +88,7 @@ func quickSearch(st State, q string) []searchHit {
 		add("Bill", b.Name, money(b.Amount)+" a month", "/budget", "", false)
 	}
 	for _, d := range st.Debts {
-		add("Debt", d.Name, money(d.Balance)+" at "+d.APR, "/budget", "", false)
+		add("Debt", d.Name, money(d.Balance)+" at "+d.APR, "/debt", "", false)
 	}
 	for _, l := range st.Links {
 		add("Link", l.Title, l.Category, l.URL, l.Notes, true)

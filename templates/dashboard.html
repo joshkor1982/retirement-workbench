@@ -38,11 +38,11 @@
     <div class="gist-item"><span class="gist-label">Tasks Complete</span>
       <span class="gist-num">{{.TasksPct}}%</span><span class="gist-sub">{{.TasksDone}} of {{.TasksTotal}} done</span></div>
     <div class="gist-item"><span class="gist-label">Debt Paid Off</span>
-      <span class="gist-num">{{.DebtPct}}%</span><span class="gist-sub">{{money .OpenDebt}} still open · <a href="/budget">Budget</a></span></div>
+      <span class="gist-num">{{.DebtPct}}%</span><span class="gist-sub">{{money .OpenDebt}} still open · <a href="/debt">Debt</a></span></div>
     <div class="gist-item"><span class="gist-label">Money Saved</span>
       <span class="gist-num">{{money .Sav.Saved}}</span>
-      {{if ge .Sav.Pct 0}}<span class="gist-sub">{{.Sav.Pct}}% of the {{money .Sav.Goal}} {{or .Sav.GoalName "goal"}} · <a href="/budget#savings">Savings</a></span>
-      {{else}}<span class="gist-sub">{{money .Sav.ThisMonth}} this month · <a href="/budget#savings">Set a goal</a></span>{{end}}</div>
+      {{if ge .Sav.Pct 0}}<span class="gist-sub">{{.Sav.Pct}}% of the {{money .Sav.Goal}} {{or .Sav.GoalName "goal"}} · <a href="/savings">Savings</a></span>
+      {{else}}<span class="gist-sub">{{money .Sav.ThisMonth}} this month · <a href="/savings">Set a goal</a></span>{{end}}</div>
     <div class="gist-item"><span class="gist-label">VA Claim Readiness</span>
       {{if ge .VaPct 0}}<span class="gist-num">{{.VaPct}}%</span><span class="gist-sub">{{.CondReady}} of {{.CondTotal}} conditions documented + DBQ</span>
       {{else}}<span class="gist-num">·</span><span class="gist-sub">Add conditions on <a href="/medical">Medical / VA</a></span>{{end}}</div>

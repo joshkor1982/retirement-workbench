@@ -28,6 +28,9 @@ var sideNav = []navGroup{
 	}},
 	{"Money", []navItem{
 		{"budget", "Budget", "/budget", "wallet"},
+		{"debt", "Debt", "/debt", "card"},
+		{"savings", "Savings", "/savings", "piggy"},
+		{"retirepay", "Retired Pay", "/retired-pay", "dollar"},
 	}},
 	{"Career", []navItem{
 		{"resume", "Resume", "/resume", "resume"},
@@ -55,6 +58,8 @@ var navIcons = map[string]string{
 	"resume":    `<rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="9" r="2.5"/><path d="M8.5 16c.7-1.8 2-2.7 3.5-2.7s2.8.9 3.5 2.7"/>`,
 	"compass":   `<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>`,
 	"briefcase": `<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2M3 12h18"/>`,
+	"card":      `<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19M6 15h4"/>`,
+	"piggy":     `<path d="M5 11a7 5.5 0 0 1 13.2-1.6L21 9v4l-2 .8A7 5.5 0 0 1 16 16.5V19h-3v-1.6a8 8 0 0 1-3 0V19H7v-2.8A5.4 5.4 0 0 1 5 11z"/><path d="M11 6.5h3"/><circle cx="16" cy="11" r=".6"/>`,
 	"chart":     `<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>`,
 	"dollar":    `<path d="M12 3v18M16.5 7.5c0-1.9-2-3-4.5-3s-4.5 1.2-4.5 3.1c0 4.4 9 2.4 9 6.8 0 2-2 3.1-4.5 3.1s-4.5-1.1-4.5-3"/>`,
 	"sparkle":   `<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/>`,

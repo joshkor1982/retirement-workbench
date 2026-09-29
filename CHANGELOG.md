@@ -21,6 +21,10 @@
 - The timeline card is named Retirement Timeline, and its description explains
   how to change it.
 - The weather card sits at the top of the dashboard in a compact layout.
+- Money is split into four tabs: Budget (bills, pay, and spending), Debt (the
+  payoff countdown, avalanche, and schedule), Savings (the savings goal and
+  the countdown to retirement day), and Retired Pay (the pension, High-3, and
+  VA pay). The Debt tab now shows the add-a-debt form even with no debts.
 - The selected resume no longer uses a one-off thick edge; it matches the rest
   of the app.
 

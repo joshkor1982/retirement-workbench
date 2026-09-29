@@ -673,6 +673,9 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 	mux.HandleFunc("POST /resources/links", s.linkAdd)
 	mux.HandleFunc("POST /resources/links/{id}/delete", s.linkDelete)
 	mux.HandleFunc("GET /budget", s.budget)
+	mux.HandleFunc("GET /debt", s.debtPage)
+	mux.HandleFunc("GET /savings", s.savingsPage)
+	mux.HandleFunc("GET /retired-pay", s.retirePayPage)
 	mux.HandleFunc("POST /budget", s.txnAdd)
 	mux.HandleFunc("POST /budget/{id}/delete", s.txnDelete)
 	mux.HandleFunc("POST /bills", s.billAdd)
@@ -766,7 +769,7 @@ func (s *Server) page(w http.ResponseWriter, name string, data map[string]any) {
 		"dashboard": "Dashboard", "timeline": "Timeline", "todos": "To-Dos", "medical": "Medical / VA",
 		"appointments": "Appointments", "docs": "Documents", "budget": "Budget",
 		"resume": "Resume", "jobs": "Jobs", "resources": "Resources", "itp": "ITP", "settings": "Settings",
-		"packet": "Submit Packet", "housing": "Housing", "notes": "Notes", "skillbridge": "SkillBridge",
+		"packet": "Submit Packet", "housing": "Housing", "debt": "Debt", "savings": "Savings", "retirepay": "Retired Pay", "notes": "Notes", "skillbridge": "SkillBridge",
 	}
 	data["PageTitle"] = titles[name]
 	// Recent Advisor exchanges feed the docked sidebar on every page.
@@ -3168,7 +3171,15 @@ func avalancheProject(debts []Debt, engine int64) (months []monthPlan, payoff []
 	return
 }
 
-func (s *Server) budget(w http.ResponseWriter, r *http.Request) {
+// The Money pages share one set of figures; each tab shows a slice of them.
+func (s *Server) budget(w http.ResponseWriter, r *http.Request)      { s.moneyPage(w, "budget") }
+func (s *Server) debtPage(w http.ResponseWriter, r *http.Request)    { s.moneyPage(w, "debt") }
+func (s *Server) savingsPage(w http.ResponseWriter, r *http.Request) { s.moneyPage(w, "savings") }
+func (s *Server) retirePayPage(w http.ResponseWriter, r *http.Request) {
+	s.moneyPage(w, "retirepay")
+}
+
+func (s *Server) moneyPage(w http.ResponseWriter, tab string) {
 	st := s.store.snapshot()
 	items := append([]Txn(nil), st.Txns...)
 	sort.Slice(items, func(i, j int) bool { return items[i].Date > items[j].Date })
@@ -3391,14 +3402,18 @@ func (s *Server) budget(w http.ResponseWriter, r *http.Request) {
 		"TotalDebt":       totalDebt,
 	}
 
-	s.page(w, "budget", map[string]any{
+	clock := moneyClock(st, totalDebt)
+	if tab == "savings" {
+		clock.HasDebt = false // the Savings tab always counts to retirement day and the savings goal
+	}
+	s.page(w, tab, map[string]any{
 		"Items": items, "MonthIn": in, "MonthOut": out, "Net": in - out,
 		"Debts": views, "Target": target, "Power": power,
 		"PlanMonths": planMonths, "PlanRows": planRows, "DebtFree": debtFree,
 		"PlanInterest": totalInterest, "PlanTBD": planTBD, "HasPlan": planOK && engine > 0,
 		"Bills": st.Bills, "BillsTotal": billsTotal, "DebtMins": debtMins,
 		"Engine": engine, "EngineComputed": computed, "Gist": gist,
-		"Countdown": countdown, "Clock": moneyClock(st, totalDebt), "Sav": summarizeSavings(st), "Ret": estimateRetirePay(st), "Today": time.Now().Format("2006-01-02"),
+		"Countdown": countdown, "Clock": clock, "Sav": summarizeSavings(st), "Ret": estimateRetirePay(st), "Today": time.Now().Format("2006-01-02"),
 	})
 }
 
@@ -3551,7 +3566,7 @@ func (s *Server) budgetGoalSave(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	})
-	http.Redirect(w, r, "/budget", http.StatusSeeOther)
+	http.Redirect(w, r, "/debt", http.StatusSeeOther)
 }
 
 func bumpBaseline(st *State) {
@@ -3591,7 +3606,7 @@ func (s *Server) debtAdd(w http.ResponseWriter, r *http.Request) {
 			bumpBaseline(st)
 		})
 	}
-	http.Redirect(w, r, "/budget", http.StatusSeeOther)
+	http.Redirect(w, r, "/debt", http.StatusSeeOther)
 }
 
 func (s *Server) debtDelete(w http.ResponseWriter, r *http.Request) {
@@ -3599,7 +3614,7 @@ func (s *Server) debtDelete(w http.ResponseWriter, r *http.Request) {
 	_ = s.store.mutate(func(st *State) {
 		st.Debts = deleteByID(st.Debts, id, func(d Debt) int { return d.ID })
 	})
-	http.Redirect(w, r, "/budget", http.StatusSeeOther)
+	http.Redirect(w, r, "/debt", http.StatusSeeOther)
 }
 
 func (s *Server) debtUpdate(w http.ResponseWriter, r *http.Request) {
@@ -3623,7 +3638,7 @@ func (s *Server) debtUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 		bumpBaseline(st)
 	})
-	http.Redirect(w, r, "/budget", http.StatusSeeOther)
+	http.Redirect(w, r, "/debt", http.StatusSeeOther)
 }
 
 func (s *Server) debtToggle(w http.ResponseWriter, r *http.Request) {
@@ -3635,7 +3650,7 @@ func (s *Server) debtToggle(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	})
-	http.Redirect(w, r, "/budget", http.StatusSeeOther)
+	http.Redirect(w, r, "/debt", http.StatusSeeOther)
 }
 
 // ---------- Resume ----------------------------------------------------------

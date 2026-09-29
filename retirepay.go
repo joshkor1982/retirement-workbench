@@ -121,5 +121,5 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 		})
 		flash(w, "ok", "Retired pay estimate updated.")
 	}
-	http.Redirect(w, r, "/budget#retired-pay", http.StatusSeeOther)
+	http.Redirect(w, r, "/retired-pay", http.StatusSeeOther)
 }

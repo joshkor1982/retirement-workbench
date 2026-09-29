@@ -61,7 +61,7 @@ later.
 | Store orders, DD 214s, medical records, and forms | **Documents** |
 | Build your VA claim evidence and estimate your combined rating | **Medical / VA** |
 | Work the PAR step by step and combine your packet into one PDF | **Submit Packet** |
-| Plan debt payoff, savings, leave, and your retired pay | **Budget** and the **Dashboard** |
+| Plan your budget, debt payoff, savings, and retired pay | **Budget**, **Debt**, **Savings**, and **Retired Pay** |
 | Write a tailored resume per job, pick its design, font, and colors, and download it as a PDF | **Resume** |
 | Find jobs near a ZIP code or remote, and track every opening | **Jobs** |
 | Find a SkillBridge program, track leads, work the packet, and download your request memo | **SkillBridge** |

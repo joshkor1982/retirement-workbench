@@ -78,7 +78,7 @@ func (s *Server) savingsAdd(w http.ResponseWriter, r *http.Request) {
 			_, _ = addSavings(st, amt, strings.TrimSpace(r.FormValue("date")), r.FormValue("note"))
 		})
 	}
-	http.Redirect(w, r, "/budget#savings", http.StatusSeeOther)
+	http.Redirect(w, r, "/savings", http.StatusSeeOther)
 }
 
 func (s *Server) savingsDelete(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +86,7 @@ func (s *Server) savingsDelete(w http.ResponseWriter, r *http.Request) {
 	_ = s.store.mutate(func(st *State) {
 		st.Savings = deleteByID(st.Savings, id, func(e SavingsEntry) int { return e.ID })
 	})
-	http.Redirect(w, r, "/budget#savings", http.StatusSeeOther)
+	http.Redirect(w, r, "/savings", http.StatusSeeOther)
 }
 
 func (s *Server) savingsGoal(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +100,7 @@ func (s *Server) savingsGoal(w http.ResponseWriter, r *http.Request) {
 			st.Settings.SavingsGoalName = strings.TrimSpace(r.FormValue("name"))
 		})
 	}
-	http.Redirect(w, r, "/budget#savings", http.StatusSeeOther)
+	http.Redirect(w, r, "/savings", http.StatusSeeOther)
 }
 
 // ---------- Advisor tools ------------------------------------------------------

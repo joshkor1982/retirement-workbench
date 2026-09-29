@@ -260,7 +260,7 @@ func (j *journey) post(path string, form url.Values) int {
 }
 
 var allPages = []string{"/", "/timeline", "/todos", "/notes", "/appointments", "/docs", "/medical",
-	"/packet", "/budget", "/resume", "/itp", "/jobs", "/housing", "/resources", "/settings"}
+	"/packet", "/budget", "/debt", "/savings", "/retired-pay", "/resume", "/itp", "/jobs", "/housing", "/resources", "/settings"}
 
 func TestJourneyFirstRunDemoAndErase(t *testing.T) {
 	j := newJourney(t)
@@ -802,7 +802,7 @@ func TestMoneyClockWithoutDebt(t *testing.T) {
 	}
 	j := newJourney(t)
 	j.post("/settings", url.Values{"name": {"A"}, "retirement_date": {rd}})
-	if code, body := j.get("/budget"); code != 200 || !strings.Contains(body, "Money Countdown") || !strings.Contains(body, "To retirement day") {
+	if code, body := j.get("/savings"); code != 200 || !strings.Contains(body, "Money Countdown") || !strings.Contains(body, "To retirement day") {
 		t.Errorf("no-debt budget page: %d", code)
 	}
 }

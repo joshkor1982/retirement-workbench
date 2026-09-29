@@ -1,0 +1,5 @@
+{{template "head" .}}
+{{if .Clock.HasDebt}}{{template "money-clock" .}}{{end}}
+{{template "debt-card" .}}
+{{template "payoff-card" .}}
+{{template "foot" .}}
