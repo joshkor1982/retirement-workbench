@@ -517,14 +517,15 @@ func TestJourneyBadInputIsRefusedWithANotice(t *testing.T) {
 }
 
 func TestRetirePay(t *testing.T) {
-	st := State{Settings: Settings{RetYears: 20, RetHigh3: 600000, RetSBP: true, RetVAComp: 100000, VaEstimate: 70, MonthlyIncome: 700000}}
+	st := State{Settings: Settings{RetYears: 20, RetHigh3: 600000, RetSBP: true, VaEstimate: 70, MonthlyIncome: 700000}}
 	p := estimateRetirePay(st)
-	// 20 x 2.5% = 50% of $6,000 = $3,000; SBP 6.5% = $195; CRDP at 70% pays VA on top.
-	if p.Gross != 300000 || p.SBP != 19500 || p.Net != 280500 || !p.CRDP || p.Total != 380500 || p.Change != -319500 {
+	// 20 x 2.5% = 50% of $6,000 = $3,000; SBP 6.5% = $195; 70% alone is
+	// $1,808.45, paid on top of retired pay under CRDP.
+	if p.Gross != 300000 || p.SBP != 19500 || p.Net != 280500 || !p.CRDP || p.VA != 180845 || p.Total != 461345 {
 		t.Fatalf("High-3 at 70%%: %+v", p)
 	}
 	st.Settings.VaEstimate = 30 // below 50%: VA replaces an equal amount of retired pay
-	if p := estimateRetirePay(st); p.CRDP || p.Offset != 100000 || p.Total != 280500 {
+	if p := estimateRetirePay(st); p.CRDP || p.VA != 55247 || p.Offset != 55247 || p.Total != 280500 {
 		t.Errorf("below 50%%: %+v", p)
 	}
 	st.Settings.RetSystem, st.Settings.VaEstimate = "brs", 70
@@ -533,6 +534,36 @@ func TestRetirePay(t *testing.T) {
 	}
 	if p := estimateRetirePay(State{}); p.Set {
 		t.Error("no inputs should mean no estimate")
+	}
+}
+
+func TestVAMonthlyMatchesVATable(t *testing.T) {
+	// Every expected value is read straight off va.gov's table effective
+	// December 1, 2025, including combinations built from its add-on rows.
+	cases := []struct {
+		rating int
+		d      vaDependents
+		want   int64
+	}{
+		{0, vaDependents{}, 0},
+		{10, vaDependents{Spouse: true, Children: 3}, 18042}, // dependents never change 10% or 20%
+		{20, vaDependents{}, 35666},
+		{30, vaDependents{Spouse: true, Parents: 1}, 66947},
+		{50, vaDependents{Parents: 1}, 122090},
+		{70, vaDependents{}, 180845},
+		{70, vaDependents{Spouse: true}, 196145},
+		{70, vaDependents{Spouse: true, Children: 2}, 207445 + 7600},
+		{90, vaDependents{Parents: 2}, 267830},
+		{100, vaDependents{Spouse: true, Parents: 2}, 451065},
+		{100, vaDependents{Spouse: true, Children: 1, SchoolKids: 1}, 431899 + 35245},
+		{100, vaDependents{Children: 1}, 408543},
+		{68, vaDependents{}, 180845}, // an estimate of 68 rounds to 70, as VA rounds
+		{64, vaDependents{}, 143502}, // and 64 rounds to 60
+	}
+	for _, c := range cases {
+		if got := vaMonthly(c.rating, c.d); got != c.want {
+			t.Errorf("vaMonthly(%d, %+v) = %s, want %s", c.rating, c.d, money(got), money(c.want))
+		}
 	}
 }
 
@@ -755,4 +786,41 @@ func mustRead(t *testing.T, p string) string {
 		t.Fatal(err)
 	}
 	return string(b)
+}
+
+func TestMoneyClockWithoutDebt(t *testing.T) {
+	rd := time.Now().AddDate(0, 0, 100).Format("2006-01-02")
+	st := State{Settings: Settings{RetirementDate: rd, SavingsGoal: 1000000}}
+	st.Savings = []SavingsEntry{{ID: 1, Date: time.Now().Format("2006-01-02"), Amount: 500000}}
+	c := moneyClock(st, 0)
+	if c.HasDebt || c.RetDays != 100 || c.SavPerDay != 5000 {
+		t.Fatalf("no-debt clock: %+v", c)
+	}
+	st.Debts = []Debt{{ID: 2, Name: "Visa", Balance: 10000}}
+	if c := moneyClock(st, 10000); !c.HasDebt {
+		t.Error("an open debt should switch the clock to payoff mode")
+	}
+	j := newJourney(t)
+	j.post("/settings", url.Values{"name": {"A"}, "retirement_date": {rd}})
+	if code, body := j.get("/budget"); code != 200 || !strings.Contains(body, "Money Countdown") || !strings.Contains(body, "To retirement day") {
+		t.Errorf("no-debt budget page: %d", code)
+	}
+}
+
+func TestWeatherPlacesFallBackToHousingZip(t *testing.T) {
+	st := State{Settings: Settings{WeatherHere: "Wiesbaden"}, Housing: &HouseSearch{Zip: "80903"}}
+	got := weatherPlaces(st)
+	if len(got) != 2 || got[0][1] != "Wiesbaden" || got[1][1] != "80903" {
+		t.Errorf("places = %v", got)
+	}
+	if len(weatherPlaces(State{})) != 0 {
+		t.Error("no places set should fetch nothing")
+	}
+}
+
+func TestPARWindowIsTwelveMonths(t *testing.T) {
+	st := State{Settings: Settings{RetirementDate: "2027-12-03"}}
+	if v := buildPARView(st); v.WindowOpen != "Dec 3, 2025" || v.WindowClose != "Dec 3, 2026" {
+		t.Errorf("window = %s to %s, want Dec 3, 2025 to Dec 3, 2026", v.WindowOpen, v.WindowClose)
+	}
 }

@@ -812,3 +812,39 @@ input[type="file"]::file-selector-button { font: inherit; font-size: var(--t-13)
   margin-right: 12px; padding: 0 14px; border-radius: 5px; border: 1px solid var(--border-color);
   background: var(--bg-card); color: var(--fg-primary); cursor: pointer; transition: border-color .14s ease, color .14s ease; }
 input[type="file"]:hover::file-selector-button { border-color: var(--fg-accent); color: var(--fg-accent); }
+
+/* VA pay calculator on the Retired Pay card */
+.va-calc { flex: 1 1 100%; display: flex; flex-direction: column; gap: 8px; padding: .8rem 1rem; margin-top: 4px;
+  border-radius: var(--r-1); background: var(--bg-well); border: 1px solid var(--c-line); }
+.va-calc-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.va-amount { font-size: 22px; font-weight: 700; color: var(--fg-accent); font-variant-numeric: tabular-nums; }
+.va-calc .hint { flex: 1 1 100%; margin: 0; }
+.cd-goal { display: block; margin-top: 2px; font-size: var(--t-13); color: var(--fg-muted); }
+
+/* Weather card */
+.wx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.wx-place { position: relative; overflow: hidden; padding: 1.1rem 1.2rem 1rem; border-radius: var(--r-1);
+  border: 1px solid var(--c-line); background:
+  radial-gradient(260px 140px at 88% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
+  linear-gradient(160deg, color-mix(in srgb, var(--status-info-fg) 10%, var(--bg-well)), var(--bg-well) 60%); }
+.wx-head { display: flex; flex-direction: column; gap: 2px; }
+.wx-role { font-size: var(--t-12); font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-muted); }
+.wx-name { font-size: var(--t-16); font-weight: 650; color: var(--fg-primary); }
+.wx-now { display: flex; align-items: center; gap: 14px; margin: 12px 0 10px; }
+.wx-icon { width: 58px; height: 58px; flex: none; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; stroke: var(--fg-primary); }
+.wx-icon.wx-sun { stroke: var(--fg-accent); filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 45%, transparent)); }
+.wx-icon.wx-moon { stroke: var(--fg-accent); }
+.wx-icon.wx-rain, .wx-icon.wx-storm { stroke: var(--status-info-fg); }
+.wx-temp-wrap { display: flex; flex-direction: column; }
+.wx-temp { font-size: 44px; font-weight: 700; line-height: 1; letter-spacing: -.03em; color: var(--fg-primary); font-variant-numeric: tabular-nums; }
+.wx-text { font-size: var(--t-14); color: var(--fg-muted); margin-top: 4px; }
+.wx-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px 0; border-top: 1px solid var(--c-line); border-bottom: 1px solid var(--c-line); }
+.wx-fact { display: flex; flex-direction: column; gap: 2px; font-size: var(--t-12); color: var(--fg-muted); }
+.wx-fact b { font-size: var(--t-14); color: var(--fg-primary); font-weight: 650; }
+.wx-days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.wx-day { display: flex; align-items: center; gap: 8px; font-size: var(--t-13); }
+.wx-dname { font-weight: 650; color: var(--fg-primary); width: 32px; }
+.wx-dicon { width: 20px; height: 20px; fill: none; stroke: var(--fg-muted); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.wx-drange { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.wx-credit { margin: 10px 0 0; font-size: var(--t-12); color: var(--fg-muted); }
+@media (max-width: 700px) { .wx-facts { grid-template-columns: repeat(2, 1fr); } }

@@ -2,8 +2,8 @@
 
 {{if .Rows}}
 <section class="card tl-bleed">
-  <h2>The Glide</h2>
-  <p class="hint">Every task on its own row, time running left to right. Bars are task windows; diamonds are single dates; blue diamonds are appointments. The green line is today; the flag line is retirement. Check things off on the <a href="/todos">To-Dos</a> page.</p>
+  <h2>Retirement Timeline</h2>
+  <p class="hint">Every milestone from your packet to retirement day, counted back from your retirement date. Each task has its own row, with time running left to right: bars are task windows, diamonds are single dates, and blue diamonds are appointments. The gold line is today and the green line, marked Retired, is retirement day. To add or change anything on this chart, use the <a href="/todos">To-Dos</a> page: every dated to-do with a lane shows here.</p>
   <div class="tl-scroll">
     <div class="gantt">
       <div class="g-axis">
@@ -41,7 +41,6 @@
     {{range .Legend}}<span class="tl-key"><span class="tl-dot tl-c{{.Color}}"></span>{{.Phase}}</span>{{end}}
     <span class="tl-key"><span class="tl-dot tl-appt"></span>Appointments</span>
   </p>
-  <p class="hint">To add or change what is on this chart, use the <a href="/todos">To-Dos</a> page - every dated to-do with a lane shows here.</p>
 </section>
 <script>
 (function(){
@@ -56,7 +55,7 @@
 </script>
 {{else}}
 <section class="card">
-  <h2>The Glide, Month by Month</h2>
+  <h2>Retirement Timeline</h2>
   <p class="hint">No timeline yet. Set your retirement date in Settings, then generate it with one click.</p>
   <a class="btn" href="/settings">Open Settings</a>
 </section>

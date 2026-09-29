@@ -212,14 +212,14 @@
   // Card headers get an icon matched to their topic; anything unmatched
   // takes its page's sidebar icon. Icons come from nav.go via #rw-icons.
   var HEAD_ICONS = [
-    [/numbers/i, 'chart'], [/week|appointment|calendar/i, 'calendar'], [/countdown|leave|clock/i, 'clock'],
+    [/weather/i, 'weather'], [/numbers/i, 'chart'], [/week|appointment|calendar/i, 'calendar'], [/countdown|leave|clock/i, 'clock'],
     [/next up|to-do|one list|checklist|packet file/i, 'check'], [/note/i, 'note'],
     [/document|form|shelf|record/i, 'file'], [/medical|rating|condition|medication|symptom|claim/i, 'heart'],
     [/par\b|submit|packet/i, 'send'], [/money|saving|budget|bill|debt|payoff|pay|month/i, 'dollar'],
     [/resume|target|header/i, 'resume'], [/skillbridge|program|lead|application/i, 'bridge'],
     [/job|prospect|opening|search/i, 'briefcase'], [/contact|who to call|about you/i, 'user'],
     [/home|housing/i, 'house'], [/resource|link|site/i, 'link'], [/itp|transition plan|readiness|standards/i, 'compass'],
-    [/timeline|glide/i, 'timeline'], [/settings|data|advisor/i, 'settings']
+    [/timeline/i, 'timeline'], [/settings|data|advisor/i, 'settings']
   ];
   function wireHeadIcons() {
     var src = document.getElementById('rw-icons');
@@ -261,7 +261,77 @@
     setTimeout(function () { btn.classList.remove('is-saved'); btn.textContent = label; }, 2200);
   }
 
-  function init() { var k = readFlash(); wireTheme(); wireMenu(); wireHowTos(); wireSearch(); wireCountUps(); wireAnalyze(); wireHeadIcons(); wireSaved(k); }
+  // Weather card: loads after the page so a slow weather service never
+  // delays the dashboard. Codes are WMO weather codes from Open-Meteo.
+  var WX_ICON = {
+    sun: '<circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/>',
+    moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+    partly: '<path d="M8 4.5v1.5M3.5 9H5M4.8 5.8l1 1M12.2 5.8l-1 1"/><path d="M5.6 11.4A3.5 3.5 0 1 1 11.8 8"/><path d="M8 19h9a3.5 3.5 0 0 0 .4-7 5 5 0 0 0-9.6 1.4A2.8 2.8 0 0 0 8 19z"/>',
+    cloud: '<path d="M7 18h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.4 1.7A3.2 3.2 0 0 0 7 18z"/>',
+    fog: '<path d="M7 13h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.4 1.7A3.2 3.2 0 0 0 7 13z"/><path d="M4 17h16M6 20.5h12"/>',
+    rain: '<path d="M7 14h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.4 1.7A3.2 3.2 0 0 0 7 14z"/><path d="M8 17l-1 3M12 17l-1 3M16 17l-1 3"/>',
+    snow: '<path d="M7 14h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.4 1.7A3.2 3.2 0 0 0 7 14z"/><path d="M8 18h.01M12 20h.01M16 18h.01M10 21.5h.01M14 21.5h.01"/>',
+    storm: '<path d="M7 14h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.4 1.7A3.2 3.2 0 0 0 7 14z"/><path d="M12.5 14l-2.5 4h3l-2 4"/>'
+  };
+  function wxKind(code, isDay) {
+    if (code === 0 || code === 1) return isDay === false ? 'moon' : 'sun';
+    if (code === 2) return 'partly';
+    if (code === 3) return 'cloud';
+    if (code === 45 || code === 48) return 'fog';
+    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
+    if (code >= 95) return 'storm';
+    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
+    return 'cloud';
+  }
+  var WX_TEXT = {0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Freezing fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',56:'Freezing drizzle',57:'Freezing drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',66:'Freezing rain',67:'Freezing rain',71:'Light snow',73:'Snow',75:'Heavy snow',77:'Snow grains',80:'Rain showers',81:'Rain showers',82:'Heavy showers',85:'Snow showers',86:'Snow showers',95:'Thunderstorms',96:'Thunderstorms with hail',99:'Thunderstorms with hail'};
+  function svgIcon(kind, cls) {
+    var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('class', cls + ' wx-' + kind); s.setAttribute('aria-hidden', 'true');
+    s.innerHTML = WX_ICON[kind]; // fixed set above, never data from the network
+    return s;
+  }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function wireWeather() {
+    var grid = document.getElementById('wx-grid');
+    if (!grid || !document.querySelector('[data-weather]')) return;
+    fetch('/weather.json').then(function (r) { return r.json(); }).then(function (reps) {
+      if (!reps || !reps.length) return;
+      grid.textContent = '';
+      reps.forEach(function (w) {
+        var card = el('div', 'wx-place');
+        var head = el('div', 'wx-head');
+        head.appendChild(el('span', 'wx-role', w.role));
+        head.appendChild(el('span', 'wx-name', w.err ? w.query : w.place.label));
+        card.appendChild(head);
+        if (w.err) { card.appendChild(el('p', 'hint', 'Weather unavailable: ' + w.err + '.')); grid.appendChild(card); return; }
+        var now = el('div', 'wx-now');
+        var kind = wxKind(w.code, w.is_day);
+        now.appendChild(svgIcon(kind, 'wx-icon'));
+        var t = el('div', 'wx-temp-wrap');
+        t.appendChild(el('span', 'wx-temp', w.temp + '°'));
+        t.appendChild(el('span', 'wx-text', WX_TEXT[w.code] || 'Weather'));
+        now.appendChild(t);
+        card.appendChild(now);
+        var facts = el('div', 'wx-facts');
+        [['Feels like', w.feels + '°'], ['High / Low', w.hi + '° / ' + w.lo + '°'], ['Wind', w.wind + ' mph'], ['Humidity', w.humidity + '%']].forEach(function (f) {
+          var d = el('div', 'wx-fact'); d.appendChild(el('span', '', f[0])); d.appendChild(el('b', '', f[1])); facts.appendChild(d);
+        });
+        card.appendChild(facts);
+        var days = el('div', 'wx-days');
+        (w.days || []).forEach(function (d) {
+          var c = el('div', 'wx-day');
+          c.appendChild(el('span', 'wx-dname', d.day));
+          c.appendChild(svgIcon(wxKind(d.code, true), 'wx-dicon'));
+          c.appendChild(el('span', 'wx-drange', d.hi + '° ' + d.lo + '°'));
+          days.appendChild(c);
+        });
+        card.appendChild(days);
+        grid.appendChild(card);
+      });
+    }).catch(function () {});
+  }
+
+  function init() { var k = readFlash(); wireTheme(); wireMenu(); wireHowTos(); wireSearch(); wireCountUps(); wireAnalyze(); wireHeadIcons(); wireSaved(k); wireWeather(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();

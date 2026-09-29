@@ -48,8 +48,8 @@ var parChecklist = []parItem{
 		Detail: "Memorandum format. Mandatory for every separation and retirement action."},
 	{Key: "doc-adso", Title: "ADSO",
 		Detail: "SFC and above is 3 years. No waiver for the 9/11 GI Bill."},
-	{Key: "doc-lateness", Title: "Letter of Lateness", Optional: true,
-		Detail: "Only if you submit 9 months or less before the requested retirement date. Signed by the first O5 in your chain of command."},
+	{Key: "doc-lateness", Title: "Late Request Documents", Optional: true,
+		Detail: "Army Directive 2026-08 (17 April 2026) set the request window at 24 to 12 months before your retirement date. If you are inside 12 months, ask your S-1 and Retirement Services Officer what your request needs."},
 	{Key: "doc-waivers", Title: "Waivers", Optional: true,
 		Detail: "If applicable. Memorandum format."},
 	{Key: "doc-deros", Title: "DEROS", Optional: true,
@@ -71,7 +71,7 @@ type parView struct {
 	Steps, Checklist []parCard
 	Done, Total      int
 	WindowOpen       string // 24 months before the retirement date
-	WindowClose      string // 9 months before
+	WindowClose      string // 12 months before (Army Directive 2026-08)
 	WindowState      string // before | open | late
 }
 
@@ -96,7 +96,7 @@ func buildPARView(st State) parView {
 	v.Steps = parCards(parSteps, st.PARDone, &v)
 	v.Checklist = parCards(parChecklist, st.PARDone, &v)
 	if rd, err := time.Parse("2006-01-02", st.Settings.RetirementDate); err == nil {
-		open, close := rd.AddDate(-2, 0, 0), rd.AddDate(0, -9, 0)
+		open, close := rd.AddDate(-2, 0, 0), rd.AddDate(-1, 0, 0) // Army Directive 2026-08: 24 to 12 months out
 		v.WindowOpen, v.WindowClose = open.Format("Jan 2, 2006"), close.Format("Jan 2, 2006")
 		switch now := time.Now(); {
 		case now.Before(open):

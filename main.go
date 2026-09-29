@@ -1,7 +1,7 @@
 // ARW (Army Retirement Workbench) - a local retirement-transition command center.
 //
 // One binary, one JSON state file, no cloud, no accounts. It tracks the
-// whole glide from active duty to retired: the milestone timeline, the
+// whole transition from active duty to retired: the milestone timeline, the
 // to-do list it generates, appointments, uploaded documents, the budget,
 // the resume, and federal job searches.
 //
@@ -56,6 +56,8 @@ type Settings struct {
 	RetirementDate  string  `json:"retirement_date"` // YYYY-MM-DD
 	USAJobsEmail    string  `json:"usajobs_email"`
 	USAJobsKey      string  `json:"usajobs_key"`
+	WeatherHere     string  `json:"weather_here,omitempty"` // ZIP or city
+	WeatherRetire   string  `json:"weather_retire,omitempty"`
 	AdzunaID        string  `json:"adzuna_id,omitempty"`
 	AdzunaKey       string  `json:"adzuna_key,omitempty"`
 	VaEstimate      int     `json:"va_estimate,omitempty"` // working percent, user-set
@@ -77,7 +79,10 @@ type Settings struct {
 	RetYears        float64 `json:"ret_years,omitempty"`
 	RetHigh3        int64   `json:"ret_high3_cents,omitempty"`
 	RetSBP          bool    `json:"ret_sbp,omitempty"`
-	RetVAComp       int64   `json:"ret_va_comp_cents,omitempty"`
+	RetSpouse       bool    `json:"ret_spouse,omitempty"`      // VA dependents: spouse
+	RetKids         int     `json:"ret_kids,omitempty"`        // children under 18
+	RetSchoolKids   int     `json:"ret_school_kids,omitempty"` // children 18 to 23 in school
+	RetParents      int     `json:"ret_parents,omitempty"`     // dependent parents
 	SavingsGoal     int64   `json:"savings_goal_cents,omitempty"`
 	SavingsGoalName string  `json:"savings_goal_name,omitempty"`
 	TimelineSeeded  bool    `json:"timeline_seeded"`
@@ -628,6 +633,7 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 	mux.Handle("GET /static/", http.FileServerFS(staticFS))
 	mux.HandleFunc("GET /{$}", s.dashboard)
 	mux.HandleFunc("GET /search", s.search)
+	mux.HandleFunc("GET /weather.json", s.weatherJSON)
 	mux.HandleFunc("GET /timeline", s.timeline)
 	mux.HandleFunc("GET /todos", s.todos)
 	mux.HandleFunc("POST /todos", s.todoAdd)
@@ -1736,8 +1742,9 @@ voluntary retirement. Your unit S-1 initiates it from your signed DA Form 2339
 your G-1 to HRC for approval.
 
 TIMING
-Submit the request no earlier than 24 months and no later than 9 months before
-your requested retirement date. Earlier is better - orders can take months.
+Submit the request no earlier than 24 months and no later than 12 months before
+your requested retirement date (Army Directive 2026-08, 17 April 2026). Earlier
+is better - orders can take months.
 
 TWO CHECKLISTS, DO NOT CONFUSE THEM
 1. The Transitions checklist (the Retirement Application Questionnaire and its
@@ -1756,8 +1763,8 @@ STEPS
 
 PAR CHECKLIST (Enlisted Retirement Checklist, as of March 2024 - verify with S-1)
 - Personnel Action Request (PAR), submitted through IPPS-A
-- Letter of Lateness, if within 9 months or less of the requested retirement date
-  (must be signed by the first O5 in the chain of command)
+- If you are inside 12 months of the requested retirement date, ask your S-1 and
+  Retirement Services Officer what a late request needs
 - Waivers, if applicable (memorandum format)
 - DEROS, if the requested retirement date is before your DEROS date
 - ADSO (SFC and above is 3 years; there is no waiver for the 9/11 GI Bill)
@@ -3387,7 +3394,7 @@ func (s *Server) budget(w http.ResponseWriter, r *http.Request) {
 		"PlanInterest": totalInterest, "PlanTBD": planTBD, "HasPlan": planOK && engine > 0,
 		"Bills": st.Bills, "BillsTotal": billsTotal, "DebtMins": debtMins,
 		"Engine": engine, "EngineComputed": computed, "Gist": gist,
-		"Countdown": countdown, "Sav": summarizeSavings(st), "Ret": estimateRetirePay(st), "Today": time.Now().Format("2006-01-02"),
+		"Countdown": countdown, "Clock": moneyClock(st, totalDebt), "Sav": summarizeSavings(st), "Ret": estimateRetirePay(st), "Today": time.Now().Format("2006-01-02"),
 	})
 }
 
@@ -4054,6 +4061,10 @@ func (s *Server) settingsSave(w http.ResponseWriter, r *http.Request) {
 		}
 		if r.FormValue("usajobs_key_clear") == "1" {
 			st.Settings.USAJobsKey = ""
+		}
+		if r.Form.Has("weather_here") {
+			st.Settings.WeatherHere = strings.TrimSpace(r.FormValue("weather_here"))
+			st.Settings.WeatherRetire = strings.TrimSpace(r.FormValue("weather_retire"))
 		}
 		if r.Form.Has("adzuna_id") {
 			st.Settings.AdzunaID = strings.TrimSpace(r.FormValue("adzuna_id"))

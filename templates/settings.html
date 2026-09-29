@@ -10,6 +10,10 @@
         <input type="text" name="branch" value="{{.Settings.Branch}}" placeholder="Army"></label>
       <label class="field"><span class="field-label">Retirement Date</span>
         <input type="date" name="retirement_date" value="{{.Settings.RetirementDate}}"></label>
+      <label class="field"><span class="field-label">Where You Are Now</span>
+        <input type="text" name="weather_here" value="{{.Settings.WeatherHere}}" placeholder="ZIP code or city"></label>
+      <label class="field"><span class="field-label">Where You Plan to Retire</span>
+        <input type="text" name="weather_retire" value="{{.Settings.WeatherRetire}}" placeholder="ZIP code or city"></label>
       <label class="field"><span class="field-label">Leave Balance (Days)</span>
         <input type="number" name="leave_days" step="0.5" min="-30" max="200" value="{{if .Settings.LeaveSet}}{{.Settings.LeaveDays}}{{end}}" placeholder="From your LES"></label>
       <label class="field"><span class="field-label">Balance As Of</span>

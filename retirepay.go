@@ -5,7 +5,8 @@ package main
 //   - Pension: years of service x 2.5% (High-3) or 2.0% (Blended Retirement
 //     System), times the average of your highest 36 months of base pay.
 //   - SBP: full spouse coverage costs 6.5% of the covered amount.
-//   - VA compensation is tax-free. At a combined rating of 50% or more,
+//   - VA compensation is tax-free, and comes from VA's rate table for your
+//     estimated rating and dependents (varates.go). At a combined rating of 50% or more,
 //     Concurrent Retirement and Disability Pay (CRDP) pays both in full.
 //     Below 50%, VA pay replaces an equal amount of retired pay (the VA
 //     waiver), so the total is the larger of the two, not the sum. Combat-
@@ -29,17 +30,20 @@ type retirePay struct {
 	Net        int64 // retired pay after SBP, before tax
 	VA         int64
 	Rating     int
-	CRDP       bool  // rating >= 50: both paid in full
-	Offset     int64 // retired pay given up to the VA waiver
-	Total      int64 // what arrives each month
-	Change     int64 // Total minus current take-home
+	RatesAsOf  string // VA rate table effective date
+	CRDP       bool   // rating >= 50: both paid in full
+	Offset     int64  // retired pay given up to the VA waiver
+	Total      int64  // what arrives each month
+	Change     int64  // Total minus current take-home
 	HaveIncome bool
 }
 
 func estimateRetirePay(st State) retirePay {
 	s := st.Settings
 	if s.RetYears <= 0 || s.RetHigh3 <= 0 {
-		return retirePay{}
+		// No pension inputs yet, but VA pay can still be shown from the rating.
+		return retirePay{Rating: roundRating(s.VaEstimate), RatesAsOf: vaRatesEffective,
+			VA: vaMonthly(s.VaEstimate, vaDependents{Spouse: s.RetSpouse, Children: s.RetKids, SchoolKids: s.RetSchoolKids, Parents: s.RetParents})}
 	}
 	rate := 0.025
 	sys := "High-3"
@@ -52,10 +56,12 @@ func estimateRetirePay(st State) retirePay {
 	}
 	p := retirePay{Set: true, System: sys, Years: fmtDays(s.RetYears),
 		Multiplier: strconv.FormatFloat(mult*100, 'f', 1, 64) + "%",
-		Gross:      int64(float64(s.RetHigh3)*mult + 0.5), VA: s.RetVAComp, Rating: s.VaEstimate}
+		Gross:      int64(float64(s.RetHigh3)*mult + 0.5), Rating: roundRating(s.VaEstimate),
+		VA: vaMonthly(s.VaEstimate, vaDependents{Spouse: s.RetSpouse, Children: s.RetKids, SchoolKids: s.RetSchoolKids, Parents: s.RetParents})}
 	if s.RetSBP {
 		p.SBP = int64(float64(p.Gross)*0.065 + 0.5)
 	}
+	p.RatesAsOf = vaRatesEffective
 	p.Net = p.Gross - p.SBP
 	p.CRDP = p.Rating >= 50
 	if p.CRDP {
@@ -74,15 +80,20 @@ func estimateRetirePay(st State) retirePay {
 func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 	years, yErr := strconv.ParseFloat(strings.TrimSpace(r.FormValue("years")), 64)
 	high3, hOK := optionalMoney(r.FormValue("high3"))
-	va, vOK := optionalMoney(r.FormValue("va_comp"))
+	count := func(k string, hi int) int {
+		n, _ := strconv.Atoi(strings.TrimSpace(r.FormValue(k)))
+		return min(max(n, 0), hi)
+	}
 	switch {
 	case yErr != nil || years < 0 || years > 45:
 		flash(w, "err", "Years of service must be a number like 20 or 22.5.")
-	case !hOK || !vOK:
-		flash(w, "err", "High-3 and VA pay must be dollar amounts, like 6,450.00.")
+	case !hOK:
+		flash(w, "err", "High-3 must be a dollar amount, like 6,450.00.")
 	default:
 		_ = s.store.mutate(func(st *State) {
-			st.Settings.RetYears, st.Settings.RetHigh3, st.Settings.RetVAComp = years, high3, va
+			st.Settings.RetYears, st.Settings.RetHigh3 = years, high3
+			st.Settings.RetSpouse = r.FormValue("spouse") == "1"
+			st.Settings.RetKids, st.Settings.RetSchoolKids, st.Settings.RetParents = count("kids", 20), count("school_kids", 20), count("parents", 2)
 			st.Settings.RetSystem = map[bool]string{true: "brs", false: "high3"}[r.FormValue("system") == "brs"]
 			st.Settings.RetSBP = r.FormValue("sbp") == "1"
 		})
