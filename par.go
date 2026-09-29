@@ -32,6 +32,25 @@ var parSteps = []parItem{
 		Detail: "Check IPPS-A weekly. Chase it with S-1 if it stalls."},
 }
 
+// parTransitions is what the Transition Center asks for to issue the
+// DA Form 2339, the application the PAR is built on.
+var parTransitions = []parItem{
+	{Key: "tr-questionnaire", Title: "Retirement Application Questionnaire",
+		Detail: "Filled out and signed. This starts your application at the Transition Center."},
+	{Key: "tr-dd214", Title: "DD 214s and Prior-Service Documents",
+		Detail: "Every DD 214 and any prior-service record, so your service dates add up."},
+	{Key: "tr-dd93", Title: "DD 93, Record of Emergency Data",
+		Detail: "Current and correct."},
+	{Key: "tr-sgli", Title: "SGLI Election (SOES)",
+		Detail: "Your current SGLI election and beneficiaries from SOES."},
+	{Key: "tr-stp", Title: "Current Soldier Talent Profile (STP)",
+		Detail: "A fresh printout."},
+	{Key: "tr-2648", Title: "DD Form 2648, Pre-Separation Counseling",
+		Detail: "Signed. Required before your retirement is processed."},
+	{Key: "tr-orders", Title: "Current Orders",
+		Detail: "Your most recent orders, if the Transition Center asks for them.", Optional: true},
+}
+
 var parChecklist = []parItem{
 	{Key: "doc-par", Title: "Personnel Action Request (PAR)",
 		Detail: "Submitted through IPPS-A. Effective Date = requested retirement date."},
@@ -68,11 +87,11 @@ type parCard struct {
 }
 
 type parView struct {
-	Steps, Checklist []parCard
-	Done, Total      int
-	WindowOpen       string // 24 months before the retirement date
-	WindowClose      string // 12 months before (Army Directive 2026-08)
-	WindowState      string // before | open | late
+	Steps, Transitions, Checklist []parCard
+	Done, Total                   int
+	WindowOpen                    string // 24 months before the retirement date
+	WindowClose                   string // 12 months before (Army Directive 2026-08)
+	WindowState                   string // before | open | late
 }
 
 func parCards(items []parItem, done map[string]string, v *parView) []parCard {
@@ -94,6 +113,7 @@ func parCards(items []parItem, done map[string]string, v *parView) []parCard {
 func buildPARView(st State) parView {
 	var v parView
 	v.Steps = parCards(parSteps, st.PARDone, &v)
+	v.Transitions = parCards(parTransitions, st.PARDone, &v)
 	v.Checklist = parCards(parChecklist, st.PARDone, &v)
 	if rd, err := time.Parse("2006-01-02", st.Settings.RetirementDate); err == nil {
 		open, close := rd.AddDate(-2, 0, 0), rd.AddDate(-1, 0, 0) // Army Directive 2026-08: 24 to 12 months out
@@ -111,7 +131,7 @@ func buildPARView(st State) parView {
 }
 
 func parKnown(key string) bool {
-	for _, list := range [][]parItem{parSteps, parChecklist, sbChecklist} {
+	for _, list := range [][]parItem{parSteps, parTransitions, parChecklist, sbChecklist} {
 		for _, it := range list {
 			if it.Key == key {
 				return true

@@ -57,14 +57,16 @@
     {{else}}Past the 12-month mark. See your S-1 and Retirement Services Officer now about a late request.{{end}}
   </div>
   {{end}}
-  <details class="how-to"><summary>Two Checklists, Do Not Confuse Them</summary>
-    <p class="hint">The <b>Transitions checklist</b> (the Retirement Application Questionnaire and its documents) goes to the Transition Center to get your DA Form 2339. The <b>Enlisted Retirement Checklist</b> is the PAR checklist: the documents the PAR needs once S-1 initiates it.</p>
-  </details>
 
   <h3 class="phase">Steps</h3>
   <div class="par-list">{{range .PAR.Steps}}{{template "par-card" .}}{{end}}</div>
 
+  <h3 class="phase">Transitions Checklist</h3>
+  <p class="hint">Turn these in to the Transition Center to get your DA Form 2339. Your Transition Center has the final list.</p>
+  <div class="par-list">{{range .PAR.Transitions}}{{template "par-card" .}}{{end}}</div>
+
   <h3 class="phase">PAR Checklist (Enlisted Retirement Checklist, March 2024)</h3>
+  <p class="hint">What the PAR needs once your S-1 starts it in IPPS-A.</p>
   <div class="par-list">{{range .PAR.Checklist}}{{template "par-card" .}}{{end}}</div>
   <p class="hint">Consolidate all documents into one PDF. This is planning guidance, not official policy; confirm every step and deadline with your Transition Center and unit S-1.</p>
 </section>

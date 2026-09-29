@@ -1748,12 +1748,14 @@ Submit the request no earlier than 24 months and no later than 12 months before
 your requested retirement date (Army Directive 2026-08, 17 April 2026). Earlier
 is better - orders can take months.
 
-TWO CHECKLISTS, DO NOT CONFUSE THEM
-1. The Transitions checklist (the Retirement Application Questionnaire and its
-   required documents) is what you turn IN to the Transition Center to get your
-   DA Form 2339 (Application for Voluntary Retirement) - the form the PAR needs.
-2. The Enlisted Retirement Checklist is the PAR checklist itself - the documents
-   the PAR requires once you initiate it in IPPS-A.
+TRANSITIONS CHECKLIST
+Turn these in to the Transition Center to get your DA Form 2339 (Application for
+Voluntary Retirement), the form the PAR needs: the Retirement Application
+Questionnaire, DD 214s and prior-service documents, DD 93, SGLI election (SOES),
+a current STP, and DD Form 2648.
+
+PAR CHECKLIST (ENLISTED RETIREMENT CHECKLIST)
+What the PAR needs once your S-1 starts it in IPPS-A. The full list follows below.
 
 STEPS
 1. Turn the Transitions checklist and its documents in to the Transition Center;
