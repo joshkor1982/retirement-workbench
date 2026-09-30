@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"mime/multipart"
@@ -1217,5 +1218,55 @@ func TestJourneyEveryListIsEditable(t *testing.T) {
 		if code, body := j.get(p); code != 200 || !strings.Contains(body, `data-edit=`) {
 			t.Errorf("%s: code %d, has edit buttons %v", p, code, strings.Contains(body, "data-edit="))
 		}
+	}
+}
+
+func TestJourneyFindConditionsInRecords(t *testing.T) {
+	j := newJourney(t)
+	// No Advisor and no records yet: refused with a reason, nothing stored.
+	if resp := j.postResp("/medical/find", nil); !strings.Contains(resp.Header.Get("Location"), "err=") {
+		t.Errorf("find without an Advisor went through: %s", resp.Header.Get("Location"))
+	}
+	var prompt, dir string
+	askAIFunc = func(_ context.Context, _, p, d string) (string, error) {
+		prompt, dir = p, d
+		return "```json\n" + `{"conditions":[
+			{"name":"Tinnitus","where":"STR 2019","evidence":"Ringing after range week."},
+			{"name":"Right knee, patellofemoral pain","where":"Ortho note, 2021-03-04","evidence":"Pain on stairs, crepitus."},
+			{"name":"right knee,  patellofemoral pain","where":"PT note","evidence":"Repeat."},
+			{"name":"Lumbar strain","where":"Sick call 2018","evidence":"Low back pain lifting."}]}` + "\n```", nil
+	}
+	defer func() { askAIFunc = askAI }()
+	_ = j.app.store.mutate(func(st *State) {
+		st.Settings.AdvisorProvider = "claude"
+		st.Docs = append(st.Docs, Doc{ID: st.id(), Name: "STR copy.pdf", File: "docs/str.pdf", Kind: "medical"})
+		st.Conditions = append(st.Conditions, Condition{ID: st.id(), Name: "Tinnitus"})
+	})
+
+	j.post("/medical/find", nil)
+	if !strings.Contains(prompt, "STR copy.pdf") || !strings.Contains(prompt, "leave these out: Tinnitus") || dir == "" {
+		t.Errorf("prompt or read folder is wrong: dir %q\n%s", dir, prompt)
+	}
+	found := j.app.store.snapshot().Found
+	if found == nil || len(found.Items) != 2 || found.Items[0].Name != "Right knee, patellofemoral pain" || found.Items[1].Name != "Lumbar strain" {
+		t.Fatalf("found = %+v, want the knee and the back only (Tinnitus is listed, the repeat merged)", found)
+	}
+	if _, body := j.get("/medical"); !strings.Contains(body, "Found in Your Records") || !strings.Contains(body, "Ortho note, 2021-03-04") {
+		t.Error("the found panel is missing")
+	}
+
+	// Add the back only; the knee stays for later.
+	j.post("/medical/found/add", url.Values{"pick": {"1"}})
+	st := j.app.store.snapshot()
+	c := st.Conditions[len(st.Conditions)-1]
+	if c.Name != "Lumbar strain" || !c.Documented || !strings.Contains(c.Notes, "Sick call 2018") {
+		t.Errorf("added condition = %+v", c)
+	}
+	if len(st.Found.Items) != 1 || st.Found.Items[0].Name != "Right knee, patellofemoral pain" {
+		t.Errorf("left to pick = %+v", st.Found.Items)
+	}
+	j.post("/medical/found/clear", nil)
+	if j.app.store.snapshot().Found != nil {
+		t.Error("Dismiss All did not clear the list")
 	}
 }

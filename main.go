@@ -282,6 +282,7 @@ type State struct {
 	Links         []Link            `json:"links,omitempty"`
 	Advisor       []AdvisorEntry    `json:"advisor,omitempty"`
 	Analysis      *ClaimAnalysis    `json:"analysis,omitempty"`
+	Found         *ConditionScan    `json:"found_conditions,omitempty"` // Find Conditions in My Records results, until added or dismissed
 	Symptoms      []Symptom         `json:"symptoms"`
 	Housing       *HouseSearch      `json:"housing,omitempty"`
 	PARDone       map[string]string `json:"par_done,omitempty"` // PAR card key -> "done|YYYY-MM-DD" or "na|..."
@@ -747,6 +748,9 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 	mux.HandleFunc("POST /medical/conditions/{id}/delete", s.conditionDelete)
 	mux.HandleFunc("POST /medical/symptoms", s.symptomAdd)
 	s.routeEdits(mux)
+	mux.HandleFunc("POST /medical/find", s.conditionsFind)
+	mux.HandleFunc("POST /medical/found/add", s.conditionsFoundAdd)
+	mux.HandleFunc("POST /medical/found/clear", s.conditionsFoundClear)
 	mux.HandleFunc("POST /medical/symptoms/{id}/delete", s.symptomDelete)
 	mux.HandleFunc("POST /timeline/tasks", s.timelineTaskAdd)
 	mux.HandleFunc("GET /settings", s.settings)
@@ -2649,7 +2653,7 @@ func (s *Server) advisorAsk(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(&p, "soldier: %s\n\nadvisor: %s\n\n", e.Q, e.A)
 	}
 	p.WriteString("=== QUESTION ===\n" + q + "\n\n" + advisorReplyFormat)
-	text, err := askAI(r.Context(), st.Settings.AdvisorProvider, p.String(), "")
+	text, err := askAIFunc(r.Context(), st.Settings.AdvisorProvider, p.String(), "")
 	if err != nil {
 		fail(err.Error())
 		return
@@ -2711,6 +2715,8 @@ func (s *Server) medical(w http.ResponseWriter, r *http.Request) {
 		"Analysis": st.Analysis, "Err": r.URL.Query().Get("err"),
 		"JustAnalyzed": r.URL.Query().Get("analyzed") == "1", // the count-up plays once, right after an analysis
 		"AdvisorReady": st.aiReady(),
+		"Found":        st.Found,
+		"HaveRecords":  len(records)+len(dbqs) > 0,
 	})
 }
 
@@ -2797,36 +2803,15 @@ func (s *Server) medicalAnalyze(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&ev, "- %s %s: %s\n", x.Date, x.Condition, x.Note)
 		}
 	}
-	// The model reads the PDFs itself, from the docs folder only, DBQs first.
-	var dbqNames, recNames, files []string
-	pdf := func(d Doc) {
-		if strings.HasSuffix(strings.ToLower(d.Name), ".pdf") && len(files) < 20 {
-			files = append(files, filepath.Base(s.docPath(d.File))+"  ("+d.Name+")")
-		}
-	}
-	for _, d := range st.Docs {
-		if d.Kind == "dbq" {
-			dbqNames = append(dbqNames, d.Name)
-			pdf(d)
-		}
-	}
-	for _, d := range st.Docs {
-		if d.Kind == "medical" {
-			recNames = append(recNames, d.Name)
-			pdf(d)
-		}
-	}
+	dbqNames, recNames, files, docsDir := s.claimEvidence(st)
 	if len(dbqNames) > 0 {
 		fmt.Fprintf(&ev, "\nDBQs on file: %s\n", strings.Join(dbqNames, "; "))
 	}
 	if len(recNames) > 0 {
 		fmt.Fprintf(&ev, "\nMEDICAL RECORDS on file: %s\n", strings.Join(recNames, "; "))
 	}
-	docsDir, _ := filepath.Abs(filepath.Join(s.data, "docs"))
 	if len(files) > 0 {
 		fmt.Fprintf(&ev, "\nRead these PDFs in %s before rating:\n- %s\n", docsDir, strings.Join(files, "\n- "))
-	} else {
-		docsDir = ""
 	}
 	ev.WriteString("\nRate ONLY the claimed conditions. Do not invent findings. Be realistic and conservative; label nothing as certain.")
 
@@ -2835,7 +2820,7 @@ func (s *Server) medicalAnalyze(w http.ResponseWriter, r *http.Request) {
 		"This is a planning estimate for the veteran, not an official decision, and you never overstate the evidence."
 
 	prompt := sys + "\n\n" + ev.String() + "\n\nRespond with ONLY a JSON object: {\"conditions\":[{\"name\":str,\"percent\":int,\"bilateral\":bool,\"code\":str,\"rationale\":str}],\"summary\":str}. No prose, no code fence."
-	out, err := askAI(r.Context(), st.Settings.AdvisorProvider, prompt, docsDir)
+	out, err := askAIFunc(r.Context(), st.Settings.AdvisorProvider, prompt, docsDir)
 	if err != nil {
 		http.Redirect(w, r, "/medical?err="+url.QueryEscape(err.Error()), http.StatusSeeOther)
 		return

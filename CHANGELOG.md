@@ -3,6 +3,11 @@
 ## Unreleased
 
 ### Added
+- Find Conditions in My Records on Medical / VA: the Advisor reads your
+  uploaded medical records and DBQs and lists conditions they document that
+  are not on your claim list, each with the document and date it came from.
+  Check the ones that fit and Add Selected puts them on the list, marked as
+  in the record, with the source as the note. Nothing is added on its own.
 - Everything you can add, you can edit. Conditions, medications, symptom
   entries, job prospects and contacts, saved job searches, SkillBridge leads,
   Who to Call offices, resource sites, savings entries, and recorded money all

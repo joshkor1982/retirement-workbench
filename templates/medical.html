@@ -67,10 +67,10 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBreakdo
 </script>
 {{end}}
 
-<section class="card">
+<section class="card" id="conditions">
   <h2>Conditions for the Claim</h2>
   <details class="how-to"><summary>How to Use</summary>
-    <p class="hint">One row per condition you intend to claim. Documented means the condition appears in your medical record; DBQ means you studied the questionnaire for it before the exams. Both need to be true before the BDD claim files. The claim is built from the record, so keep the symptom log below current and get every condition into the record at the retirement physical.</p>
+    <p class="hint">One row per condition you intend to claim. Documented means the condition appears in your medical record; DBQ means you studied the questionnaire for it before the exams. Both need to be true before the BDD claim files. The claim is built from the record, so keep the symptom log below current and get every condition into the record at the retirement physical. Find Conditions in My Records has the Advisor read your uploaded records and DBQs and suggest conditions they document that you have not listed.</p>
   </details>
   <form method="post" action="/medical/conditions" class="field-row">
     <label class="field field-grow"><span class="field-label">Condition</span>
@@ -79,6 +79,37 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBreakdo
       <input type="text" name="notes" placeholder="First documented 2019, Bragg"></label>
     <button type="submit" class="primary">Add</button>
   </form>
+  <div class="find-bar">
+    {{if and .AdvisorReady .HaveRecords}}
+    <form method="post" action="/medical/find" data-busy="Reading your records...">
+      <button type="submit" class="btn">Find Conditions in My Records</button>
+    </form>
+    <span class="hint">The Advisor reads your uploaded medical records and DBQs and lists conditions they document that are not on this list yet. Nothing is added until you pick it. Your records go to your Advisor, the same as Analyze the Claim.</span>
+    {{else}}
+    <button type="button" class="btn" disabled>Find Conditions in My Records</button>
+    <span class="hint">{{if not .AdvisorReady}}Set up the Advisor in <a href="/settings">Settings</a>, then{{else}}First{{end}} upload your medical records or DBQs as PDFs below. The Advisor reads them and suggests conditions they document.</span>
+    {{end}}
+  </div>
+  {{with .Found}}{{if .Items}}
+  <div class="found-panel" id="found">
+    <div class="found-head">
+      <b>Found in Your Records</b>
+      <span class="hint">{{len .Items}} not on your list yet, from {{.Read}} PDF{{if ne .Read 1}}s{{end}} read {{.At}} via {{.Provider}}. The Advisor can misread a record, so check each one against the document before you claim it.</span>
+    </div>
+    <form method="post" action="/medical/found/add">
+      <ul class="found-list">
+        {{range $i, $f := .Items}}
+        <li><label class="found-item"><input type="checkbox" name="pick" value="{{$i}}">
+          <span class="found-text"><b>{{$f.Name}}</b>{{if $f.Where}}<span class="found-where">{{$f.Where}}</span>{{end}}<span class="found-ev">{{$f.Evidence}}</span></span></label></li>
+        {{end}}
+      </ul>
+      <div class="found-actions">
+        <button type="submit" class="primary">Add Selected</button>
+        <button type="submit" formaction="/medical/found/clear" formnovalidate>Dismiss All</button>
+      </div>
+    </form>
+  </div>
+  {{end}}{{end}}
   {{if .Conditions}}
   <table>
     <thead><tr><th>Condition</th><th>In the Record</th><th>DBQ Studied</th><th>Notes</th><th></th></tr></thead>

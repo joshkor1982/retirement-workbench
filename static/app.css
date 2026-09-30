@@ -952,3 +952,21 @@ th.num { text-align: right; }
 .res-edit { margin-top: 8px; padding: 12px; border: 1px dashed var(--c-line); border-radius: var(--r-1); }
 .res-tile:has(> .res-edit:not([hidden])) .res-link { height: auto; }
 .res-x.res-pen:hover { color: var(--fg-accent); background: color-mix(in srgb, var(--fg-accent) 12%, transparent); }
+
+/* Find Conditions in My Records: the button, then the picks it found. */
+.find-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.find-bar form { margin: 0; }
+.find-bar .hint { flex: 1 1 320px; margin: 0; }
+.found-panel { border: 1px solid var(--c-line); border-radius: var(--r-1); background: var(--bg-well); padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.found-head { display: flex; flex-direction: column; gap: 4px; }
+.found-head .hint { margin: 0; }
+.found-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
+.found-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--c-line); border-radius: var(--r-1); cursor: pointer; height: 100%; }
+.found-item:hover { border-color: var(--fg-accent); }
+.found-item:has(input:checked) { border-color: var(--fg-accent); background: color-mix(in srgb, var(--fg-accent) 8%, transparent); }
+.found-item input { margin-top: 3px; flex-shrink: 0; }
+.found-text { display: flex; flex-direction: column; gap: 2px; }
+.found-where { font-size: var(--t-13); color: var(--fg-accent); }
+.found-ev { font-size: var(--t-13); color: var(--fg-muted); }
+.found-actions { display: flex; gap: 10px; }
+button.is-busy { cursor: progress; }

@@ -345,7 +345,18 @@
     });
   }
 
-  function init() { var k = readFlash(); wireEdits(); wireTheme(); wireMenu(); wireHowTos(); wireSearch(); wireCountUps(); wireAnalyze(); wireHeadIcons(); wireSaved(k); wireWeather(); }
+  // Slow forms (the Advisor): <form data-busy="Working..."> disables its
+  // button and says what is happening, so nobody clicks twice.
+  function wireBusy() {
+    document.querySelectorAll('form[data-busy]').forEach(function (f) {
+      f.addEventListener('submit', function () {
+        var b = f.querySelector('button[type=submit], button:not([type])');
+        if (b) { b.disabled = true; b.textContent = f.getAttribute('data-busy'); b.classList.add('is-busy'); }
+      });
+    });
+  }
+
+  function init() { var k = readFlash(); wireEdits(); wireBusy(); wireTheme(); wireMenu(); wireHowTos(); wireSearch(); wireCountUps(); wireAnalyze(); wireHeadIcons(); wireSaved(k); wireWeather(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
