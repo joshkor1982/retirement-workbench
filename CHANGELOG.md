@@ -30,6 +30,9 @@
   retire, from Open-Meteo. Works with a US ZIP code or any city worldwide.
 
 ### Changed
+- Bills can be renamed in place and saved with the amount. Debts have an
+  Edit button that opens the account name, APR, balance, and minimum in one
+  form, replacing the crowded Update column that pushed Delete off the edge.
 - The interface font is Barlow, with Barlow Semi Condensed for headings and
   big numbers, and the small text is a size larger.
 - Every card uses the same spacing between its parts, so the How This Works

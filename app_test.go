@@ -1058,3 +1058,26 @@ func TestJourneyHealthPlan(t *testing.T) {
 		t.Error("the health section is missing from Retired Pay")
 	}
 }
+
+func TestJourneyRenameBillAndDebt(t *testing.T) {
+	j := newJourney(t)
+	j.post("/bills", url.Values{"name": {"Phone"}, "amount": {"84.99"}})
+	j.post("/debts", url.Values{"name": {"Visa"}, "balance": {"1200"}})
+	st := j.app.store.snapshot()
+	bill, debt := st.Bills[len(st.Bills)-1], st.Debts[len(st.Debts)-1]
+
+	j.post("/bills/"+strconv.Itoa(bill.ID)+"/update", url.Values{"name": {"Verizon"}, "amount": {"90.00"}})
+	j.post("/debts/"+strconv.Itoa(debt.ID)+"/update", url.Values{"name": {"Chase Visa"}})
+	st = j.app.store.snapshot()
+	if b := st.Bills[len(st.Bills)-1]; b.Name != "Verizon" || b.Amount != 9000 {
+		t.Errorf("bill after rename: %+v", b)
+	}
+	if d := st.Debts[len(st.Debts)-1]; d.Name != "Chase Visa" || d.Balance != 120000 {
+		t.Errorf("debt after rename: %+v", d)
+	}
+	// A blank name keeps the old one.
+	j.post("/bills/"+strconv.Itoa(bill.ID)+"/update", url.Values{"name": {" "}, "amount": {"90.00"}})
+	if b := j.app.store.snapshot().Bills[len(st.Bills)-1]; b.Name != "Verizon" {
+		t.Errorf("blank name replaced the bill name: %q", b.Name)
+	}
+}

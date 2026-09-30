@@ -3572,6 +3572,9 @@ func (s *Server) billUpdate(w http.ResponseWriter, r *http.Request) {
 			for i := range st.Bills {
 				if st.Bills[i].ID == id {
 					st.Bills[i].Amount = amt
+					if v := strings.TrimSpace(r.FormValue("name")); v != "" {
+						st.Bills[i].Name = v
+					}
 				}
 			}
 		})
@@ -3679,6 +3682,9 @@ func (s *Server) debtUpdate(w http.ResponseWriter, r *http.Request) {
 	_ = s.store.mutate(func(st *State) {
 		for i := range st.Debts {
 			if st.Debts[i].ID == id {
+				if v := strings.TrimSpace(r.FormValue("name")); v != "" {
+					st.Debts[i].Name = v
+				}
 				if balErr == nil {
 					st.Debts[i].Balance = bal
 				}

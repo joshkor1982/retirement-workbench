@@ -393,9 +393,9 @@
     <tbody>
     {{range .Bills}}
     <tr>
-      <td><b>{{.Name}}</b></td>
+      <td><input name="name" value="{{.Name}}" form="bill-{{.ID}}" class="inline-name" aria-label="Bill name" required></td>
       <td>
-        <form method="post" action="/bills/{{.ID}}/update" class="debt-update">
+        <form method="post" action="/bills/{{.ID}}/update" class="debt-update" id="bill-{{.ID}}">
           <input name="amount" value="{{if .Amount}}{{money .Amount}}{{end}}" placeholder="0.00" size="10">
           <button class="primary">Save</button>
         </form>
@@ -454,7 +454,7 @@
     {{end}}
   </div>
   <table>
-    <thead><tr><th>#</th><th>Account</th><th>APR</th><th>Balance</th><th>Minimum</th><th>Pay This Month</th><th>Status</th><th>Update</th><th></th></tr></thead>
+    <thead><tr><th>#</th><th>Account</th><th>APR</th><th class="num">Balance</th><th class="num">Minimum</th><th class="num">Pay This Month</th><th></th></tr></thead>
     <tbody>
     {{range .Debts}}
     <tr class="{{if .PaidOff}}paiddebt{{end}}">
@@ -464,24 +464,33 @@
       <td class="num">{{if .Balance}}{{money .Balance}}{{else}}TBD{{end}}</td>
       <td class="num">{{if .Min}}{{money .Min}}{{else}}TBD{{end}}</td>
       <td class="num">{{if .PaidOff}}-{{else if .Pay}}<b class="pay-amt">{{money .Pay}}</b>{{else}}Min{{end}}</td>
-      <td>
+      <td><span class="row-actions">
         <form method="post" action="/debts/{{.ID}}/toggle">
-          {{if .PaidOff}}<button class="btn-done" title="Paid off. Click to reopen.">✓ Paid</button>{{else}}<button class="primary" title="Mark paid off">Mark Paid</button>{{end}}
+          {{if .PaidOff}}<button class="btn-done appt-done" title="Paid off. Click to reopen.">✓ Paid</button>{{else}}<button class="primary appt-done" title="Mark paid off">Mark Paid</button>{{end}}
+        </form>
+        <button type="button" class="btn-edit" onclick="toggleDebtEdit({{.ID}})">Edit</button>
+        <form method="post" action="/debts/{{.ID}}/delete"><button class="danger">Delete</button></form>
+      </span></td>
+    </tr>
+    <tr class="edit-row" id="dedit-{{.ID}}" hidden>
+      <td colspan="7">
+        <form method="post" action="/debts/{{.ID}}/update" class="field-row">
+          <label class="field field-grow"><span class="field-label">Account</span>
+            <input type="text" name="name" value="{{.Name}}" required></label>
+          <label class="field"><span class="field-label">APR</span>
+            <input type="text" name="apr" value="{{.APR}}" placeholder="19.99%" size="8"></label>
+          <label class="field"><span class="field-label">Balance</span>
+            <input type="text" name="balance" inputmode="decimal" value="{{if .Balance}}{{money .Balance}}{{end}}" placeholder="0.00" size="10"></label>
+          <label class="field"><span class="field-label">Minimum</span>
+            <input type="text" name="min" inputmode="decimal" value="{{if .Min}}{{money .Min}}{{end}}" placeholder="0.00" size="9"></label>
+          <button type="submit" class="primary">Save</button>
         </form>
       </td>
-      <td>
-        <form method="post" action="/debts/{{.ID}}/update" class="debt-update">
-          <input name="apr" placeholder="APR" size="7">
-          <input name="balance" placeholder="Balance" size="9">
-          <input name="min" placeholder="Min" size="7">
-          <button class="primary">Save</button>
-        </form>
-      </td>
-      <td><form method="post" action="/debts/{{.ID}}/delete"><button class="danger">Delete</button></form></td>
     </tr>
     {{end}}
     </tbody>
   </table>
+  <script>function toggleDebtEdit(id){var e=document.getElementById('dedit-'+id);if(e){e.hidden=!e.hidden;if(!e.hidden){var f=e.querySelector('input');if(f)f.focus();}}}</script>
   <form method="post" action="/debts" class="field-row">
     <label class="field field-grow"><span class="field-label">Add an Account</span>
       <input type="text" name="name" placeholder="New card or loan"></label>

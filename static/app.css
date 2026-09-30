@@ -940,3 +940,7 @@ main .card > details.how-to[open] > .hint { margin: 10px 0 0; }
 .tax-table td:first-child { width: 240px; }
 .tax-table td.num { width: 110px; }
 @media (max-width: 700px) { .tax-table td:first-child { width: auto; white-space: normal; } }
+
+/* A bill or debt name you can rename; it saves with the row's Save button. */
+.inline-name { width: 100%; min-width: 9ch; font-weight: 700; }
+th.num { text-align: right; }
