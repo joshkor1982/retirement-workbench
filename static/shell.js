@@ -228,8 +228,10 @@
     var fallback = document.body.dataset.pageIcon;
     document.querySelectorAll('main .card > h2, main .card > .job-results-head > h2').forEach(function (h) {
       if (h.querySelector('.h-icon')) return;
-      var text = h.textContent, name = fallback;
-      for (var i = 0; i < HEAD_ICONS.length; i++) { if (HEAD_ICONS[i][0].test(text)) { name = HEAD_ICONS[i][1]; break; } }
+      // A heading can name its own icon (data-icon), e.g. a company name that
+      // would otherwise match a topic word.
+      var text = h.textContent, name = h.dataset.icon || fallback;
+      for (var i = 0; !h.dataset.icon && i < HEAD_ICONS.length; i++) { if (HEAD_ICONS[i][0].test(text)) { name = HEAD_ICONS[i][1]; break; } }
       if (!icons[name]) return;
       var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('class', 'h-icon');

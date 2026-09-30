@@ -3,6 +3,11 @@
 ## Unreleased
 
 ### Added
+- Learning (under Career): list the companies you want to work for and the
+  skills, protocols, and tools to master at each, grouped by area with a
+  link to where you will learn them. Click a skill's status to move it To
+  Learn, Learning, Mastered; each company shows its progress. Skills show up
+  in quick search, and the Advisor can add them for you.
 - Find Conditions in My Records on Medical / VA: the Advisor reads your
   uploaded medical records and DBQs and lists conditions they document that
   are not on your claim list, each with the document and date it came from.

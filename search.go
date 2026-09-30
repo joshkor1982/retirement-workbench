@@ -93,6 +93,14 @@ func quickSearch(st State, q string) []searchHit {
 	for _, l := range st.Links {
 		add("Link", l.Title, l.Category, l.URL, l.Notes, true)
 	}
+	coName := map[int]string{}
+	for _, c := range st.Companies {
+		coName[c.ID] = c.Name
+		add("Company", c.Name, c.Role, "/learning#co-"+id(c.ID), c.Notes, false)
+	}
+	for _, sk := range st.Skills {
+		add("Skill", sk.Name, strings.Trim(coName[sk.CompanyID]+" · "+sk.Area, " ·"), "/learning#co-"+id(sk.CompanyID), sk.Notes, false)
+	}
 	for _, r := range st.Resources {
 		add("Contact", r.Name, r.Org, "/resources", r.Info+" "+r.Notes, false)
 	}

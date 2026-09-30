@@ -62,6 +62,7 @@ later.
 | Build your VA claim evidence and estimate your combined rating | **Medical / VA** |
 | Work the PAR step by step and combine your packet into one PDF | **Submit Packet** |
 | Plan your budget, debt payoff, savings, and retired pay | **Budget**, **Debt**, **Savings**, and **Retired Pay** |
+| Track what to master for each company you want to work for, skill by skill | **Learning** |
 | See your take-home after retirement: retired pay, VA pay, and a civilian job, minus federal and state tax and TRICARE, dental, and vision costs | **Retired Pay** |
 | Write a tailored resume per job, pick its design, font, and colors, and download it as a PDF | **Resume** |
 | Find jobs near a ZIP code or remote, and track every opening | **Jobs** |

@@ -261,7 +261,7 @@ func (j *journey) post(path string, form url.Values) int {
 }
 
 var allPages = []string{"/", "/timeline", "/todos", "/notes", "/appointments", "/docs", "/medical",
-	"/packet", "/budget", "/debt", "/savings", "/retired-pay", "/resume", "/itp", "/jobs", "/housing", "/resources", "/settings"}
+	"/packet", "/budget", "/debt", "/savings", "/retired-pay", "/resume", "/itp", "/jobs", "/housing", "/resources", "/learning", "/settings"}
 
 func TestJourneyFirstRunDemoAndErase(t *testing.T) {
 	j := newJourney(t)
@@ -1268,5 +1268,63 @@ func TestJourneyFindConditionsInRecords(t *testing.T) {
 	j.post("/medical/found/clear", nil)
 	if j.app.store.snapshot().Found != nil {
 		t.Error("Dismiss All did not clear the list")
+	}
+}
+
+func TestJourneyLearningByCompany(t *testing.T) {
+	j := newJourney(t)
+	if code, body := j.get("/learning"); code != 200 || !strings.Contains(body, "No companies yet") {
+		t.Fatalf("empty Learning page: %d", code)
+	}
+	j.post("/learning/companies", url.Values{"name": {"Acme Radar"}, "role": {"Integration engineer"}, "url": {"acme.example/careers"}})
+	co := j.app.store.snapshot().Companies[0]
+	if co.URL != "https://acme.example/careers" {
+		t.Errorf("careers link = %q", co.URL)
+	}
+	cid := strconv.Itoa(co.ID)
+	j.post("/learning/companies/"+cid+"/skills", url.Values{"name": {"Link 16 J-series"}, "area": {"Protocols"}})
+	j.post("/learning/companies/"+cid+"/skills", url.Values{"name": {"JREAP-C"}, "area": {"Protocols"}})
+	j.post("/learning/companies/"+cid+"/skills", url.Values{"name": {"Kubernetes"}, "area": {"Platform"}})
+	if f := flashOf(j.postResp("/learning/companies/"+cid+"/skills", url.Values{"name": {" "}})); !strings.HasPrefix(f, "err|") {
+		t.Errorf("blank skill flash = %q", f)
+	}
+	st := j.app.store.snapshot()
+	if len(st.Skills) != 3 || st.Skills[0].Status != "learn" {
+		t.Fatalf("skills = %+v", st.Skills)
+	}
+
+	// Status cycles To Learn, Learning, Mastered, and back.
+	sid := strconv.Itoa(st.Skills[0].ID)
+	for _, want := range []string{"learning", "mastered", "learn", "learning"} {
+		j.post("/learning/skills/"+sid+"/status", nil)
+		if got := j.app.store.snapshot().Skills[0].Status; got != want {
+			t.Fatalf("status = %q, want %q", got, want)
+		}
+	}
+	j.post("/learning/skills/"+strconv.Itoa(st.Skills[2].ID)+"/update", url.Values{"name": {"Kubernetes operators"}, "area": {"Platform"}, "status": {"mastered"}})
+	v := learningView(j.app.store.snapshot())
+	if len(v) != 1 || v[0].Total != 3 || v[0].Mastered != 1 || v[0].Learning != 1 || v[0].Pct != 33 ||
+		len(v[0].Areas) != 2 || v[0].Areas[0].Name != "Protocols" || len(v[0].Areas[0].Skills) != 2 {
+		t.Errorf("view = %+v", v)
+	}
+	if _, body := j.get("/learning"); !strings.Contains(body, "Kubernetes operators") || !strings.Contains(body, "1 of 3 mastered") {
+		t.Error("the page does not show the edited skill or progress")
+	}
+
+	// The Advisor can add a skill, and makes the company when it is new.
+	_ = j.app.store.mutate(func(st *State) {
+		addSkillTool(st, "acme radar", "SIMPLE", "Protocols", "", "")
+		addSkillTool(st, "New Co", "Pulumi", "Tools", "pulumi.com/docs", "")
+	})
+	st = j.app.store.snapshot()
+	if len(st.Companies) != 2 || len(st.Skills) != 5 || st.Skills[3].CompanyID != co.ID {
+		t.Errorf("advisor add: %d companies, %d skills", len(st.Companies), len(st.Skills))
+	}
+
+	// Deleting a company takes its skills with it.
+	j.post("/learning/companies/"+cid+"/delete", nil)
+	st = j.app.store.snapshot()
+	if len(st.Companies) != 1 || len(st.Skills) != 1 || st.Skills[0].Name != "Pulumi" {
+		t.Errorf("after delete: %+v %+v", st.Companies, st.Skills)
 	}
 }

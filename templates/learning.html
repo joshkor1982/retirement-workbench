@@ -1,0 +1,101 @@
+{{template "head" .}}
+<section class="card">
+  <h2>What to Master, by Company</h2>
+  <details class="how-to"><summary>How to Use</summary>
+    <p class="hint">Add each company you want to work for, then the skills, protocols, and tools you need to know there. Group them by area, like Protocols or Platform, and add a link to where you will learn each one. Click a skill's status to move it from To Learn to Learning to Mastered; one more click starts it over. Put the same skill under two companies if both want it.</p>
+  </details>
+  {{if .Companies}}
+  <div class="gist">
+    {{range .Companies}}
+    <a class="gist-item co-tile" href="#co-{{.ID}}"><span class="gist-label">{{.Name}}</span>
+      <span class="gist-num">{{.Pct}}%</span>
+      <span class="gist-sub">{{if .Total}}{{.Mastered}} of {{.Total}} mastered{{if .Learning}} · {{.Learning}} in progress{{end}}{{else}}No skills yet{{end}}</span></a>
+    {{end}}
+  </div>
+  {{end}}
+  <form method="post" action="/learning/companies" class="field-row">
+    <label class="field field-grow"><span class="field-label">Add a Company</span>
+      <input type="text" name="name" required placeholder="Company name"></label>
+    <label class="field field-grow"><span class="field-label">Role You Want</span>
+      <input type="text" name="role" placeholder="Platform engineer"></label>
+    <label class="field"><span class="field-label">Careers Page</span>
+      <input type="text" name="url" placeholder="company.com/careers"></label>
+    <label class="field field-grow"><span class="field-label">Notes</span>
+      <input type="text" name="notes" placeholder="Why this company, who you know there"></label>
+    <button type="submit" class="primary">Add</button>
+  </form>
+  {{if not .Companies}}<p class="hint">No companies yet. Add the first place you want to work, then list what you need to master there.</p>{{end}}
+</section>
+<datalist id="skill-areas">{{range .Areas}}<option value="{{.}}">{{end}}</datalist>
+
+{{range .Companies}}
+<section class="card co-card" id="co-{{.ID}}">
+  <h2 data-icon="book">{{.Name}}</h2>
+  <div class="co-meta">
+    {{if .Role}}<span class="chip">{{.Role}}</span>{{end}}
+    {{if .URL}}<a href="{{.URL}}" target="_blank" rel="noopener">Careers ↗</a>{{end}}
+    {{if .Notes}}<span class="hint">{{.Notes}}</span>{{end}}
+    <span class="row-actions co-actions">
+      <button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit Company</button>
+      <form method="post" action="/learning/companies/{{.ID}}/delete" onsubmit="return confirm('Remove {{.Name}} and all its skills?')"><button class="danger">Delete</button></form>
+    </span>
+  </div>
+  <div class="edit-row co-edit" id="edit-{{.ID}}" hidden>
+    <form method="post" action="/learning/companies/{{.ID}}/update" class="field-row">
+      <label class="field field-grow"><span class="field-label">Company</span><input type="text" name="name" value="{{.Name}}" required></label>
+      <label class="field field-grow"><span class="field-label">Role You Want</span><input type="text" name="role" value="{{.Role}}"></label>
+      <label class="field"><span class="field-label">Careers Page</span><input type="text" name="url" value="{{.URL}}"></label>
+      <label class="field field-grow"><span class="field-label">Notes</span><input type="text" name="notes" value="{{.Notes}}"></label>
+      <button type="submit" class="primary">Save</button>
+    </form>
+  </div>
+  {{if .Total}}
+  <div class="co-progress">
+    <div class="sav-track" role="progressbar" aria-valuenow="{{.Pct}}" aria-valuemin="0" aria-valuemax="100"><div class="sav-fill" style="width: {{.Pct}}%"></div></div>
+    <span class="hint">{{.Mastered}} of {{.Total}} mastered{{if .Learning}} · {{.Learning}} in progress{{end}}</span>
+  </div>
+  {{end}}
+
+  {{range .Areas}}
+  <div class="skill-area">
+    <h3 class="skill-area-name">{{.Name}} <span>{{len .Skills}}</span></h3>
+    <ul class="plain skill-list">
+      {{range .Skills}}
+      <li class="skill-row s-{{.Status}}">
+        <form method="post" action="/learning/skills/{{.ID}}/status">
+          <button class="skill-status {{if eq .Status "mastered"}}btn-done{{else if eq .Status "learning"}}primary{{end}}" title="Click to move to the next step">{{index $.SkillLabels .Status}}</button>
+        </form>
+        <div class="skill-text"><b>{{.Name}}</b>{{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}</div>
+        <span class="row-actions">
+          {{if .URL}}<a href="{{.URL}}" target="_blank" rel="noopener" class="skill-link">Learn ↗</a>{{end}}
+          <button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit</button>
+          <form method="post" action="/learning/skills/{{.ID}}/delete"><button class="danger">Delete</button></form>
+        </span>
+      </li>
+      <li class="edit-row" id="edit-{{.ID}}" hidden>
+        <form method="post" action="/learning/skills/{{.ID}}/update" class="field-row">
+          <label class="field field-grow"><span class="field-label">Skill</span><input type="text" name="name" value="{{.Name}}" required></label>
+          <label class="field"><span class="field-label">Area</span><input type="text" name="area" value="{{.Area}}" list="skill-areas"></label>
+          <label class="field"><span class="field-label">Status</span>
+            {{$st := .Status}}<select name="status">{{range $v := $.SkillFlow}}<option value="{{$v}}"{{if eq $v $st}} selected{{end}}>{{index $.SkillLabels $v}}</option>{{end}}</select></label>
+          <label class="field field-grow"><span class="field-label">Where to Learn It</span><input type="text" name="url" value="{{.URL}}"></label>
+          <label class="field field-grow"><span class="field-label">Notes</span><input type="text" name="notes" value="{{.Notes}}"></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
+      </li>
+      {{end}}
+    </ul>
+  </div>
+  {{end}}
+  {{if not .Total}}<p class="hint">Nothing to master listed yet. Add the first skill, protocol, or tool below.</p>{{end}}
+
+  <form method="post" action="/learning/companies/{{.ID}}/skills" class="field-row skill-add">
+    <label class="field field-grow"><span class="field-label">Add a Skill</span><input type="text" name="name" required placeholder="What you need to know"></label>
+    <label class="field"><span class="field-label">Area</span><input type="text" name="area" list="skill-areas" placeholder="Protocols"></label>
+    <label class="field field-grow"><span class="field-label">Where to Learn It</span><input type="text" name="url" placeholder="Docs or course link"></label>
+    <label class="field field-grow"><span class="field-label">Notes</span><input type="text" name="notes" placeholder="Optional"></label>
+    <button type="submit" class="primary">Add Skill</button>
+  </form>
+</section>
+{{end}}
+{{template "foot" .}}

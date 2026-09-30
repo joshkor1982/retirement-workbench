@@ -282,6 +282,8 @@ type State struct {
 	Links         []Link            `json:"links,omitempty"`
 	Advisor       []AdvisorEntry    `json:"advisor,omitempty"`
 	Analysis      *ClaimAnalysis    `json:"analysis,omitempty"`
+	Companies     []Company         `json:"companies,omitempty"`        // Learning: companies you want to work for
+	Skills        []Skill           `json:"skills,omitempty"`           // Learning: what to master for each
 	Found         *ConditionScan    `json:"found_conditions,omitempty"` // Find Conditions in My Records results, until added or dismissed
 	Symptoms      []Symptom         `json:"symptoms"`
 	Housing       *HouseSearch      `json:"housing,omitempty"`
@@ -748,6 +750,7 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 	mux.HandleFunc("POST /medical/conditions/{id}/delete", s.conditionDelete)
 	mux.HandleFunc("POST /medical/symptoms", s.symptomAdd)
 	s.routeEdits(mux)
+	s.routeLearning(mux)
 	mux.HandleFunc("POST /medical/find", s.conditionsFind)
 	mux.HandleFunc("POST /medical/found/add", s.conditionsFoundAdd)
 	mux.HandleFunc("POST /medical/found/clear", s.conditionsFoundClear)
@@ -787,7 +790,7 @@ func (s *Server) page(w http.ResponseWriter, name string, data map[string]any) {
 		"dashboard": "Dashboard", "timeline": "Timeline", "todos": "To-Dos", "medical": "Medical / VA",
 		"appointments": "Appointments", "docs": "Documents", "budget": "Budget",
 		"resume": "Resume", "jobs": "Jobs", "resources": "Resources", "itp": "ITP", "settings": "Settings",
-		"packet": "Submit Packet", "housing": "Housing", "debt": "Debt", "savings": "Savings", "retirepay": "Retired Pay", "notes": "Notes", "skillbridge": "SkillBridge",
+		"packet": "Submit Packet", "housing": "Housing", "debt": "Debt", "savings": "Savings", "retirepay": "Retired Pay", "notes": "Notes", "skillbridge": "SkillBridge", "learning": "Learning",
 	}
 	data["PageTitle"] = titles[name]
 	// Recent Advisor exchanges feed the docked sidebar on every page.
@@ -2071,6 +2074,7 @@ func advisorDigest(st *State) string {
 	}
 	b.WriteString(savingsDigest(*st))
 	b.WriteString(leaveDigest(*st))
+	b.WriteString(learningDigest(*st))
 	if rp := estimateRetirePay(*st); rp.Set {
 		fmt.Fprintf(&b, "Retired pay estimate (%s, %s years): gross %s, SBP %s, VA %s, total %s/mo before tax\n", rp.System, rp.Years, money(rp.Gross), money(rp.SBP), money(rp.VA), money(rp.Total))
 		t := rp.Tax
@@ -2206,6 +2210,9 @@ func advisorTools() []map[string]any {
 			map[string]any{"id": prop("integer", "task id"), "title": prop("string", ""), "due": date, "start": date,
 				"lane": prop("string", ""), "notes": prop("string", ""), "done": prop("boolean", "check or uncheck")}),
 		tool("delete_task", "Delete a task by #id.", []string{"id"}, map[string]any{"id": prop("integer", "")}),
+		tool("add_skill", "Add a skill to master for a company on the Learning page. Creates the company if it is new.", []string{"company", "name"},
+			map[string]any{"company": prop("string", "company name"), "name": prop("string", "the skill, protocol, or tool"),
+				"area": prop("string", "grouping, e.g. Protocols, Platform, Tools"), "url": prop("string", "where to learn it"), "notes": prop("string", "")}),
 		tool("add_appointment", "Add an appointment.", []string{"title", "at"},
 			map[string]any{"title": prop("string", ""), "at": prop("string", "YYYY-MM-DDTHH:MM"),
 				"place": prop("string", ""), "notes": prop("string", "")}),
@@ -2328,6 +2335,8 @@ func (s *Server) applyTool(name string, in map[string]any) string {
 				}
 			}
 			res = fmt.Sprintf("error: task #%d not found", id)
+		case "add_skill":
+			res = addSkillTool(st, toolStr(in, "company"), toolStr(in, "name"), toolStr(in, "area"), toolStr(in, "url"), toolStr(in, "notes"))
 		case "add_appointment":
 			a := Appointment{ID: st.id(), Title: toolStr(in, "title"), At: toolStr(in, "at"),
 				Place: toolStr(in, "place"), Notes: toolStr(in, "notes")}
@@ -2640,7 +2649,7 @@ func (s *Server) advisorAsk(w http.ResponseWriter, r *http.Request) {
 		"The app state below is live and true; treat it as the record of what exists in the app, not of what exists in official systems. " +
 		"Answer plainly in short paragraphs or simple numbered lists; no markdown symbols and no em dashes. Be concrete and use the soldier's real numbers and dates. " +
 		"On VA disability topics, apply 38 CFR Part 4 concepts carefully, never invent record contents, label estimates as estimates, and recommend a VSO for filing decisions. " +
-		"You can CHANGE the app with your tools when asked: add or edit tasks, appointments, bills, debts, conditions, symptoms, prospects, contacts, resources, resume targets (one tailored resume per position) and their sections, and the VA estimate. When asked to help with the resume, write strong, quantified, civilian-readable achievement bullets (no unexplained military jargon). Item IDs are the #numbers in the app state. Confirm each change in one short line. Never guess a required field like a date or dollar amount; if it is missing, ask instead of inventing it.\n\n=== APP STATE ===\n" + advisorDigest(&st)
+		"You can CHANGE the app with your tools when asked: add or edit tasks, appointments, skills to learn per company, bills, debts, conditions, symptoms, prospects, contacts, resources, resume targets (one tailored resume per position) and their sections, and the VA estimate. When asked to help with the resume, write strong, quantified, civilian-readable achievement bullets (no unexplained military jargon). Item IDs are the #numbers in the app state. Confirm each change in one short line. Never guess a required field like a date or dollar amount; if it is missing, ask instead of inventing it.\n\n=== APP STATE ===\n" + advisorDigest(&st)
 	var p strings.Builder
 	p.WriteString(sys)
 	p.WriteString("\n\n=== TOOLS YOU CAN REQUEST ===\n" + toolCatalog())
