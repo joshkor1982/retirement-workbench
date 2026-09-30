@@ -224,7 +224,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) before you open a pull request, and
 
 [MIT](LICENSE). Free for anyone to use, change, and share.
 
-Map data comes from OpenStreetMap contributors (ODbL), FEMA's National Flood
+Map data comes from OpenStreetMap contributors (ODbL), USGS The National Map
+(topo and satellite tiles, public domain), FEMA's National Flood
 Hazard Layer, the Census Bureau's TIGERweb (2020 Census), NCES school
 locations, and the FBI Crime Data Explorer. The map is drawn with Leaflet
 (BSD 2-Clause, [static/vendor/leaflet/LICENSE](static/vendor/leaflet/LICENSE)).

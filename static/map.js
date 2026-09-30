@@ -16,10 +16,34 @@
   function say(msg) { if (status) status.textContent = msg || ''; }
 
   var map = L.map(el, { scrollWheelZoom: false, zoomControl: true });
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19, className: 'osm-base',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-  }).addTo(map);
+  // Base maps. OpenStreetMap's volunteer tile servers block requests that
+  // carry no Referer, and this app sends none to other sites by default
+  // (Referrer-Policy: same-origin), so the tile layer asks for one. USGS's
+  // National Map tiles are US government, public domain, and need no key.
+  var usgs = function (svc) { return 'https://basemap.nationalmap.gov/arcgis/rest/services/' + svc + '/MapServer/tile/{z}/{y}/{x}'; };
+  var bases = {
+    streets: { label: 'Streets', url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', max: 19, cls: 'osm-base',
+      attr: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
+    topo: { label: 'Topo', url: usgs('USGSTopo'), max: 16, attr: 'USGS The National Map' },
+    satellite: { label: 'Satellite', url: usgs('USGSImageryTopo'), max: 16, attr: 'USGS The National Map: imagery' }
+  };
+  var base = null;
+  function setBase(key) {
+    var b = bases[key] || bases.streets;
+    if (base) map.removeLayer(base);
+    base = L.tileLayer(b.url, { maxZoom: b.max, maxNativeZoom: b.max, className: b.cls || '', attribution: b.attr,
+      referrerPolicy: 'strict-origin-when-cross-origin' }).addTo(map);
+    base.bringToBack();
+  }
+  var pick = document.getElementById('map-base');
+  if (pick) {
+    Object.keys(bases).forEach(function (k) { var o = document.createElement('option'); o.value = k; o.textContent = bases[k].label; pick.appendChild(o); });
+    pick.addEventListener('change', function () { setBase(pick.value); });
+  }
+  var startBase = new URLSearchParams(location.search).get('base');
+  if (!bases[startBase]) startBase = 'streets';
+  if (pick) pick.value = startBase;
+  setBase(startBase);
   el.addEventListener('click', function () { map.scrollWheelZoom.enable(); });
 
   // FEMA flood zones: FEMA's map-image service, one image per tile.

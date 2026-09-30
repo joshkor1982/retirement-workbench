@@ -1,7 +1,8 @@
 package main
 
 // The neighborhood map on Housing. The browser draws it with Leaflet
-// (vendored in static/vendor/leaflet) over OpenStreetMap tiles, and asks this
+// (vendored in static/vendor/leaflet) over OpenStreetMap street tiles or USGS
+// topo and satellite tiles, and asks this
 // server for everything else, so each outside service is called in one
 // place, politely, and cached:
 //
