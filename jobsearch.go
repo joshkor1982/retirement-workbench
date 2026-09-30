@@ -25,7 +25,7 @@ type jobQuery struct {
 	Q      string
 	Zip    string // five-digit US ZIP code
 	Radius int    // miles around the ZIP
-	Mode   string // near | remote | both
+	Mode   string // near | remote | both | anywhere
 	Where  string // free-text location, kept for searches saved by older builds
 	City   string // "Colorado Springs, CO", looked up from the ZIP
 }
@@ -40,12 +40,14 @@ func parseJobQuery(q, zip, radius, mode, where string) jobQuery {
 		jq.Radius = 25
 	}
 	switch jq.Mode {
-	case "near", "remote", "both":
+	case "near", "remote", "both", "anywhere":
 	default:
 		jq.Mode = "both"
 	}
 	if jq.Zip == "" && jq.Where == "" && jq.Mode != "remote" {
-		jq.Mode = "remote" // nowhere to be near: remote is the only search that makes sense
+		// Nowhere to be near: search the whole country. Remote-only would
+		// find almost nothing on USAJOBS, where few postings are remote.
+		jq.Mode = "anywhere"
 	}
 	return jq
 }
@@ -111,7 +113,20 @@ func jobLinkRows(jq jobQuery) []jobLinkRow {
 	e := url.QueryEscape
 	q := jq.Q
 	var rows []jobLinkRow
-	if jq.Mode != "remote" {
+	if jq.Mode == "anywhere" {
+		us := "United States"
+		rows = append(rows, jobLinkRow{"Anywhere in the US", []jobLink{
+			{"LinkedIn", "https://www.linkedin.com/jobs/search/?keywords=" + e(q) + "&location=" + e(us), ""},
+			{"Indeed", "https://www.indeed.com/jobs?q=" + e(q) + "&l=" + e(us), ""},
+			{"ClearanceJobs", "https://www.clearancejobs.com/jobs?keywords=" + e(q), "cleared jobs"},
+			{"Glassdoor", "https://www.glassdoor.com/Job/jobs.htm?sc.keyword=" + e(q), ""},
+			{"ZipRecruiter", "https://www.ziprecruiter.com/jobs-search?search=" + e(q), ""},
+			{"Dice", "https://www.dice.com/jobs?q=" + e(q), "tech"},
+			{"Google Jobs", "https://www.google.com/search?ibp=htl;jobs&q=" + e(q+" jobs"), "every board at once"},
+			{"USAJOBS", "https://www.usajobs.gov/search/results/?k=" + e(q), "federal"},
+		}})
+	}
+	if jq.Mode == "near" || jq.Mode == "both" {
 		loc := jq.Zip
 		if loc == "" {
 			loc = jq.Where
@@ -132,7 +147,7 @@ func jobLinkRows(jq jobQuery) []jobLinkRow {
 			{"USAJOBS", "https://www.usajobs.gov/search/results/?k=" + e(q) + "&l=" + e(firstNonEmpty(jq.City, loc)), "federal"},
 		}})
 	}
-	if jq.Mode != "near" {
+	if jq.Mode == "remote" || jq.Mode == "both" {
 		rows = append(rows, jobLinkRow{"Remote", []jobLink{
 			{"LinkedIn", "https://www.linkedin.com/jobs/search/?keywords=" + e(q) + "&location=United%20States&f_WT=2", ""},
 			{"Indeed", "https://www.indeed.com/jobs?q=" + e(q) + "&l=Remote", ""},
@@ -155,8 +170,35 @@ func firstNonEmpty(a, b string) string {
 }
 
 type jobResults struct {
-	Hits []jobHit
-	Errs []string
+	Hits  []jobHit
+	Errs  []string
+	Notes []string // e.g. which federal title a search was retried with
+}
+
+// fedTitles maps civilian job titles to the title USAJOBS postings use, for a
+// retry when the civilian words find nothing. Federal IT work is posted as
+// "IT Specialist" (series 2210), whatever the private sector calls it.
+var fedTitles = []struct {
+	civ []string
+	fed string
+}{
+	{[]string{"cybersecurity", "cyber security", "security engineer", "information security", "security analyst"}, "IT Specialist INFOSEC"},
+	{[]string{"platform engineer", "devops", "site reliability", "sre", "systems engineer", "system administrator", "systems administrator",
+		"sysadmin", "software engineer", "software developer", "cloud engineer", "network engineer", "kubernetes", "infrastructure engineer"}, "IT Specialist"},
+	{[]string{"data engineer", "data analyst"}, "IT Specialist DATAMGT"},
+	{[]string{"project manager", "program manager"}, "Program Manager"},
+}
+
+func fedTitle(q string) string {
+	l := strings.ToLower(q)
+	for _, m := range fedTitles {
+		for _, c := range m.civ {
+			if strings.Contains(l, c) {
+				return m.fed
+			}
+		}
+	}
+	return ""
 }
 
 // searchJobs runs every configured source in parallel, near and remote per
@@ -187,22 +229,38 @@ func searchJobs(cfg Settings, jq *jobQuery) jobResults {
 			out.Hits = append(out.Hits, hits...)
 		}()
 	}
-	near := jq.Mode != "remote"
-	remote := jq.Mode != "near"
+	near := jq.Mode == "near" || jq.Mode == "both" || jq.Mode == "anywhere"
+	remote := jq.Mode == "remote" || jq.Mode == "both"
+	// usajobs retries with the federal title when the civilian one finds nothing.
+	usajobs := func(v url.Values) ([]jobHit, error) {
+		hits, err := usajobsSearch(cfg, jq.Q, v)
+		if err == nil && len(hits) == 0 {
+			if ft := fedTitle(jq.Q); ft != "" {
+				if hits, err = usajobsSearch(cfg, ft, v); err == nil && len(hits) > 0 {
+					mu.Lock()
+					out.Notes = append(out.Notes, fmt.Sprintf("USAJOBS had nothing for %q, so these are for %q, the title federal agencies use.", jq.Q, ft))
+					mu.Unlock()
+				}
+			}
+		}
+		return hits, err
+	}
 	if cfg.USAJobsKey != "" {
 		if near {
 			v := url.Values{}
-			if loc := firstNonEmpty(jq.City, jq.Where); loc != "" {
-				v.Set("LocationName", loc)
-				if jq.City != "" {
-					v.Set("Radius", strconv.Itoa(jq.Radius))
+			if jq.Mode != "anywhere" {
+				if loc := firstNonEmpty(jq.City, jq.Where); loc != "" {
+					v.Set("LocationName", loc)
+					if jq.City != "" {
+						v.Set("Radius", strconv.Itoa(jq.Radius))
+					}
 				}
 			}
-			run("USAJOBS", false, func() ([]jobHit, error) { return usajobsSearch(cfg, jq.Q, v) })
+			run("USAJOBS", false, func() ([]jobHit, error) { return usajobs(v) })
 		}
 		if remote {
 			run("USAJOBS remote", true, func() ([]jobHit, error) {
-				return usajobsSearch(cfg, jq.Q, url.Values{"RemoteIndicator": {"True"}})
+				return usajobs(url.Values{"RemoteIndicator": {"True"}})
 			})
 		}
 	}

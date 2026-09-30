@@ -128,11 +128,17 @@ func sbLinkRows(jq jobQuery) []jobLinkRow {
 	}
 	loc := firstNonEmpty(jq.Zip, jq.Where)
 	var boards []jobLink
-	if jq.Mode == "remote" || loc == "" {
+	if jq.Mode == "remote" {
 		boards = []jobLink{
 			{"LinkedIn", "https://www.linkedin.com/jobs/search/?keywords=" + e(q) + "&location=United%20States&f_WT=2", ""},
 			{"Indeed", "https://www.indeed.com/jobs?q=" + e(q) + "&l=Remote", ""},
 			{"Google Jobs", "https://www.google.com/search?ibp=htl;jobs&q=" + e("remote "+q), ""},
+		}
+	} else if loc == "" {
+		boards = []jobLink{
+			{"LinkedIn", "https://www.linkedin.com/jobs/search/?keywords=" + e(q) + "&location=United%20States", ""},
+			{"Indeed", "https://www.indeed.com/jobs?q=" + e(q) + "&l=United+States", ""},
+			{"Google Jobs", "https://www.google.com/search?ibp=htl;jobs&q=" + e(q), ""},
 		}
 	} else {
 		r := fmt.Sprint(jq.Radius)
@@ -149,9 +155,6 @@ func (s *Server) skillbridge(w http.ResponseWriter, r *http.Request) {
 	st := s.store.snapshot()
 	qv := r.URL.Query()
 	jq := parseJobQuery(qv.Get("q"), qv.Get("zip"), qv.Get("radius"), qv.Get("mode"), "")
-	if qv.Get("mode") == "" && jq.Zip == "" {
-		jq.Mode = "remote"
-	}
 	var res jobResults
 	if jq.Q != "" {
 		sq := jq

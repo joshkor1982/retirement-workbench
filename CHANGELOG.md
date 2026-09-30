@@ -93,6 +93,12 @@
   retire, from Open-Meteo. Works with a US ZIP code or any city worldwide.
 
 ### Changed
+- Job search with no ZIP code searches the whole country (a new "Anywhere
+  in the US" work type) instead of remote only; only a few dozen of USAJOBS's
+  10,000-plus postings are fully remote, so most remote-only searches came
+  back empty. A civilian title that finds nothing on USAJOBS (platform
+  engineer, DevOps, cybersecurity) is retried with the federal title
+  ("IT Specialist"), and the page says so.
 - Retired Pay shows TRICARE and dental costs from the first visit. Before
   years of service were entered, the health section showed a blank plan and
   the wrong TRICARE group.

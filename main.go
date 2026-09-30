@@ -4007,7 +4007,7 @@ func (s *Server) jobs(w http.ResponseWriter, r *http.Request) {
 		res = searchJobs(st.Settings, &jq)
 	}
 	s.page(w, "jobs", map[string]any{
-		"Searches": st.JobSearches, "Hits": res.Hits, "Errs": res.Errs, "JQ": jq,
+		"Searches": st.JobSearches, "Hits": res.Hits, "Errs": res.Errs, "Notes": res.Notes, "JQ": jq,
 		"LinkRows": jobLinkRows(jq), "Radii": []int{10, 25, 50, 100},
 		"HaveUSAJobs": st.Settings.USAJobsKey != "",
 		"HaveAdzuna":  st.Settings.AdzunaID != "" && st.Settings.AdzunaKey != "",

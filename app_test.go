@@ -442,9 +442,19 @@ func TestJobQueryAndLinks(t *testing.T) {
 	if !strings.Contains(rows[1].Links[0].URL, "f_WT=2") || !strings.Contains(rows[1].Links[1].URL, "l=Remote") {
 		t.Errorf("remote links: %s | %s", rows[1].Links[0].URL, rows[1].Links[1].URL)
 	}
-	// No ZIP and no saved location: remote is the only search that makes sense.
-	if parseJobQuery("analyst", "", "", "both", "").Mode != "remote" {
-		t.Error("blank ZIP should search remote only")
+	// No ZIP and no saved location: search the whole country, since few
+	// federal postings are remote. An explicit Remote Only stays remote.
+	if parseJobQuery("analyst", "", "", "both", "").Mode != "anywhere" {
+		t.Error("blank ZIP should search anywhere in the US")
+	}
+	if parseJobQuery("analyst", "", "", "remote", "").Mode != "remote" {
+		t.Error("Remote Only should stay remote")
+	}
+	for q, want := range map[string]string{"Platform Engineer": "IT Specialist", "senior DevOps": "IT Specialist",
+		"cybersecurity analyst": "IT Specialist INFOSEC", "logistics manager": ""} {
+		if got := fedTitle(q); got != want {
+			t.Errorf("fedTitle(%q) = %q, want %q", q, got, want)
+		}
 	}
 	if got := parseJobQuery("x", "12ab5", "999", "odd", "Denver").Radius; got != 25 {
 		t.Errorf("bad radius should fall back to 25, got %d", got)

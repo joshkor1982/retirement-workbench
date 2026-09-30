@@ -13,6 +13,7 @@
         <option value="both"{{if eq .JQ.Mode "both"}} selected{{end}}>Near Me and Remote</option>
         <option value="near"{{if eq .JQ.Mode "near"}} selected{{end}}>Near Me Only</option>
         <option value="remote"{{if eq .JQ.Mode "remote"}} selected{{end}}>Remote Only</option>
+        <option value="anywhere"{{if eq .JQ.Mode "anywhere"}} selected{{end}}>Anywhere in the US</option>
       </select></label>
     <button type="submit" class="primary">Search</button>
   </form>
@@ -25,7 +26,7 @@
     </div>
   </div>
   {{end}}
-  <p class="hint">Leave the ZIP code blank to search remote jobs only. Results below come from {{if and .HaveUSAJobs .HaveAdzuna}}USAJOBS and Adzuna{{else if .HaveUSAJobs}}USAJOBS only. Add a free Adzuna key in <a href="/settings">Settings</a> for private-sector jobs too{{else if .HaveAdzuna}}Adzuna only. Add a free USAJOBS key in <a href="/settings">Settings</a> for federal jobs too{{else}}USAJOBS (federal) and Adzuna (everything else) once you add their free keys in <a href="/settings">Settings</a>{{end}}. LinkedIn and Indeed have no public search, so the links above open your search on their sites.</p>
+  <p class="hint">Leave the ZIP code blank to search the whole country. Few federal jobs are fully remote, so Remote Only finds little on USAJOBS; federal IT jobs are posted as "IT Specialist", and a civilian title that finds nothing is retried with the federal one. Results below come from {{if and .HaveUSAJobs .HaveAdzuna}}USAJOBS and Adzuna{{else if .HaveUSAJobs}}USAJOBS only. Add a free Adzuna key in <a href="/settings">Settings</a> for private-sector jobs too{{else if .HaveAdzuna}}Adzuna only. Add a free USAJOBS key in <a href="/settings">Settings</a> for federal jobs too{{else}}USAJOBS (federal) and Adzuna (everything else) once you add their free keys in <a href="/settings">Settings</a>{{end}}. LinkedIn and Indeed have no public search, so the links above open your search on their sites.</p>
 </section>
 
 {{if .JQ.Q}}
@@ -39,6 +40,7 @@
       <button type="submit" class="primary">Save This Search</button>
     </form>
   </div>
+  {{range .Notes}}<p class="hint">{{.}}</p>{{end}}
   {{range .Errs}}<p class="warntext">{{.}}</p>{{end}}
   {{if .Hits}}
   <ul class="job-list">
@@ -174,7 +176,7 @@
     {{range .Searches}}
     <li class="rowline">
       <div><a href="/jobs?q={{.Keyword}}&zip={{.Zip}}&radius={{.Radius}}&mode={{.Mode}}&where={{.Location}}"><b>{{.Keyword}}</b>
-        {{if eq .Mode "remote"}} · remote only{{else}}{{if .Zip}} · within {{.Radius}} miles of {{.Zip}}{{else if .Location}} · {{.Location}}{{end}}{{if eq .Mode "both"}} and remote{{end}}{{end}}</a></div>
+        {{if eq .Mode "remote"}} · remote only{{else if eq .Mode "anywhere"}} · anywhere in the US{{else}}{{if .Zip}} · within {{.Radius}} miles of {{.Zip}}{{else if .Location}} · {{.Location}}{{end}}{{if eq .Mode "both"}} and remote{{end}}{{end}}</a></div>
       <span class="row-actions"><button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit</button><form method="post" action="/jobs/searches/{{.ID}}/delete"><button class="danger">Delete</button></form></span>
     </li>
     <li class="edit-row" id="edit-{{.ID}}" hidden>
@@ -186,7 +188,7 @@
           <label class="field"><span class="field-label">Radius in Miles</span>
             <input type="number" name="radius" value="{{if .Radius}}{{.Radius}}{{end}}" min="5" max="200" placeholder="50"></label>
           <label class="field"><span class="field-label">Where</span>
-            <select name="mode"><option value="both"{{if eq .Mode "both"}} selected{{end}}>Near Me and Remote</option><option value="near"{{if eq .Mode "near"}} selected{{end}}>Near Me Only</option><option value="remote"{{if eq .Mode "remote"}} selected{{end}}>Remote Only</option></select></label>
+            <select name="mode"><option value="both"{{if eq .Mode "both"}} selected{{end}}>Near Me and Remote</option><option value="near"{{if eq .Mode "near"}} selected{{end}}>Near Me Only</option><option value="remote"{{if eq .Mode "remote"}} selected{{end}}>Remote Only</option><option value="anywhere"{{if eq .Mode "anywhere"}} selected{{end}}>Anywhere in the US</option></select></label>
           <button type="submit" class="primary">Save</button>
         </form>
     </li>

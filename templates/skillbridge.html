@@ -30,6 +30,7 @@
         <option value="both"{{if eq .JQ.Mode "both"}} selected{{end}}>Near Me and Remote</option>
         <option value="near"{{if eq .JQ.Mode "near"}} selected{{end}}>Near Me Only</option>
         <option value="remote"{{if eq .JQ.Mode "remote"}} selected{{end}}>Remote Only</option>
+        <option value="anywhere"{{if eq .JQ.Mode "anywhere"}} selected{{end}}>Anywhere in the US</option>
       </select></label>
     <button type="submit" class="primary">Search</button>
   </form>
