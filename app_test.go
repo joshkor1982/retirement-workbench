@@ -1438,18 +1438,18 @@ func tgt(st State, id int) *ResumeTarget { return st.findTarget(id) }
 
 func TestLinkCompanyToExistingResume(t *testing.T) {
 	j := newJourney(t)
-	j.post("/resume/targets", url.Values{"position": {"Engineer"}, "company": {"Ultra"}, "requirements": {"Link 16"}})
-	j.post("/learning/companies", url.Values{"name": {"Ultra I&C"}})
+	j.post("/resume/targets", url.Values{"position": {"Engineer"}, "company": {"Acme"}, "requirements": {"Link 16"}})
+	j.post("/learning/companies", url.Values{"name": {"Acme Systems"}})
 	st := j.app.store.snapshot()
 	var old, card int
 	for _, c := range st.Companies {
-		if c.Name == "Ultra" {
+		if c.Name == "Acme" {
 			old = c.TargetID
 		} else {
 			card = c.ID
 		}
 	}
-	j.post("/learning/companies/"+strconv.Itoa(card)+"/update", url.Values{"name": {"Ultra I&C"}, "target": {strconv.Itoa(old)}, "posting": {"stale box"}})
+	j.post("/learning/companies/"+strconv.Itoa(card)+"/update", url.Values{"name": {"Acme Systems"}, "target": {strconv.Itoa(old)}, "posting": {"stale box"}})
 	st = j.app.store.snapshot()
 	for _, c := range st.Companies {
 		if c.ID == card && c.TargetID != old {
