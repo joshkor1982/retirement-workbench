@@ -58,7 +58,7 @@ func (s *Server) loadHandbook(slug string) *handbook {
 	rest, refs := splitSection(src, "References")
 	rest, books := splitSection(rest, "Recommended Books")
 	h.Refs, h.Books = parseRefs(refs), parseRefs(books)
-	h.Body, h.TOC = renderMarkdown(rest)
+	h.Body, h.TOC = renderMarkdown(dropLead(rest))
 	if fi, err := os.Stat(s.hbPath(slug)); err == nil {
 		h.Updated = fi.ModTime().Format("2006-01-02")
 	}
@@ -419,4 +419,25 @@ func (s *Server) generateDoc(w http.ResponseWriter, r *http.Request, prompt, bac
 	_ = s.store.mutate(func(st *State) { link(st, slug) })
 	flash(w, "ok", "Written "+time.Now().Format("Jan 2")+". Check the facts and references before you rely on it.")
 	http.Redirect(w, r, back, http.StatusSeeOther)
+}
+
+// dropLead removes the title and the summary paragraph under it; the page
+// shows both above the body already.
+func dropLead(src string) string {
+	lines := strings.Split(src, "\n")
+	i := 0
+	for i < len(lines) && !strings.HasPrefix(strings.TrimSpace(lines[i]), "# ") {
+		i++
+	}
+	if i == len(lines) {
+		return src
+	}
+	i++
+	for i < len(lines) && strings.TrimSpace(lines[i]) == "" {
+		i++
+	}
+	for i < len(lines) && strings.TrimSpace(lines[i]) != "" && !strings.HasPrefix(strings.TrimSpace(lines[i]), "#") {
+		i++
+	}
+	return strings.Join(lines[i:], "\n")
 }
