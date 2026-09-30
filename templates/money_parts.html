@@ -265,7 +265,9 @@
           <tr><td>Federal income tax</td><td class="num">{{money .Ret.Tax.Federal}}</td>
             <td class="hint">{{.Ret.Tax.FedRate}} of {{if .Ret.Tax.Wages}}retired pay and job pay together{{else}}retired pay{{end}}, on the 2026 brackets after the standard deduction.{{if .Ret.Tax.Wages}} The job pushes retired pay into higher brackets, so raise your W-4P withholding in myPay or the job's W-4 to cover it.{{end}}</td></tr>
           <tr><td>Deduction</td><td class="num">{{if .Ret.Tax.Itemized.Better}}{{dollars .Ret.Tax.Itemized.Total}}{{else}}{{dollars .Ret.Tax.Itemized.Standard}}{{end}}</td>
-            <td class="hint">{{if .Ret.Tax.Itemized.Better}}Itemized: saves {{dollars .Ret.Tax.Itemized.Saves}} a year over the standard deduction.{{else}}Standard deduction.{{if or .Settings.OwnHome .Settings.OwnRV}} Itemizing the house{{if .Settings.OwnRV}} and RV{{end}} comes to {{dollars .Ret.Tax.Itemized.Total}}, less than the standard, so it would not lower your federal tax.{{end}}{{end}}</td></tr>
+            <td class="hint">{{if .Ret.Tax.Itemized.Better}}Itemized, larger than the {{dollars .Ret.Tax.Itemized.Standard}} standard deduction.{{else}}Standard deduction.{{if or .Settings.OwnHome .Settings.OwnRV .Settings.OwnCar}} Itemizing comes to {{dollars .Ret.Tax.Itemized.Total}}, less than the standard, so it would not lower your federal tax.{{end}}{{end}}{{if .Ret.Tax.Itemized.Saves}} All together, the house, RV, car, and gifts cut your federal tax by {{dollars .Ret.Tax.Itemized.Saves}} a year.{{end}}</td></tr>
+          {{with .Ret.Tax.Itemized}}{{if .Car}}<tr><td>Car loan interest</td><td class="num">{{if .CarDed}}{{dollars .CarDed}}{{else}}$0.00{{end}}</td>
+            <td class="hint">{{if .CarWhyNot}}{{.CarWhyNot}}{{else}}Deducted on top of either deduction: {{dollars .CarInterest}} first-year interest, up to $10,000{{if .CarPhasedOut}}, reduced because income is over the $100,000 ($200,000 joint) limit{{end}}. Tax years 2025-2028 only.{{end}}</td></tr>{{end}}{{end}}
           {{if .Ret.Tax.Wages}}<tr><td>Social Security and Medicare</td><td class="num">{{money .Ret.Tax.FICA}}</td>
             <td class="hint">7.65% of job pay, withheld by the employer. Retired pay pays neither.</td></tr>{{end}}
           <tr><td>{{if .Ret.Tax.StateName}}{{.Ret.Tax.StateName}}{{else}}State{{end}} income tax</td><td class="num">{{if .Ret.Tax.State}}{{money .Ret.Tax.StateTax}}{{else}}·{{end}}</td>
@@ -317,8 +319,8 @@
     </div>
     <div class="va-calc tax-calc" id="home-plan">
       <div class="va-calc-head">
-        <span class="field-label">Home, RV, and Deductions</span>
-        {{if .Ret.Home.Set}}<span class="va-amount">{{money .Ret.Home.Left}}<small> a month left after housing</small></span>{{end}}
+        <span class="field-label">Home, RV, Car, and Deductions</span>
+        {{if .Ret.Home.Set}}<span class="va-amount">{{money .Ret.Home.Left}}<small> a month left after these</small></span>{{end}}
         <span class="hint">Check what you plan to own. The house uses your price and down payment from <a href="/home-team#fee">Agents &amp; Lenders</a>, the lowest rate and closing costs from your lender quotes, and your <a href="/savings">Savings</a> balance. Interest and property tax only lower your tax if, together with state taxes and gifts, they beat the standard deduction.</span>
       </div>
       {{with .Ret.Home}}{{if .Set}}
@@ -332,9 +334,11 @@
           {{end}}
           {{if $.Settings.OwnRV}}<tr><td>RV payment</td><td class="num">{{money .RVPay}}</td>
             <td class="hint">{{money $.Settings.RVLoan}} over {{$.Settings.RVYears}} years at {{$.Settings.RVRate}}%.</td></tr>{{end}}
-          <tr><td>Housing each month</td><td class="num"><b>{{money .Total}}</b></td><td class="hint">Everything above.</td></tr>
+          {{if $.Settings.OwnCar}}<tr><td>Car payment and tag tax</td><td class="num">{{money .CarPay}}</td>
+            <td class="hint">{{money $.Settings.CarLoan}} over {{$.Settings.CarYears}} years at {{$.Settings.CarRate}}%{{if $.Settings.CarPropTax}}, plus the yearly tag tax spread over 12 months{{end}}.</td></tr>{{end}}
+          <tr><td>Home, RV, and car each month</td><td class="num"><b>{{money .Total}}</b></td><td class="hint">Everything above.</td></tr>
           <tr class="tax-total"><td>Left each month</td><td class="num">{{money .Left}}</td>
-            <td class="hint">Take-home after tax and health ({{money $.Ret.TakeHome}}) minus housing. Food, utilities, cars, and other bills come out of this.</td></tr>
+            <td class="hint">Take-home after tax and health ({{money $.Ret.TakeHome}}) minus the payments above. Food, utilities, gas, and other bills come out of this.</td></tr>
           {{if $.Settings.OwnHome}}
           <tr><td>Cash to close</td><td class="num">{{money .Cash}}</td>
             <td class="hint">{{money .Down}} down{{if .Closing}} plus {{money .Closing}} closing costs ({{.ClosingFrom}}'s quote){{else}}, plus closing costs once a lender quotes them{{end}}. VA lets the seller pay closing costs, so ask.</td></tr>
@@ -345,7 +349,7 @@
       </table>
       {{end}}{{end}}
       {{with .Ret.Tax.Itemized}}{{if or .Home .RV $.Settings.Charity}}
-      <p class="hint ded-line">Itemized {{dollars .Total}}: {{if .Home}}mortgage interest {{dollars .HomeInterest}}, {{end}}{{if .RV}}RV interest {{dollars .RVInterest}}, {{end}}state and local taxes {{dollars .SALT}}{{if .SALTUsesSales}} (the RV's sales tax beat state income tax){{end}}{{if .SALTCapped}} (capped){{end}}{{if .Charity}}, gifts {{dollars .Charity}}{{end}}. Standard {{dollars .Standard}}.{{if .RVNotHome}} RV interest only counts when it has sleeping, cooking, and toilet facilities.{{end}}{{if .InterestCapped}} Loans over $750,000 only get part of their interest counted.{{end}} First-year interest; it shrinks each year after.</p>
+      <p class="hint ded-line">Itemized {{dollars .Total}}: {{if .Home}}mortgage interest {{dollars .HomeInterest}}, {{end}}{{if .RV}}RV interest {{dollars .RVInterest}}, {{end}}state and local taxes {{dollars .SALT}}{{if .SALTUsesSales}} (sales tax on the RV and car beat state income tax){{end}}{{if .SALTCapped}} (capped){{end}}{{if .Charity}}, gifts {{dollars .Charity}}{{end}}. Standard {{dollars .Standard}}.{{if .RVNotHome}} RV interest only counts when it has sleeping, cooking, and toilet facilities.{{end}}{{if .InterestCapped}} Loans over $750,000 only get part of their interest counted.{{end}} First-year interest; it shrinks each year after.</p>
       {{end}}{{end}}
       <div class="ded-group">
         <label class="field inline-check"><input type="checkbox" name="own_home" value="1"{{if .Settings.OwnHome}} checked{{end}}> I'll Own a Home</label>
@@ -366,6 +370,18 @@
           <label class="field"><span class="field-label">Years</span><input type="number" name="rv_years" min="1" max="30" value="{{or .Settings.RVYears 15}}"></label>
           <label class="field"><span class="field-label">Sales Tax Paid</span><input type="text" name="rv_sales_tax" inputmode="decimal" value="{{if .Settings.RVSalesTax}}{{money .Settings.RVSalesTax}}{{end}}" placeholder="4,000"></label>
           <label class="field inline-check"><input type="checkbox" name="rv_is_home" value="1"{{if .Settings.RVIsHome}} checked{{end}}> Has Sleeping, Cooking, and Toilet</label>
+        </div>
+      </div>
+      <div class="ded-group">
+        <label class="field inline-check"><input type="checkbox" name="own_car" value="1"{{if .Settings.OwnCar}} checked{{end}}> I'll Buy a Car</label>
+        <div class="field-row ded-fields">
+          <label class="field"><span class="field-label">Car Loan</span><input type="text" name="car_loan" inputmode="decimal" value="{{if .Settings.CarLoan}}{{money .Settings.CarLoan}}{{end}}" placeholder="32,000"></label>
+          <label class="field"><span class="field-label">Rate %</span><input type="text" name="car_rate" inputmode="decimal" value="{{if .Settings.CarRate}}{{.Settings.CarRate}}{{end}}" placeholder="6.9" size="6"></label>
+          <label class="field"><span class="field-label">Years</span><input type="number" name="car_years" min="1" max="10" value="{{or .Settings.CarYears 6}}"></label>
+          <label class="field"><span class="field-label">Sales Tax Paid</span><input type="text" name="car_sales_tax" inputmode="decimal" value="{{if .Settings.CarSalesTax}}{{money .Settings.CarSalesTax}}{{end}}" placeholder="1,300"></label>
+          <label class="field"><span class="field-label">Yearly Tag Tax</span><input type="text" name="car_prop_tax" inputmode="decimal" value="{{if .Settings.CarPropTax}}{{money .Settings.CarPropTax}}{{end}}" placeholder="Value-based part"></label>
+          <label class="field inline-check"><input type="checkbox" name="car_new" value="1"{{if .Settings.CarNew}} checked{{end}}> New, Not Used</label>
+          <label class="field inline-check"><input type="checkbox" name="car_us" value="1"{{if .Settings.CarUS}} checked{{end}}> Assembled in the US</label>
         </div>
       </div>
       <div class="field-row">

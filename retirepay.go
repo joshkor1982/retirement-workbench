@@ -131,6 +131,11 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 	homeRate, hrOK := optionalRate(r.FormValue("home_rate"))
 	rvRate, rrOK := optionalRate(r.FormValue("rv_rate"))
 	rvYears, ryErr := strconv.Atoi(cmpOr(field(r, "rv_years"), "15"))
+	carLoan, clOK := optionalMoney(r.FormValue("car_loan"))
+	carSales, csOK := optionalMoney(r.FormValue("car_sales_tax"))
+	carProp, cpOK := optionalMoney(r.FormValue("car_prop_tax"))
+	carRate, crOK := optionalRate(r.FormValue("car_rate"))
+	carYears, cyErr := strconv.Atoi(cmpOr(field(r, "car_years"), "6"))
 	count := func(k string, hi int) int {
 		n, _ := strconv.Atoi(strings.TrimSpace(r.FormValue(k)))
 		return min(max(n, 0), hi)
@@ -148,6 +153,10 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 		flash(w, "err", "The down payment has to be less than the home price.")
 	case !hrOK || !rrOK:
 		flash(w, "err", "Interest rates must be percentages, like 6.25.")
+	case !clOK || !csOK || !cpOK || !crOK || carLoan < 0 || carSales < 0 || carProp < 0:
+		flash(w, "err", "Car amounts must be dollars and the rate a percentage, like 32,000 and 6.9.")
+	case cyErr != nil || carYears < 1 || carYears > 10:
+		flash(w, "err", "The car loan term must be 1 to 10 years.")
 	case ryErr != nil || rvYears < 1 || rvYears > 30:
 		flash(w, "err", "The RV loan term must be 1 to 30 years.")
 	case !oOK || other < 0:
@@ -174,6 +183,9 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 			st.Settings.OwnRV, st.Settings.RVIsHome = r.FormValue("own_rv") == "1", r.FormValue("rv_is_home") == "1"
 			st.Settings.RVLoan, st.Settings.RVRate, st.Settings.RVYears, st.Settings.RVSalesTax = rvLoan, rvRate, rvYears, rvSales
 			st.Settings.Charity = charity
+			st.Settings.OwnCar, st.Settings.CarNew, st.Settings.CarUS = r.FormValue("own_car") == "1", r.FormValue("car_new") == "1", r.FormValue("car_us") == "1"
+			st.Settings.CarLoan, st.Settings.CarRate, st.Settings.CarYears = carLoan, carRate, carYears
+			st.Settings.CarSalesTax, st.Settings.CarPropTax = carSales, carProp
 			st.Settings.NoVision = r.FormValue("vision") != "1"
 			st.Settings.BirthYear, _ = strconv.Atoi(strings.TrimSpace(r.FormValue("birth_year")))
 		})

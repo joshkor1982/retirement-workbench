@@ -110,6 +110,14 @@ type Settings struct {
 	RVYears         int     `json:"rv_years,omitempty"`
 	RVSalesTax      int64   `json:"rv_sales_tax_cents,omitempty"`
 	Charity         int64   `json:"charity_cents,omitempty"` // a year // estimated civilian job pay, a year
+	OwnCar          bool    `json:"own_car,omitempty"`       // a car loan
+	CarNew          bool    `json:"car_new,omitempty"`       // new, not used: needed for the car loan interest deduction
+	CarUS           bool    `json:"car_us,omitempty"`        // final assembly in the United States
+	CarLoan         int64   `json:"car_loan_cents,omitempty"`
+	CarRate         float64 `json:"car_rate,omitempty"`
+	CarYears        int     `json:"car_years,omitempty"`
+	CarSalesTax     int64   `json:"car_sales_tax_cents,omitempty"`
+	CarPropTax      int64   `json:"car_prop_tax_cents,omitempty"` // yearly value-based (ad valorem) tag tax
 	SavingsGoal     int64   `json:"savings_goal_cents,omitempty"`
 	SavingsGoalName string  `json:"savings_goal_name,omitempty"`
 	TimelineSeeded  bool    `json:"timeline_seeded"`

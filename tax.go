@@ -318,12 +318,14 @@ func estimateRetireTax(st State, p retirePay) retireTax {
 	}
 	rate, _ := st.homeRate()
 	t.Itemized = itemize(s, rate, income, stax, fstd)
+	// The car loan interest deduction applies either way.
+	car := float64(t.Itemized.CarDed)
 	withStd := bracketTax(max(income-fstd, 0), fb)
-	fed := withStd
+	fed := bracketTax(max(income-fstd-car, 0), fb)
 	if t.Itemized.Better {
-		fed = bracketTax(max(income-float64(t.Itemized.Total), 0), fb)
-		t.Itemized.Saves = int64(withStd - fed + 0.5)
+		fed = bracketTax(max(income-float64(t.Itemized.Total)-car, 0), fb)
 	}
+	t.Itemized.Saves = int64(withStd - fed + 0.5) // everything the home, RV, car, and gifts save
 	t.Federal, t.FedRate = cents(fed), pct(fed, income)
 	t.Total = t.Federal + t.StateTax + t.FICA
 	t.AfterTax = p.Total + t.Wages - t.Total

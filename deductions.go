@@ -13,6 +13,13 @@ package main
 //     or sales tax (the sales tax on an RV counts), capped at $40,400 for
 //     2026, and cut by 30% of income over $505,000, never below $10,000.
 //   - Charitable gifts, as entered.
+//   - A car: its sales tax and yearly value-based tag tax count toward state
+//     and local taxes when itemizing. Separately, for tax years 2025-2028,
+//     interest on a loan for a NEW personal vehicle with final assembly in
+//     the US (car, minivan, van, SUV, pickup, or motorcycle under 14,000
+//     lbs; not RVs, used cars, or leases) is deductible up to $10,000, with
+//     or without itemizing, reduced by $200 for each $1,000 of income over
+//     $100,000 ($200,000 joint). Source: IRS fact sheet FS-2025-03.
 //
 // Interest is the first year's, from a standard amortizing loan; it shrinks
 // every year after, so itemizing tends to help most the year you buy.
@@ -24,6 +31,8 @@ import (
 )
 
 const (
+	carDedMax      = 10000
+	carDedLastYear = 2028
 	mortgageLimit  = 750000
 	saltCap2026    = 40400
 	saltPhaseStart = 505000
@@ -45,6 +54,13 @@ type itemization struct {
 	Better         bool  // itemizing beats the standard deduction
 	Saves          int64 // federal tax saved a year, dollars
 	RVNotHome      bool  // RV entered without sleep, cook, and toilet: interest not counted
+	CarPropTax     int64
+	// The car loan interest deduction stands apart from itemizing.
+	Car          bool
+	CarInterest  int64  // first-year interest, dollars
+	CarDed       int64  // deductible part, dollars
+	CarWhyNot    string // why it does not qualify, when it does not
+	CarPhasedOut bool
 }
 
 // firstYearInterest is the interest paid in the first 12 payments of a
@@ -101,20 +117,49 @@ func itemize(s Settings, homeRate, income, stateIncomeTax, standard float64) ite
 	if s.OwnRV {
 		sales = float64(s.RVSalesTax) / 100
 	}
+	if s.OwnCar {
+		sales += float64(s.CarSalesTax) / 100
+		it.CarPropTax = s.CarPropTax / 100
+	}
 	general := stateIncomeTax
 	if sales > stateIncomeTax {
 		general, it.SALTUsesSales = sales, true
 	}
-	salt := general + float64(it.PropTax)
+	salt := general + float64(it.PropTax+it.CarPropTax)
 	if c := saltCap(income); salt > c {
 		salt, it.SALTCapped = c, true
 	}
 	it.SALT = int64(salt + 0.5)
 	it.Charity = s.Charity / 100
 	it.Total = it.HomeInterest + it.RVInterest + it.SALT + it.Charity
-	it.Better = (s.OwnHome || s.OwnRV || s.Charity > 0) && float64(it.Total) > standard
+	it.Better = (s.OwnHome || s.OwnRV || s.OwnCar || s.Charity > 0) && float64(it.Total) > standard
+
+	if s.OwnCar {
+		it.Car = true
+		in := firstYearInterest(float64(s.CarLoan)/100, s.CarRate, max(s.CarYears, 1))
+		it.CarInterest = int64(in + 0.5)
+		switch {
+		case !s.CarNew:
+			it.CarWhyNot = "Used vehicles do not qualify for the car loan interest deduction."
+		case !s.CarUS:
+			it.CarWhyNot = "Only vehicles with final assembly in the United States qualify."
+		case taxYear > carDedLastYear:
+			it.CarWhyNot = "The car loan interest deduction ends after tax year 2028."
+		default:
+			ded := min(in, carDedMax)
+			over := income - map[bool]float64{false: 100000, true: 200000}[s.RetSpouse]
+			if over > 0 {
+				ded -= 200 * math.Ceil(over/1000)
+				it.CarPhasedOut = true
+			}
+			it.CarDed = int64(max(ded, 0) + 0.5)
+		}
+	}
 	return it
 }
+
+// taxYear is the year these estimates model.
+const taxYear = 2026
 
 // ---------- The cost of owning ----------------------------------------------
 
@@ -130,7 +175,7 @@ type homePlan struct {
 	Rate                  float64
 	RateFrom              string // "yours" | the lender's name
 	PI, Tax, Ins, HOA     int64  // cents a month
-	RVPay                 int64
+	RVPay, CarPay         int64
 	Total                 int64 // housing a month
 	Left                  int64 // take-home after housing, a month
 	Closing               int64 // closing costs, cents
@@ -190,7 +235,7 @@ func (s Settings) homeLoan() (loan, fee int64) {
 func estimateHomePlan(st State, takeHome int64) homePlan {
 	s := st.Settings
 	h := homePlan{Price: s.HomePrice, Down: s.HomeDown}
-	if !s.OwnHome && !s.OwnRV {
+	if !s.OwnHome && !s.OwnRV && !s.OwnCar {
 		return h
 	}
 	if s.OwnHome {
@@ -209,7 +254,10 @@ func estimateHomePlan(st State, takeHome int64) homePlan {
 	if s.OwnRV {
 		h.RVPay = payment(s.RVLoan, s.RVRate, max(s.RVYears, 1))
 	}
-	h.Total = h.PI + h.Tax + h.Ins + h.HOA + h.RVPay
+	if s.OwnCar {
+		h.CarPay = payment(s.CarLoan, s.CarRate, max(s.CarYears, 1)) + (s.CarPropTax+6)/12
+	}
+	h.Total = h.PI + h.Tax + h.Ins + h.HOA + h.RVPay + h.CarPay
 	h.Left = takeHome - h.Total
 	h.Savings = summarizeSavings(st).Saved
 	h.SavingsAfter = h.Savings - h.Cash

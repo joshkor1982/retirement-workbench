@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- Retired Pay adds a car: its payment and yearly tag tax join the monthly
+  total, its sales tax and tag tax count toward state and local taxes when
+  itemizing, and a new US-assembled car's loan interest is deducted up to
+  $10,000 with or without itemizing (tax years 2025-2028, phased out over
+  $100,000 of income, $200,000 joint), with the reason shown when it does
+  not qualify.
 - Retired Pay: Home, RV, and Deductions. Check "I'll own a home" and "I'll
   own an RV" to see the monthly payment (principal and interest, property
   tax, insurance, HOA, and the RV loan), what is left of take-home after

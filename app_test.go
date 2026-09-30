@@ -1730,3 +1730,41 @@ func TestHomePlanUsesQuotesAndSavings(t *testing.T) {
 		t.Errorf("left = %d, want take-home %d minus housing %d", h.Left, p.TakeHome, h.Total)
 	}
 }
+
+func TestCarLoanInterestDeduction(t *testing.T) {
+	base := Settings{RetYears: 20, RetHigh3: 800000, RetirementDate: "2027-11-01", RetSpouse: true, VaEstimate: 60, TaxState: "AL",
+		OwnCar: true, CarLoan: 3200000, CarRate: 6.9, CarYears: 6, CarNew: true, CarUS: true}
+	in := firstYearInterest(32000, 6.9, 6)
+	tx := estimateRetirePay(State{Settings: base}).Tax
+	it := tx.Itemized
+	if it.CarInterest != int64(in+0.5) || it.CarDed != it.CarInterest || it.CarWhyNot != "" {
+		t.Fatalf("new US car: %+v", it)
+	}
+	// It lowers federal tax without itemizing: $48,000 - 32,200 - interest.
+	want := bracketTax(48000-32200-float64(it.CarDed), fedJoint)
+	if tx.Federal != cents(want) || it.Better {
+		t.Errorf("federal = %d, want %d (standard deduction plus car interest)", tx.Federal, cents(want))
+	}
+	used := base
+	used.CarNew = false
+	if it := estimateRetirePay(State{Settings: used}).Tax.Itemized; it.CarDed != 0 || !strings.Contains(it.CarWhyNot, "Used") {
+		t.Errorf("used car: %+v", it)
+	}
+	foreign := base
+	foreign.CarUS = false
+	if it := estimateRetirePay(State{Settings: foreign}).Tax.Itemized; it.CarDed != 0 {
+		t.Errorf("foreign assembly should not qualify: %+v", it)
+	}
+	// Joint income of $230,000: $30,000 over, so $6,000 off the deduction.
+	rich := base
+	rich.CivSalary = 18200000
+	if it := estimateRetirePay(State{Settings: rich}).Tax.Itemized; !it.CarPhasedOut || it.CarDed != int64(max(min(in, 10000)-6000, 0)+0.5) {
+		t.Errorf("phase-out: %+v", it)
+	}
+	// The payment and yearly tag tax join the monthly total.
+	base.CarPropTax = 60000
+	h := estimateRetirePay(State{Settings: base}).Home
+	if h.CarPay != payment(3200000, 6.9, 6)+5000 || h.Total != h.CarPay {
+		t.Errorf("car pay: %+v", h)
+	}
+}
