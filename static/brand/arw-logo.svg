@@ -3,7 +3,7 @@
   <defs><clipPath id="arw-cap"><rect x="0" y="4" width="138" height="54"/></clipPath></defs>
   <g clip-path="url(#arw-cap)" fill="none" stroke="currentColor" stroke-width="9" stroke-linejoin="miter" stroke-miterlimit="10">
     <path d="M1.2 67 L20 4 L38.8 67"/><path d="M10 41 H30"/>
-    <path d="M49.5 62 V4 H63 C75 4 79 10.5 79 18.5 C79 26.5 75 32.5 63 32.5 H49.5"/><path d="M62 31 L82.5 62"/>
+    <path d="M49.5 62 V8.5 H63 C74 8.5 78.5 13 78.5 20.5 C78.5 28 74 32.5 63 32.5 H49.5"/><path d="M62 31 L82.5 62"/>
     <path d="M88 -2 L99 57 L111 29 L123 57 L134 -2"/>
   </g>
   <path d="M111.00,1.50 L113.72,8.76 L121.46,9.10 L115.39,13.93 L117.47,21.40 L111.00,17.12 L104.53,21.40 L106.61,13.93 L100.54,9.10 L108.28,8.76 Z" fill="#E8B923"/>
