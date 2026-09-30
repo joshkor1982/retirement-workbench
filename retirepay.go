@@ -66,9 +66,15 @@ func estimateRetirePay(st State) retirePay {
 	s := st.Settings
 	high3, calc := st.high3()
 	if s.RetYears <= 0 || high3 <= 0 {
-		// No pension inputs yet, but VA pay can still be shown from the rating.
-		return retirePay{Rating: roundRating(s.VaEstimate), RatesAsOf: vaRatesEffective, High3: calc,
+		// No pension inputs yet, but VA pay and health costs can still be
+		// shown from the rating and family.
+		p := retirePay{Rating: roundRating(s.VaEstimate), RatesAsOf: vaRatesEffective, High3: calc,
 			VA: vaMonthly(s.VaEstimate, vaDependents{Spouse: s.RetSpouse, Children: s.RetKids, SchoolKids: s.RetSchoolKids, Parents: s.RetParents})}
+		p.Total = p.VA
+		p.Tax = estimateRetireTax(st, p)
+		p.Health = estimateHealth(s)
+		p.TakeHome = p.Tax.AfterTax - p.Health.Total
+		return p
 	}
 	rate := 0.025
 	sys := "High-3"

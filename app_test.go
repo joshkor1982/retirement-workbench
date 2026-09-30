@@ -1547,3 +1547,10 @@ func TestJourneyTopicAndCompanyPages(t *testing.T) {
 		t.Error("handbook page does not show which topics use it")
 	}
 }
+
+func TestRetirePayEmptyStillShowsHealth(t *testing.T) {
+	p := estimateRetirePay(State{})
+	if p.Health.PlanLabel != "TRICARE Prime" || p.Health.Group != "A" || p.Health.Tricare != 3183 {
+		t.Errorf("empty settings health = %+v", p.Health)
+	}
+}

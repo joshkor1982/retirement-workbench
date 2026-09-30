@@ -61,6 +61,9 @@
   retire, from Open-Meteo. Works with a US ZIP code or any city worldwide.
 
 ### Changed
+- Retired Pay shows TRICARE and dental costs from the first visit. Before
+  years of service were entered, the health section showed a blank plan and
+  the wrong TRICARE group.
 - Resumes can be deleted again. The Delete button sat inside the Save form,
   which browsers do not allow, so it saved instead of deleting. It is now its
   own form, and each resume in the list has a delete as well.
