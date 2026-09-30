@@ -3,6 +3,14 @@
 ## Unreleased
 
 ### Added
+- Jobs searches defense contractors' own career sites, no keys needed: GDIT,
+  Booz Allen, CACI, Leidos, Northrop Grumman, Parsons, Boeing, and KBR
+  (Workday), Anduril, Defense Unicorns, and Epirus (Greenhouse), and
+  Palantir and Shield AI (Lever). Their openings show with USAJOBS and
+  Adzuna results, filtered by work type, up to 25 per company, and open on
+  the company's site to apply. Pick the companies under "Defense Contractors
+  Searched". Lockheed Martin, RTX, L3Harris, BAE, SAIC, Peraton, and ManTech,
+  which have no public search, get links.
 - Retired Pay adds a car: its payment and yearly tag tax join the monthly
   total, its sales tax and tag tax count toward state and local taxes when
   itemizing, and a new US-assembled car's loan interest is deducted up to

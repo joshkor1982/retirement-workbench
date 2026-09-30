@@ -52,75 +52,76 @@ var staticFS embed.FS
 // ---------- Model ----------------------------------------------------------
 
 type Settings struct {
-	Name            string  `json:"name"`
-	Branch          string  `json:"branch"`
-	RetirementDate  string  `json:"retirement_date"` // YYYY-MM-DD
-	USAJobsEmail    string  `json:"usajobs_email"`
-	USAJobsKey      string  `json:"usajobs_key"`
-	WeatherHere     string  `json:"weather_here,omitempty"` // ZIP or city
-	WeatherRetire   string  `json:"weather_retire,omitempty"`
-	AdzunaID        string  `json:"adzuna_id,omitempty"`
-	AdzunaKey       string  `json:"adzuna_key,omitempty"`
-	VaEstimate      int     `json:"va_estimate,omitempty"` // working percent, user-set
-	ResumeHeadline  string  `json:"resume_headline,omitempty"`
-	ResumeContact   string  `json:"resume_contact,omitempty"`
-	LinksSeeded     bool    `json:"links_seeded,omitempty"`
-	AdvisorProvider string  `json:"advisor_provider,omitempty"` // "" (off) | claude | chatgpt; see ai.go
-	MonthlyBudget   int64   `json:"monthly_budget_cents"`
-	PowerEngine     int64   `json:"power_engine_cents"`
-	MonthlyIncome   int64   `json:"monthly_income_cents"`
-	PayMid          int64   `json:"pay_mid_cents,omitempty"`
-	PayEnd          int64   `json:"pay_end_cents,omitempty"`
-	DebtBaseline    int64   `json:"debt_baseline_cents"`
-	DebtFreeBy      string  `json:"debt_free_by"` // YYYY-MM-DD goal date
-	LeaveDays       float64 `json:"leave_days,omitempty"`
-	LeaveSet        bool    `json:"leave_set,omitempty"`
-	LeaveAsOf       string  `json:"leave_as_of,omitempty"` // YYYY-MM-DD the balance was read
-	RetSystem       string  `json:"ret_system,omitempty"`  // high3 | brs
-	PayGrade        string  `json:"pay_grade,omitempty"`   // e.g. E-8
-	PayRaise        float64 `json:"pay_raise,omitempty"`   // assumed raise for unpublished years; 0 = default
-	RetYears        float64 `json:"ret_years,omitempty"`
-	RetHigh3        int64   `json:"ret_high3_cents,omitempty"`
-	RetSBP          bool    `json:"ret_sbp,omitempty"`
-	RetSpouse       bool    `json:"ret_spouse,omitempty"`      // VA dependents: spouse
-	RetKids         int     `json:"ret_kids,omitempty"`        // children under 18
-	RetSchoolKids   int     `json:"ret_school_kids,omitempty"` // children 18 to 23 in school
-	RetParents      int     `json:"ret_parents,omitempty"`     // dependent parents
-	TaxState        string  `json:"tax_state,omitempty"`       // state retired pay is taxed in; "" = guess from WeatherRetire
-	BirthYear       int     `json:"birth_year,omitempty"`      // for age-based state exclusions
-	CivSalary       int64   `json:"civ_salary_cents,omitempty"`
-	HealthPlan      string  `json:"health_plan,omitempty"`        // prime | select | tfl | none; "" = prime
-	NoDental        bool    `json:"no_dental,omitempty"`          // skip FEDVIP dental
-	NoVision        bool    `json:"no_vision,omitempty"`          // skip FEDVIP vision
-	HealthOther     int64   `json:"health_other_cents,omitempty"` // other health premiums, a month
-	HomePrice       int64   `json:"home_price_cents,omitempty"`   // VA funding fee estimate
-	HomeDown        int64   `json:"home_down_cents,omitempty"`
-	VALoanUsed      bool    `json:"va_loan_used,omitempty"`    // a VA loan was used before: higher fee
-	DataGovKey      string  `json:"data_gov_key,omitempty"`    // api.data.gov key for FBI crime data; DEMO_KEY when empty
-	OwnHome         bool    `json:"own_home,omitempty"`        // itemize: a home with a mortgage
-	HomeLoan        int64   `json:"home_loan_cents,omitempty"` // 0 = price minus down payment
-	HomeRate        float64 `json:"home_rate,omitempty"`       // percent
-	PropTax         int64   `json:"prop_tax_cents,omitempty"`  // a year
-	HomeIns         int64   `json:"home_ins_cents,omitempty"`  // homeowners insurance, a year
-	HOA             int64   `json:"hoa_cents,omitempty"`       // a month
-	OwnRV           bool    `json:"own_rv,omitempty"`          // itemize: an RV as a second home
-	RVIsHome        bool    `json:"rv_is_home,omitempty"`      // has sleeping, cooking, and toilet facilities
-	RVLoan          int64   `json:"rv_loan_cents,omitempty"`
-	RVRate          float64 `json:"rv_rate,omitempty"`
-	RVYears         int     `json:"rv_years,omitempty"`
-	RVSalesTax      int64   `json:"rv_sales_tax_cents,omitempty"`
-	Charity         int64   `json:"charity_cents,omitempty"` // a year // estimated civilian job pay, a year
-	OwnCar          bool    `json:"own_car,omitempty"`       // a car loan
-	CarNew          bool    `json:"car_new,omitempty"`       // new, not used: needed for the car loan interest deduction
-	CarUS           bool    `json:"car_us,omitempty"`        // final assembly in the United States
-	CarLoan         int64   `json:"car_loan_cents,omitempty"`
-	CarRate         float64 `json:"car_rate,omitempty"`
-	CarYears        int     `json:"car_years,omitempty"`
-	CarSalesTax     int64   `json:"car_sales_tax_cents,omitempty"`
-	CarPropTax      int64   `json:"car_prop_tax_cents,omitempty"` // yearly value-based (ad valorem) tag tax
-	SavingsGoal     int64   `json:"savings_goal_cents,omitempty"`
-	SavingsGoalName string  `json:"savings_goal_name,omitempty"`
-	TimelineSeeded  bool    `json:"timeline_seeded"`
+	Name            string   `json:"name"`
+	Branch          string   `json:"branch"`
+	RetirementDate  string   `json:"retirement_date"` // YYYY-MM-DD
+	USAJobsEmail    string   `json:"usajobs_email"`
+	USAJobsKey      string   `json:"usajobs_key"`
+	WeatherHere     string   `json:"weather_here,omitempty"` // ZIP or city
+	WeatherRetire   string   `json:"weather_retire,omitempty"`
+	AdzunaID        string   `json:"adzuna_id,omitempty"`
+	AdzunaKey       string   `json:"adzuna_key,omitempty"`
+	VaEstimate      int      `json:"va_estimate,omitempty"` // working percent, user-set
+	ResumeHeadline  string   `json:"resume_headline,omitempty"`
+	ResumeContact   string   `json:"resume_contact,omitempty"`
+	LinksSeeded     bool     `json:"links_seeded,omitempty"`
+	AdvisorProvider string   `json:"advisor_provider,omitempty"` // "" (off) | claude | chatgpt; see ai.go
+	MonthlyBudget   int64    `json:"monthly_budget_cents"`
+	PowerEngine     int64    `json:"power_engine_cents"`
+	MonthlyIncome   int64    `json:"monthly_income_cents"`
+	PayMid          int64    `json:"pay_mid_cents,omitempty"`
+	PayEnd          int64    `json:"pay_end_cents,omitempty"`
+	DebtBaseline    int64    `json:"debt_baseline_cents"`
+	DebtFreeBy      string   `json:"debt_free_by"` // YYYY-MM-DD goal date
+	LeaveDays       float64  `json:"leave_days,omitempty"`
+	LeaveSet        bool     `json:"leave_set,omitempty"`
+	LeaveAsOf       string   `json:"leave_as_of,omitempty"` // YYYY-MM-DD the balance was read
+	RetSystem       string   `json:"ret_system,omitempty"`  // high3 | brs
+	PayGrade        string   `json:"pay_grade,omitempty"`   // e.g. E-8
+	PayRaise        float64  `json:"pay_raise,omitempty"`   // assumed raise for unpublished years; 0 = default
+	RetYears        float64  `json:"ret_years,omitempty"`
+	RetHigh3        int64    `json:"ret_high3_cents,omitempty"`
+	RetSBP          bool     `json:"ret_sbp,omitempty"`
+	RetSpouse       bool     `json:"ret_spouse,omitempty"`      // VA dependents: spouse
+	RetKids         int      `json:"ret_kids,omitempty"`        // children under 18
+	RetSchoolKids   int      `json:"ret_school_kids,omitempty"` // children 18 to 23 in school
+	RetParents      int      `json:"ret_parents,omitempty"`     // dependent parents
+	TaxState        string   `json:"tax_state,omitempty"`       // state retired pay is taxed in; "" = guess from WeatherRetire
+	BirthYear       int      `json:"birth_year,omitempty"`      // for age-based state exclusions
+	CivSalary       int64    `json:"civ_salary_cents,omitempty"`
+	HealthPlan      string   `json:"health_plan,omitempty"`        // prime | select | tfl | none; "" = prime
+	NoDental        bool     `json:"no_dental,omitempty"`          // skip FEDVIP dental
+	NoVision        bool     `json:"no_vision,omitempty"`          // skip FEDVIP vision
+	HealthOther     int64    `json:"health_other_cents,omitempty"` // other health premiums, a month
+	HomePrice       int64    `json:"home_price_cents,omitempty"`   // VA funding fee estimate
+	HomeDown        int64    `json:"home_down_cents,omitempty"`
+	VALoanUsed      bool     `json:"va_loan_used,omitempty"`    // a VA loan was used before: higher fee
+	DataGovKey      string   `json:"data_gov_key,omitempty"`    // api.data.gov key for FBI crime data; DEMO_KEY when empty
+	EmployersOff    []string `json:"employers_off,omitempty"`   // defense contractors not to search on Jobs
+	OwnHome         bool     `json:"own_home,omitempty"`        // itemize: a home with a mortgage
+	HomeLoan        int64    `json:"home_loan_cents,omitempty"` // 0 = price minus down payment
+	HomeRate        float64  `json:"home_rate,omitempty"`       // percent
+	PropTax         int64    `json:"prop_tax_cents,omitempty"`  // a year
+	HomeIns         int64    `json:"home_ins_cents,omitempty"`  // homeowners insurance, a year
+	HOA             int64    `json:"hoa_cents,omitempty"`       // a month
+	OwnRV           bool     `json:"own_rv,omitempty"`          // itemize: an RV as a second home
+	RVIsHome        bool     `json:"rv_is_home,omitempty"`      // has sleeping, cooking, and toilet facilities
+	RVLoan          int64    `json:"rv_loan_cents,omitempty"`
+	RVRate          float64  `json:"rv_rate,omitempty"`
+	RVYears         int      `json:"rv_years,omitempty"`
+	RVSalesTax      int64    `json:"rv_sales_tax_cents,omitempty"`
+	Charity         int64    `json:"charity_cents,omitempty"` // a year // estimated civilian job pay, a year
+	OwnCar          bool     `json:"own_car,omitempty"`       // a car loan
+	CarNew          bool     `json:"car_new,omitempty"`       // new, not used: needed for the car loan interest deduction
+	CarUS           bool     `json:"car_us,omitempty"`        // final assembly in the United States
+	CarLoan         int64    `json:"car_loan_cents,omitempty"`
+	CarRate         float64  `json:"car_rate,omitempty"`
+	CarYears        int      `json:"car_years,omitempty"`
+	CarSalesTax     int64    `json:"car_sales_tax_cents,omitempty"`
+	CarPropTax      int64    `json:"car_prop_tax_cents,omitempty"` // yearly value-based (ad valorem) tag tax
+	SavingsGoal     int64    `json:"savings_goal_cents,omitempty"`
+	SavingsGoalName string   `json:"savings_goal_name,omitempty"`
+	TimelineSeeded  bool     `json:"timeline_seeded"`
 }
 
 type Todo struct {
@@ -775,6 +776,7 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 	mux.HandleFunc("POST /jobs/contacts", s.contactAdd)
 	mux.HandleFunc("POST /jobs/contacts/{id}/delete", s.contactDelete)
 	mux.HandleFunc("POST /jobs/searches", s.jobSearchAdd)
+	mux.HandleFunc("POST /jobs/employers", s.employersSave)
 	mux.HandleFunc("POST /jobs/searches/{id}/delete", s.jobSearchDelete)
 	mux.HandleFunc("GET /housing", s.housing)
 	mux.HandleFunc("GET /housing/stamp", s.housingStamp)
@@ -4008,6 +4010,7 @@ func (s *Server) jobs(w http.ResponseWriter, r *http.Request) {
 	}
 	s.page(w, "jobs", map[string]any{
 		"Searches": st.JobSearches, "Hits": res.Hits, "Errs": res.Errs, "Notes": res.Notes, "JQ": jq,
+		"Employers": employers, "EmployersOn": employersOn(st.Settings), "EmployerOn": employerOnSet(st.Settings), "BackURL": r.URL.RequestURI(),
 		"LinkRows": jobLinkRows(jq), "Radii": []int{10, 25, 50, 100},
 		"HaveUSAJobs": st.Settings.USAJobsKey != "",
 		"HaveAdzuna":  st.Settings.AdzunaID != "" && st.Settings.AdzunaKey != "",

@@ -159,7 +159,7 @@ func jobLinkRows(jq jobQuery) []jobLinkRow {
 			{"USAJOBS", "https://www.usajobs.gov/search/results/?k=" + e(q+" remote"), "federal"},
 		}})
 	}
-	return rows
+	return append(rows, jobLinkRow{"Defense contractors without a public search", contractorLinks})
 }
 
 func firstNonEmpty(a, b string) string {
@@ -261,6 +261,19 @@ func searchJobs(cfg Settings, jq *jobQuery) jobResults {
 		if remote {
 			run("USAJOBS remote", true, func() ([]jobHit, error) {
 				return usajobs(url.Values{"RemoteIndicator": {"True"}})
+			})
+		}
+	}
+	// Defense contractors' own career sites: no keys, one request each.
+	if jq.Q != "" {
+		st := stateFromPlace(firstNonEmpty(jq.Zip, jq.City))
+		for _, e := range employersOn(cfg) {
+			run(e.Name, false, func() ([]jobHit, error) {
+				hits, err := employerSearch(e, jq.Q)
+				if err != nil {
+					return nil, err
+				}
+				return filterByMode(hits, jq.Mode, st), nil
 			})
 		}
 	}

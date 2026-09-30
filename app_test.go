@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -226,6 +227,9 @@ type journey struct {
 
 func newJourney(t *testing.T) *journey {
 	t.Helper()
+	// Journeys never reach real employers' career sites.
+	employerSearch = func(employer, string) ([]jobHit, error) { return nil, nil }
+	t.Cleanup(func() { employerSearch = searchEmployer })
 	dir := t.TempDir()
 	app, h, err := newApp(dir)
 	if err != nil {
@@ -432,7 +436,7 @@ func TestResumeFilename(t *testing.T) {
 func TestJobQueryAndLinks(t *testing.T) {
 	jq := parseJobQuery("logistics manager", "80903", "50", "both", "")
 	rows := jobLinkRows(jq)
-	if len(rows) != 2 || !strings.HasPrefix(rows[0].Label, "Near 80903") || rows[1].Label != "Remote" {
+	if len(rows) != 3 || !strings.HasPrefix(rows[0].Label, "Near 80903") || rows[1].Label != "Remote" || !strings.HasPrefix(rows[2].Label, "Defense contractors") {
 		t.Fatalf("rows: %+v", rows)
 	}
 	li := rows[0].Links[0].URL
@@ -471,7 +475,7 @@ func TestJobResultsRender(t *testing.T) {
 			{Title: "Logistics Manager", Org: "Acme Defense", Location: "Colorado Springs, CO", URL: "https://example.com/1", Source: "Adzuna", Posted: "2026-09-28", Pay: "$70,000 to $85,000"},
 			{Title: "Supply Chain Specialist", Org: "Department of the Army", URL: "https://example.com/2", Source: "USAJOBS", Closes: "2026-10-15", Remote: true},
 		},
-		"Errs": []string{"USAJOBS: key rejected"},
+		"Errs": []string{"USAJOBS: key rejected"}, "Employers": employers, "EmployersOn": employers, "EmployerOn": map[string]bool{},
 	})
 	body := rec.Body.String()
 	for _, want := range []string{"2 Openings", "$70,000 to $85,000", "Track It", "Found on Adzuna", "USAJOBS: key rejected",
@@ -1776,5 +1780,62 @@ func TestCarLoanInterestDeduction(t *testing.T) {
 	h := estimateRetirePay(State{Settings: base}).Home
 	if h.CarPay != payment(3200000, 6.9, 6)+5000 || h.Total != h.CarPay {
 		t.Errorf("car pay: %+v", h)
+	}
+}
+
+func TestContractorFilters(t *testing.T) {
+	now := time.Date(2026, 9, 30, 12, 0, 0, 0, time.UTC)
+	for in, want := range map[string]string{"Posted Today": "2026-09-30", "Posted Yesterday": "2026-09-29", "Posted 8 Days Ago": "2026-09-22", "Posted 30+ Days Ago": "2026-08-31"} {
+		if got := workdayPosted(in, now); got != want {
+			t.Errorf("workdayPosted(%q) = %s, want %s", in, got, want)
+		}
+	}
+	if !matchesWords("systems engineer", "Senior Systems Engineer II") || matchesWords("systems engineer", "Program Manager") {
+		t.Error("matchesWords")
+	}
+	hits := []jobHit{
+		{Title: "Systems Engineer", Location: "Huntsville, AL"},
+		{Title: "Systems Engineer", Location: "USA AL Redstone Arsenal"},
+		{Title: "Systems Engineer", Location: "Springfield, VA"},
+		{Title: "Systems Engineer (Remote)", Location: "United States"},
+		{Title: "Systems Engineer", Location: "3 Locations"},
+	}
+	count := func(mode string) int { return len(filterByMode(append([]jobHit(nil), hits...), mode, "AL")) }
+	if n := count("near"); n != 3 {
+		t.Errorf("near AL = %d, want 3 (two in Alabama plus the unnamed multi-location)", n)
+	}
+	if n := count("remote"); n != 1 {
+		t.Errorf("remote = %d, want 1", n)
+	}
+	if n := count("both"); n != 4 {
+		t.Errorf("both = %d, want 4", n)
+	}
+	if n := count("anywhere"); n != 5 {
+		t.Errorf("anywhere = %d, want 5", n)
+	}
+	if on := employersOn(Settings{EmployersOff: []string{"gdit", "bah"}}); len(on) != len(employers)-2 {
+		t.Errorf("employersOn = %d", len(on))
+	}
+}
+
+func TestJourneyEmployerPick(t *testing.T) {
+	j := newJourney(t)
+	j.post("/jobs/employers", url.Values{"on": {"gdit", "caci"}})
+	if on := employersOn(j.app.store.snapshot().Settings); len(on) != 2 || on[0].Key != "gdit" || on[1].Key != "caci" {
+		t.Errorf("saved employers = %+v", on)
+	}
+	var (
+		mu       sync.Mutex
+		searched []string
+	)
+	employerSearch = func(e employer, q string) ([]jobHit, error) {
+		mu.Lock()
+		searched = append(searched, e.Key)
+		mu.Unlock()
+		return []jobHit{{Title: "Systems Engineer", Org: e.Name, Location: "Huntsville, AL", URL: "https://example.com/" + e.Key, Source: e.Name, Posted: "2026-09-29"}}, nil
+	}
+	_, body := j.get("/jobs?q=systems+engineer&zip=35801&radius=25&mode=both")
+	if len(searched) != 2 || !strings.Contains(body, "https://example.com/caci") || !strings.Contains(body, "Defense Contractors Searched (2 of") {
+		t.Errorf("searched %v; page shows contractor jobs: %v", searched, strings.Contains(body, "example.com/caci"))
 	}
 }

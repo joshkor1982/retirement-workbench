@@ -17,6 +17,17 @@
       </select></label>
     <button type="submit" class="primary">Search</button>
   </form>
+  <details class="how-to employer-pick">
+    <summary>Defense Contractors Searched ({{len .EmployersOn}} of {{len .Employers}})</summary>
+    <form method="post" action="/jobs/employers" class="employer-form">
+      {{if .JQ.Q}}<input type="hidden" name="back" value="{{.BackURL}}">{{end}}
+      <div class="map-layers">
+        {{range .Employers}}<label class="map-chip"><input type="checkbox" name="on" value="{{.Key}}"{{if index $.EmployerOn .Key}} checked{{end}}> {{.Name}}</label>{{end}}
+      </div>
+      <p class="hint">Each search goes straight to these companies' own career sites, no keys needed, and their openings show up with the rest below. Click one to read and apply on the company's site. Near Me keeps jobs in your ZIP code's state; Remote keeps postings that say remote.</p>
+      <button type="submit">Save Companies</button>
+    </form>
+  </details>
   {{if .JQ.Where}}<p class="hint">Searching near "{{.JQ.Where}}" from a saved search. Enter a ZIP code to search by distance.</p>{{end}}
   {{range .LinkRows}}
   <div class="job-sites">
@@ -26,7 +37,7 @@
     </div>
   </div>
   {{end}}
-  <p class="hint">Leave the ZIP code blank to search the whole country. Few federal jobs are fully remote, so Remote Only finds little on USAJOBS; federal IT jobs are posted as "IT Specialist", and a civilian title that finds nothing is retried with the federal one. Results below come from {{if and .HaveUSAJobs .HaveAdzuna}}USAJOBS and Adzuna{{else if .HaveUSAJobs}}USAJOBS only. Add a free Adzuna key in <a href="/settings">Settings</a> for private-sector jobs too{{else if .HaveAdzuna}}Adzuna only. Add a free USAJOBS key in <a href="/settings">Settings</a> for federal jobs too{{else}}USAJOBS (federal) and Adzuna (everything else) once you add their free keys in <a href="/settings">Settings</a>{{end}}. LinkedIn and Indeed have no public search, so the links above open your search on their sites.</p>
+  <p class="hint">Leave the ZIP code blank to search the whole country. Few federal jobs are fully remote, so Remote Only finds little on USAJOBS; federal IT jobs are posted as "IT Specialist", and a civilian title that finds nothing is retried with the federal one. Results below come from the defense contractors you picked{{if and .HaveUSAJobs .HaveAdzuna}}, USAJOBS, and Adzuna{{else if .HaveUSAJobs}} and USAJOBS. Add a free Adzuna key in <a href="/settings">Settings</a> for more private-sector jobs{{else if .HaveAdzuna}} and Adzuna. Add a free USAJOBS key in <a href="/settings">Settings</a> for federal jobs too{{else}}. Add free USAJOBS and Adzuna keys in <a href="/settings">Settings</a> for federal and other private-sector jobs{{end}}. LinkedIn and Indeed have no public search, so the links above open your search on their sites.</p>
 </section>
 
 {{if .JQ.Q}}

@@ -34,7 +34,7 @@ import (
 	"time"
 )
 
-var mapClient = &http.Client{Timeout: 25 * time.Second}
+var mapClient = &http.Client{Timeout: 45 * time.Second} // large job boards (Anduril lists ~2,400) take a while
 
 type cached struct {
 	at   time.Time
