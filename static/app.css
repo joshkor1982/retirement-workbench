@@ -998,3 +998,19 @@ a.co-tile:hover { border-color: var(--fg-accent); text-decoration: none; }
 .skill-name { font-weight: 600; color: var(--fg-primary); }
 .skill-row.s-mastered .skill-name { opacity: .6; }
 .skill-link { font-size: var(--t-13); align-self: flex-start; }
+
+/* Generate buttons: the Advisor's sparkle marks anything it drafts. */
+.gen-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.gen-bar form { margin: 0; }
+.gen-bar .hint { margin: 0; }
+.gen-btn { display: inline-flex; align-items: center; gap: 6px; }
+.gen-ic { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; flex-shrink: 0; }
+.gen-row { align-items: flex-end; }
+.fit-note { background: var(--bg-well); border: 1px solid var(--c-line); border-radius: var(--r-1); padding: 10px 14px; }
+.fit-note p { margin: 4px 0 0; }
+.field-full { flex: 1 1 100%; }
+.target-list li { position: relative; }
+.target-x { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); margin: 0; }
+.target-list li:hover .res-x, .target-x .res-x:focus-visible { opacity: 1; }
+.target-list li a { padding-right: 40px; }
+.target-delete { margin: 0; }

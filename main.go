@@ -751,6 +751,7 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 	mux.HandleFunc("POST /medical/symptoms", s.symptomAdd)
 	s.routeEdits(mux)
 	s.routeLearning(mux)
+	s.routeGenerate(mux)
 	mux.HandleFunc("POST /medical/find", s.conditionsFind)
 	mux.HandleFunc("POST /medical/found/add", s.conditionsFoundAdd)
 	mux.HandleFunc("POST /medical/found/clear", s.conditionsFoundClear)
@@ -2536,6 +2537,7 @@ func (s *Server) applyTool(name string, in map[string]any) string {
 			}
 			t := ResumeTarget{ID: st.id(), Position: pos, Company: toolStr(in, "company"), Requirements: toolStr(in, "requirements")}
 			st.ResumeTargets = append(st.ResumeTargets, t)
+			linkCompany(st, t)
 			res = fmt.Sprintf("created resume target #%d for %s", t.ID, pos)
 		case "set_resume_target":
 			t := st.resolveTarget(toolStr(in, "target"))
@@ -3771,7 +3773,7 @@ func (s *Server) resume(w http.ResponseWriter, r *http.Request) {
 		active = &st.ResumeTargets[0]
 	}
 	s.page(w, "resume", map[string]any{
-		"Targets": st.ResumeTargets, "Active": active, "Docs": docs, "ResumeDesigns": resumeDesigns, "ResumeFonts": resumeFonts, "ResumeColors": resumeColors,
+		"Targets": st.ResumeTargets, "Active": active, "Docs": docs, "AdvisorReady": st.aiReady(), "Linked": linkedFor(st, active), "ResumeDesigns": resumeDesigns, "ResumeFonts": resumeFonts, "ResumeColors": resumeColors,
 	})
 }
 
@@ -3816,10 +3818,12 @@ func (s *Server) resumeTargetAdd(w http.ResponseWriter, r *http.Request) {
 	var newID int
 	_ = s.store.mutate(func(st *State) {
 		newID = st.id()
-		st.ResumeTargets = append(st.ResumeTargets, ResumeTarget{
+		t := ResumeTarget{
 			ID: newID, Position: pos, Company: strings.TrimSpace(r.FormValue("company")),
 			Requirements: strings.TrimSpace(r.FormValue("requirements")),
-		})
+		}
+		st.ResumeTargets = append(st.ResumeTargets, t)
+		linkCompany(st, t) // every resume has a Learning card
 	})
 	http.Redirect(w, r, fmt.Sprintf("/resume?t=%d", newID), http.StatusSeeOther)
 }
@@ -3830,7 +3834,12 @@ func (s *Server) resumeTargetDelete(w http.ResponseWriter, r *http.Request) {
 		for i := range st.ResumeTargets {
 			if st.ResumeTargets[i].ID == id {
 				st.ResumeTargets = append(st.ResumeTargets[:i], st.ResumeTargets[i+1:]...)
-				return
+				break
+			}
+		}
+		for i := range st.Companies { // the Learning card stays, unlinked
+			if st.Companies[i].TargetID == id {
+				st.Companies[i].TargetID = 0
 			}
 		}
 	})

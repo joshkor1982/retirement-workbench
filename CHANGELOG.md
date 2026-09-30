@@ -3,6 +3,15 @@
 ## Unreleased
 
 ### Added
+- Generate buttons. On Learning, Generate Topics has the Advisor add what a
+  company expects for your target role that you have not listed, reading the
+  job posting, and notes what you already bring. On a resume, Generate
+  Headline, Generate Section, and Generate on any section (rewrite it for
+  the posting). Every prompt uses only facts from your own data.
+- Companies and resumes are linked: adding a company starts a tailored
+  resume, and starting a resume adds its company to Learning. The job posting
+  is shared between them, and Add Mastered Skills writes a Technical Skills
+  section from what you have mastered for that company.
 - Learning (under Career): list the companies you want to work for and the
   skills, protocols, and tools to master at each, grouped by area with a
   link to where you will learn them. Click a skill's status to move it To
@@ -45,6 +54,9 @@
   retire, from Open-Meteo. Works with a US ZIP code or any city worldwide.
 
 ### Changed
+- Resumes can be deleted again. The Delete button sat inside the Save form,
+  which browsers do not allow, so it saved instead of deleting. It is now its
+  own form, and each resume in the list has a delete as well.
 - Bills can be renamed in place and saved with the amount. Debts have an
   Edit button that opens the account name, APR, balance, and minimum in one
   form, replacing the crowded Update column that pushed Delete off the edge.

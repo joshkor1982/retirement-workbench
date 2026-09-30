@@ -1328,3 +1328,135 @@ func TestJourneyLearningByCompany(t *testing.T) {
 		t.Errorf("after delete: %+v %+v", st.Companies, st.Skills)
 	}
 }
+
+func TestJourneyCompaniesAndResumesLink(t *testing.T) {
+	j := newJourney(t)
+	// A company starts a tailored resume, carrying the posting.
+	j.post("/learning/companies", url.Values{"name": {"Acme Radar"}, "role": {"TDL engineer"}, "posting": {"Link 16, JREAP-C"}})
+	st := j.app.store.snapshot()
+	co := st.Companies[0]
+	tg := st.findTarget(co.TargetID)
+	if tg == nil || tg.Position != "TDL engineer" || tg.Company != "Acme Radar" || tg.Requirements != "Link 16, JREAP-C" {
+		t.Fatalf("company did not start a resume: %+v", tg)
+	}
+	// A resume adds a company, or links to the one with that name.
+	j.post("/resume/targets", url.Values{"position": {"Platform engineer"}, "company": {"Beta Systems"}})
+	st = j.app.store.snapshot()
+	if len(st.Companies) != 2 || st.Companies[1].Name != "Beta Systems" || st.findTarget(st.Companies[1].TargetID) == nil {
+		t.Fatalf("resume did not add a company: %+v", st.Companies)
+	}
+	// Editing the company's posting updates the resume's.
+	j.post("/learning/companies/"+strconv.Itoa(co.ID)+"/update", url.Values{"name": {"Acme Radar"}, "posting": {"Link 16, JREAP-C, SIMPLE"}})
+	if got := tgt(j.app.store.snapshot(), co.TargetID).Requirements; got != "Link 16, JREAP-C, SIMPLE" {
+		t.Errorf("shared posting = %q", got)
+	}
+	// Deleting the resume keeps the card, unlinked; the card can start another.
+	j.post("/resume/targets/"+strconv.Itoa(co.TargetID)+"/delete", nil)
+	st = j.app.store.snapshot()
+	if st.findTarget(co.TargetID) != nil || st.Companies[0].TargetID != 0 {
+		t.Fatalf("resume delete: target still there or card still linked")
+	}
+	j.post("/learning/companies/"+strconv.Itoa(co.ID)+"/resume", nil)
+	st = j.app.store.snapshot()
+	if st.findTarget(st.Companies[0].TargetID) == nil {
+		t.Fatal("Start Tailored Resume did not make one")
+	}
+	// Deleting the company keeps its resume.
+	tid := st.Companies[0].TargetID
+	j.post("/learning/companies/"+strconv.Itoa(co.ID)+"/delete", nil)
+	if tgt(j.app.store.snapshot(), tid) == nil {
+		t.Error("deleting a company deleted its resume")
+	}
+	// Every resume page has a working delete outside the save form.
+	if _, body := j.get("/resume?t=" + strconv.Itoa(tid)); !strings.Contains(body, `class="target-delete"`) {
+		t.Error("no delete form for the open resume")
+	}
+}
+
+func TestJourneyGenerateButtons(t *testing.T) {
+	j := newJourney(t)
+	reply := ""
+	var prompts []string
+	askAIFunc = func(_ context.Context, _, p, _ string) (string, error) {
+		prompts = append(prompts, p)
+		return reply, nil
+	}
+	defer func() { askAIFunc = askAI }()
+	_ = j.app.store.mutate(func(st *State) { st.Settings.AdvisorProvider = "claude" })
+	j.post("/learning/companies", url.Values{"name": {"Acme Radar"}, "role": {"TDL engineer"}, "posting": {"Must know JREAP-C"}})
+	st := j.app.store.snapshot()
+	cid, tid := st.Companies[0].ID, st.Companies[0].TargetID
+	j.post("/learning/companies/"+strconv.Itoa(cid)+"/skills", url.Values{"name": {"Link 16"}, "area": {"Protocols"}})
+
+	// Generate Topics adds new skills only, and records the fit.
+	reply = `{"fit":"You already run ASTERIX chains.","skills":[{"name":"link 16","area":"Protocols","why":"dup"},{"name":"JREAP-C","area":"Protocols","why":"Posting asks for it.","url":"example.org/jreap"}]}`
+	j.post("/learning/companies/"+strconv.Itoa(cid)+"/generate", nil)
+	st = j.app.store.snapshot()
+	if len(st.Skills) != 2 || st.Skills[1].Name != "JREAP-C" || st.Skills[1].URL != "https://example.org/jreap" || st.Companies[0].Fit == "" {
+		t.Fatalf("generate topics: %+v fit %q", st.Skills, st.Companies[0].Fit)
+	}
+	if p := prompts[len(prompts)-1]; !strings.Contains(p, "Must know JREAP-C") || !strings.Contains(p, "leave out: Link 16") || !strings.Contains(p, "Never invent") {
+		t.Errorf("topics prompt missing the posting, the skip list, or the no-invent rule:\n%s", p)
+	}
+
+	// Resume: headline, new section, rewrite.
+	base := "/resume/targets/" + strconv.Itoa(tid)
+	reply = `{"headline":"Tactical data link integrator"}`
+	j.post(base+"/generate/headline", nil)
+	reply = `{"heading":"Integration","bullets":["- Integrated radar tracks into C2", ""]}`
+	j.post(base+"/generate/section", url.Values{"focus": {"radar work"}})
+	tg := tgt(j.app.store.snapshot(), tid)
+	if tg.Headline != "Tactical data link integrator" || len(tg.Sections) != 1 || len(tg.Sections[0].Bullets) != 1 || tg.Sections[0].Bullets[0] != "Integrated radar tracks into C2" {
+		t.Fatalf("headline or section: %+v", tg)
+	}
+	reply = `{"bullets":["Integrated radar tracks into a JREAP-C-ready C2 picture"]}`
+	j.post(base+"/sections/"+strconv.Itoa(tg.Sections[0].ID)+"/generate", nil)
+	if b := tgt(j.app.store.snapshot(), tid).Sections[0].Bullets[0]; !strings.Contains(b, "JREAP-C") {
+		t.Errorf("rewrite = %q", b)
+	}
+
+	// Mastered skills go on the resume as Technical Skills, rerunnable.
+	if f := flashOf(j.postResp(base+"/learning-skills", nil)); !strings.HasPrefix(f, "err|") {
+		t.Errorf("no mastered skills yet should refuse, got %q", f)
+	}
+	j.post("/learning/skills/"+strconv.Itoa(st.Skills[1].ID)+"/update", url.Values{"name": {"JREAP-C"}, "area": {"Protocols"}, "status": {"mastered"}})
+	j.post(base+"/learning-skills", nil)
+	j.post(base+"/learning-skills", nil)
+	tg = tgt(j.app.store.snapshot(), tid)
+	if n := len(tg.Sections); n != 2 || tg.Sections[1].Heading != "Technical Skills" || tg.Sections[1].Bullets[0] != "Protocols: JREAP-C" {
+		t.Errorf("skills section: %+v", tg.Sections)
+	}
+
+	// A bad reply is refused with a notice, and nothing changes.
+	reply = "sorry"
+	if f := flashOf(j.postResp(base+"/generate/headline", nil)); !strings.HasPrefix(f, "err|") {
+		t.Errorf("unreadable reply flash = %q", f)
+	}
+}
+
+func tgt(st State, id int) *ResumeTarget { return st.findTarget(id) }
+
+func TestLinkCompanyToExistingResume(t *testing.T) {
+	j := newJourney(t)
+	j.post("/resume/targets", url.Values{"position": {"Engineer"}, "company": {"Ultra"}, "requirements": {"Link 16"}})
+	j.post("/learning/companies", url.Values{"name": {"Ultra I&C"}})
+	st := j.app.store.snapshot()
+	var old, card int
+	for _, c := range st.Companies {
+		if c.Name == "Ultra" {
+			old = c.TargetID
+		} else {
+			card = c.ID
+		}
+	}
+	j.post("/learning/companies/"+strconv.Itoa(card)+"/update", url.Values{"name": {"Ultra I&C"}, "target": {strconv.Itoa(old)}, "posting": {"stale box"}})
+	st = j.app.store.snapshot()
+	for _, c := range st.Companies {
+		if c.ID == card && c.TargetID != old {
+			t.Errorf("card not linked to resume %d: %+v", old, c)
+		}
+	}
+	if got := tgt(st, old).Requirements; got != "Link 16" {
+		t.Errorf("switching resumes overwrote the posting with the old box: %q", got)
+	}
+}

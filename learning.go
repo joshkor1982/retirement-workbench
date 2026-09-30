@@ -20,6 +20,11 @@ type Company struct {
 	Role  string `json:"role"` // the job you are aiming for there
 	URL   string `json:"url"`
 	Notes string `json:"notes"`
+	// TargetID is the tailored resume for this company, 0 when there is none.
+	// Adding a company starts one, and starting a resume adds a company.
+	TargetID int    `json:"target_id,omitempty"`
+	Fit      string `json:"fit,omitempty"` // the last Generate's read on what you bring and what is missing
+	FitAt    string `json:"fit_at,omitempty"`
 }
 
 type Skill struct {
@@ -43,6 +48,7 @@ type skillArea struct {
 
 type companyView struct {
 	Company
+	Target   *ResumeTarget
 	Areas    []skillArea
 	Total    int
 	Learning int
@@ -55,7 +61,7 @@ type companyView struct {
 func learningView(st State) []companyView {
 	var out []companyView
 	for _, c := range st.Companies {
-		v := companyView{Company: c}
+		v := companyView{Company: c, Target: st.findTarget(c.TargetID)}
 		idx := map[string]int{}
 		for _, sk := range st.Skills {
 			if sk.CompanyID != c.ID {
@@ -117,7 +123,7 @@ func webURL(u string) string {
 func (s *Server) learning(w http.ResponseWriter, r *http.Request) {
 	st := s.store.snapshot()
 	s.page(w, "learning", map[string]any{
-		"Companies": learningView(st), "Areas": skillAreas(st), "SkillLabels": skillLabels, "SkillFlow": skillFlow,
+		"Companies": learningView(st), "Areas": skillAreas(st), "SkillLabels": skillLabels, "SkillFlow": skillFlow, "AdvisorReady": st.aiReady(), "Targets": st.ResumeTargets,
 	})
 }
 
@@ -126,6 +132,8 @@ func (s *Server) routeLearning(mux *http.ServeMux) {
 	mux.HandleFunc("POST /learning/companies", s.companyAdd)
 	mux.HandleFunc("POST /learning/companies/{id}/update", s.companyUpdate)
 	mux.HandleFunc("POST /learning/companies/{id}/delete", s.companyDelete)
+	mux.HandleFunc("POST /learning/companies/{id}/resume", s.companyStartResume)
+	mux.HandleFunc("POST /learning/companies/{id}/generate", s.companyGenerate)
 	mux.HandleFunc("POST /learning/companies/{id}/skills", s.skillAdd)
 	mux.HandleFunc("POST /learning/skills/{id}/status", s.skillStatus)
 	mux.HandleFunc("POST /learning/skills/{id}/update", s.skillUpdate)
@@ -146,9 +154,11 @@ func (s *Server) companyAdd(w http.ResponseWriter, r *http.Request) {
 	var id int
 	_ = s.store.mutate(func(st *State) {
 		id = st.id()
-		st.Companies = append(st.Companies, Company{ID: id, Name: name, Role: field(r, "role"), URL: webURL(field(r, "url")), Notes: field(r, "notes")})
+		c := Company{ID: id, Name: name, Role: field(r, "role"), URL: webURL(field(r, "url")), Notes: field(r, "notes")}
+		c.TargetID = startResume(st, c, field(r, "posting"))
+		st.Companies = append(st.Companies, c)
 	})
-	flash(w, "ok", "Added "+name+". Add the first skill to master there.")
+	flash(w, "ok", "Added "+name+" and started a tailored resume for it. Click Generate Topics to fill in what to learn.")
 	back(w, r, "#co-"+strconv.Itoa(id))
 }
 
@@ -158,14 +168,25 @@ func (s *Server) companyUpdate(w http.ResponseWriter, r *http.Request) {
 		editByID(st.Companies, id, func(c Company) int { return c.ID }, func(c *Company) {
 			keep(&c.Name, field(r, "name"))
 			c.Role, c.URL, c.Notes = field(r, "role"), webURL(field(r, "url")), field(r, "notes")
+			if v, err := strconv.Atoi(field(r, "target")); err == nil && (v == 0 || st.findTarget(v) != nil) {
+				if v != c.TargetID {
+					c.TargetID = v
+					r.Form.Del("posting") // the box showed the old resume's posting
+				}
+			}
+			if t := st.findTarget(c.TargetID); t != nil && r.Form.Has("posting") {
+				t.Requirements = field(r, "posting") // one posting, shared with the resume
+			}
 		})
 	})
 	back(w, r, "#co-"+strconv.Itoa(id))
 }
 
-// companyDelete removes the company and every skill under it.
+// companyDelete removes the company and every skill under it. Its resume
+// stays: it may hold work worth reusing for the next company.
 func (s *Server) companyDelete(w http.ResponseWriter, r *http.Request) {
 	id := pathID(r)
+	flash(w, "ok", "Removed the company and its skills. Its resume is still on the Resume page.")
 	_ = s.store.mutate(func(st *State) {
 		st.Companies = deleteByID(st.Companies, id, func(c Company) int { return c.ID })
 		st.Skills = slices.DeleteFunc(st.Skills, func(sk Skill) bool { return sk.CompanyID == id })
@@ -271,4 +292,63 @@ func addSkillTool(st *State, company, name, area, url, notes string) string {
 	sk := Skill{ID: st.id(), CompanyID: cid, Name: name, Area: strings.TrimSpace(area), URL: webURL(url), Notes: strings.TrimSpace(notes), Status: "learn"}
 	st.Skills = append(st.Skills, sk)
 	return fmt.Sprintf("added skill #%d %q under %s", sk.ID, sk.Name, company)
+}
+
+// startResume creates the tailored resume for a new company and returns its
+// ID. The position falls back to a placeholder you rename on the Resume page.
+func startResume(st *State, c Company, posting string) int {
+	id := st.id()
+	st.ResumeTargets = append(st.ResumeTargets, ResumeTarget{ID: id, Position: cmpOr(c.Role, "Role at "+c.Name),
+		Company: c.Name, Requirements: posting})
+	return id
+}
+
+// linkCompany is the other direction: a new resume adds a company card, or
+// links to the card already there with that name.
+func linkCompany(st *State, t ResumeTarget) {
+	name := cmpOr(t.Company, t.Position)
+	for i := range st.Companies {
+		if strings.EqualFold(st.Companies[i].Name, name) {
+			if st.Companies[i].TargetID == 0 || st.findTarget(st.Companies[i].TargetID) == nil {
+				st.Companies[i].TargetID = t.ID
+			}
+			return
+		}
+	}
+	st.Companies = append(st.Companies, Company{ID: st.id(), Name: name, Role: t.Position, TargetID: t.ID})
+}
+
+// companyStartResume gives an older company card its tailored resume.
+func (s *Server) companyStartResume(w http.ResponseWriter, r *http.Request) {
+	id, tid := pathID(r), 0
+	_ = s.store.mutate(func(st *State) {
+		editByID(st.Companies, id, func(c Company) int { return c.ID }, func(c *Company) {
+			if st.findTarget(c.TargetID) == nil {
+				c.TargetID = startResume(st, *c, "")
+			}
+			tid = c.TargetID
+		})
+	})
+	if tid == 0 {
+		back(w, r, "")
+		return
+	}
+	http.Redirect(w, r, "/resume?t="+strconv.Itoa(tid), http.StatusSeeOther)
+}
+
+// companyFor returns the company card linked to a resume, if any.
+func (st State) companyFor(targetID int) *companyView {
+	for _, v := range learningView(st) {
+		if v.TargetID == targetID && targetID != 0 {
+			return &v
+		}
+	}
+	return nil
+}
+
+func linkedFor(st State, t *ResumeTarget) *companyView {
+	if t == nil {
+		return nil
+	}
+	return st.companyFor(t.ID)
 }

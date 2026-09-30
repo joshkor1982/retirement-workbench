@@ -11,6 +11,9 @@
         <li class="{{if and $.Active (eq .ID $.Active.ID)}}target-on{{end}}">
           <a href="/resume?t={{.ID}}"><b>{{.Position}}</b>{{if .Company}} · {{.Company}}{{end}}</a>
           <span class="target-meta">{{len .Sections}} sections</span>
+          <form method="post" action="/resume/targets/{{.ID}}/delete" class="target-x" onsubmit="return confirm('Delete the {{.Position}} resume and all its sections? This cannot be undone.');">
+            <button type="submit" class="icon-btn res-x" title="Delete {{.Position}}" aria-label="Delete {{.Position}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          </form>
         </li>
         {{end}}
       </ul>
@@ -51,14 +54,33 @@
         </div>
         <label class="field"><span class="field-label">Job Posting Requirements - Paste What the Posting or Recruiter Said</span>
           <textarea name="requirements" rows="7" spellcheck="true" placeholder="Paste the job description or the recruiter's note here. The Advisor tailors bullets to this.">{{.Active.Requirements}}</textarea></label>
-        <p><button type="submit" class="primary">Save Target</button>
-          <form method="post" action="/resume/targets/{{.Active.ID}}/delete" style="display:inline" onsubmit="return confirm('Delete this resume target and its sections?');"><button class="danger">Delete Target</button></form></p>
+        <p><button type="submit" class="primary">Save Target</button></p>
+      </form>
+      <div class="gen-bar">
+        <form method="post" action="/resume/targets/{{.Active.ID}}/generate/headline" data-busy="Writing a headline...">
+          <button type="submit" class="gen-btn"{{if not .AdvisorReady}} disabled{{end}}><svg class="gen-ic" viewBox="0 0 24 24" aria-hidden="true">{{navIcon "sparkle"}}</svg>Generate Headline</button>
+        </form>
+        {{if .Linked}}
+        <form method="post" action="/resume/targets/{{.Active.ID}}/learning-skills">
+          <button type="submit">Add Mastered Skills</button>
+        </form>
+        <a href="/learning#co-{{.Linked.ID}}" class="hint">Learning: {{.Linked.Name}} · {{.Linked.Mastered}} of {{.Linked.Total}} mastered →</a>
+        {{end}}
+      </div>
+      {{if not .AdvisorReady}}<p class="hint">Set up the Advisor in <a href="/settings">Settings</a> to use the Generate buttons.</p>{{end}}
+      <form method="post" action="/resume/targets/{{.Active.ID}}/delete" class="target-delete" onsubmit="return confirm('Delete the {{.Active.Position}} resume and all its sections? This cannot be undone.');">
+        <button class="danger">Delete This Resume</button>
       </form>
     </section>
 
     <section class="card">
       <h2>Add a Section</h2>
       <p class="hint">Add a role, deployment, award, or skills block. Or ask the Advisor: "tailor a section for {{.Active.Position}} using the requirements."</p>
+      <form method="post" action="/resume/targets/{{.Active.ID}}/generate/section" class="field-row gen-row" data-busy="Drafting a section...">
+        <label class="field field-grow"><span class="field-label">Generate a Section About</span>
+          <input type="text" name="focus" placeholder="Optional: my radar integration work, leadership, the skills they list"></label>
+        <button type="submit" class="gen-btn"{{if not .AdvisorReady}} disabled{{end}}><svg class="gen-ic" viewBox="0 0 24 24" aria-hidden="true">{{navIcon "sparkle"}}</svg>Generate Section</button>
+      </form>
       <form method="post" action="/resume/targets/{{.Active.ID}}/sections">
         <div class="field-row">
           <label class="field field-grow"><span class="field-label">Heading</span>
@@ -74,12 +96,13 @@
       <h2>Sections</h2>
       {{if .Active.Sections}}
       {{range .Active.Sections}}
-      <div class="cell">
+      <div class="cell" id="rsec-{{.ID}}">
         <div class="rowline">
           <div><b>{{.Heading}}</b></div>
           <span class="row-actions">
             <form method="post" action="/resume/targets/{{$.Active.ID}}/sections/{{.ID}}/up"><button title="Move up">↑</button></form>
             <form method="post" action="/resume/targets/{{$.Active.ID}}/sections/{{.ID}}/down"><button title="Move down">↓</button></form>
+            <form method="post" action="/resume/targets/{{$.Active.ID}}/sections/{{.ID}}/generate" data-busy="Rewriting..."><button type="submit" class="gen-btn" title="Rewrite this section for the job posting"{{if not $.AdvisorReady}} disabled{{end}}><svg class="gen-ic" viewBox="0 0 24 24" aria-hidden="true">{{navIcon "sparkle"}}</svg>Generate</button></form>
             <button type="button" class="btn-edit" onclick="rEdit({{.ID}})">Edit</button>
             <form method="post" action="/resume/targets/{{$.Active.ID}}/sections/{{.ID}}/delete"><button class="danger">Delete</button></form>
           </span>

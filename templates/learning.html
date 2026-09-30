@@ -2,7 +2,7 @@
 <section class="card">
   <h2>What to Master, by Company</h2>
   <details class="how-to"><summary>How to Use</summary>
-    <p class="hint">Add each company you want to work for, then the skills, protocols, and tools you need to know there. Group them by area, like Protocols or Platform, and add a link to where you will learn each one. Click a skill's status to move it from To Learn to Learning to Mastered; one more click starts it over. Put the same skill under two companies if both want it.</p>
+    <p class="hint">Add each company you want to work for, then the skills, protocols, and tools you need to know there. Group them by area, like Protocols or Platform, and add a link to where you will learn each one. Click a skill's status to move it from To Learn to Learning to Mastered; one more click starts it over. Put the same skill under two companies if both want it. Generate Topics has the Advisor add what the company expects that you have not listed, reading the job posting when you paste one. Each company has its own tailored resume; mastered skills can go straight onto it.</p>
   </details>
   {{if .Companies}}
   <div class="gist">
@@ -22,8 +22,11 @@
       <input type="text" name="url" placeholder="company.com/careers"></label>
     <label class="field field-grow"><span class="field-label">Notes</span>
       <input type="text" name="notes" placeholder="Why this company, who you know there"></label>
+    <label class="field field-full"><span class="field-label">Job Posting (Optional)</span>
+      <textarea name="posting" rows="3" placeholder="Paste the posting. Generate Topics and your tailored resume both read it."></textarea></label>
     <button type="submit" class="primary">Add</button>
   </form>
+  <p class="hint">Adding a company starts a tailored resume for it on the Resume page, and starting a resume there adds its company here.</p>
   {{if not .Companies}}<p class="hint">No companies yet. Add the first place you want to work, then list what you need to master there.</p>{{end}}
 </section>
 <datalist id="skill-areas">{{range .Areas}}<option value="{{.}}">{{end}}</datalist>
@@ -46,6 +49,10 @@
       <label class="field field-grow"><span class="field-label">Role You Want</span><input type="text" name="role" value="{{.Role}}"></label>
       <label class="field"><span class="field-label">Careers Page</span><input type="text" name="url" value="{{.URL}}"></label>
       <label class="field field-grow"><span class="field-label">Notes</span><input type="text" name="notes" value="{{.Notes}}"></label>
+      {{$tid := .TargetID}}<label class="field"><span class="field-label">Tailored Resume</span>
+        <select name="target"><option value="0">None</option>{{range $.Targets}}<option value="{{.ID}}"{{if eq .ID $tid}} selected{{end}}>{{.Position}}{{if .Company}} · {{.Company}}{{end}}</option>{{end}}</select></label>
+      {{if .Target}}<label class="field field-full"><span class="field-label">Job Posting (Shared With the Tailored Resume)</span>
+        <textarea name="posting" rows="5">{{.Target.Requirements}}</textarea></label>{{end}}
       <button type="submit" class="primary">Save</button>
     </form>
   </div>
@@ -55,6 +62,18 @@
     <span class="hint">{{.Mastered}} of {{.Total}} mastered{{if .Learning}} · {{.Learning}} in progress{{end}}</span>
   </div>
   {{end}}
+
+  <div class="gen-bar">
+    <form method="post" action="/learning/companies/{{.ID}}/generate" data-busy="Generating topics...">
+      <button type="submit" class="primary gen-btn"{{if not $.AdvisorReady}} disabled title="Set up the Advisor in Settings first"{{end}}><svg class="gen-ic" viewBox="0 0 24 24" aria-hidden="true">{{navIcon "sparkle"}}</svg>Generate Topics</button>
+    </form>
+    {{if .Target}}<a class="btn" href="/resume?t={{.Target.ID}}">Tailored Resume →</a>
+    {{else}}<form method="post" action="/learning/companies/{{.ID}}/resume"><button type="submit">Start Tailored Resume</button></form>{{end}}
+    {{if not $.AdvisorReady}}<span class="hint">Set up the Advisor in <a href="/settings">Settings</a> to generate topics.</span>
+    {{else if and .Target .Target.Requirements}}<span class="hint">Reads the job posting you pasted.</span>
+    {{else}}<span class="hint">Paste the job posting under Edit Company for sharper topics.</span>{{end}}
+  </div>
+  {{if .Fit}}<div class="fit-note"><span class="field-label">Your Fit · {{.FitAt}}</span><p>{{.Fit}}</p></div>{{end}}
 
   {{range .Areas}}
   <div class="skill-area">
