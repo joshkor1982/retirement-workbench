@@ -200,7 +200,7 @@
 <section class="card" id="retired-pay">
   <h2>Retired Pay Estimate</h2>
   <details class="how-to"><summary>How This Works</summary>
-    <p class="hint">Your pension is your years of service times 2.5% (High-3) or 2.0% (Blended Retirement System), times the average of your highest 36 months of base pay. SBP for full spouse coverage costs 6.5% of it. VA compensation is tax-free: at a combined rating of 50% or more you receive both in full (CRDP); below 50%, VA pay replaces an equal amount of retired pay. The rating comes from your Potential VA Rating. This is a planning estimate before taxes, not a DFAS statement.</p>
+    <p class="hint">Your pension is your years of service times 2.5% (High-3) or 2.0% (Blended Retirement System), times the average of your highest 36 months of base pay. SBP for full spouse coverage costs 6.5% of it. VA compensation is tax-free: at a combined rating of 50% or more you receive both in full (CRDP); below 50%, VA pay replaces an equal amount of retired pay. The rating comes from your Potential VA Rating. Taxes use the 2026 federal brackets and the rules of the state you retire in, taxing retired pay as your only income. This is a planning estimate, not a DFAS statement.</p>
   </details>
   {{if .Ret.Set}}
   <div class="gist">
@@ -210,9 +210,9 @@
       <span class="gist-num">{{money .Ret.Net}}</span><span class="gist-sub">{{if .Ret.SBP}}{{money .Ret.SBP}} for spouse coverage{{else}}No SBP elected{{end}}</span></div>
     <div class="gist-item"><span class="gist-label">VA Compensation</span>
       <span class="gist-num">{{money .Ret.VA}}</span><span class="gist-sub">{{if .Ret.CRDP}}{{.Ret.Rating}}% rating: paid in full with retired pay (CRDP){{else if .Ret.Offset}}{{.Ret.Rating}}% rating: replaces {{money .Ret.Offset}} of retired pay{{else}}Tax-free{{end}}</span></div>
-    <div class="gist-item"><span class="gist-label">Each Month</span>
-      <span class="gist-num">{{money .Ret.Total}}</span>
-      <span class="gist-sub {{if .Ret.HaveIncome}}{{if lt .Ret.Change 0}}gist-short{{else}}gist-ok{{end}}{{end}}">{{if .Ret.HaveIncome}}{{if lt .Ret.Change 0}}{{money .Ret.Change}} vs. today's take-home{{else}}+{{money .Ret.Change}} vs. today's take-home{{end}}{{else}}Before taxes{{end}}</span></div>
+    <div class="gist-item"><span class="gist-label">Each Month After Tax</span>
+      <span class="gist-num">{{money .Ret.Tax.AfterTax}}</span>
+      <span class="gist-sub {{if .Ret.HaveIncome}}{{if lt .Ret.Change 0}}gist-short{{else}}gist-ok{{end}}{{end}}">{{if .Ret.HaveIncome}}{{if lt .Ret.Change 0}}{{money .Ret.Change}} vs. today's take-home{{else}}+{{money .Ret.Change}} vs. today's take-home{{end}}{{else}}{{money .Ret.Total}} before tax{{end}}</span></div>
   </div>
   {{end}}
   <form method="post" action="/budget/retirepay" class="field-row sav-form">
@@ -247,6 +247,35 @@
           <input type="number" name="school_kids" min="0" max="20" value="{{.Settings.RetSchoolKids}}"></label>
         <label class="field"><span class="field-label">Dependent Parents</span>
           <input type="number" name="parents" min="0" max="2" value="{{.Settings.RetParents}}"></label>
+      </div>
+    </div>
+    <div class="va-calc tax-calc">
+      <div class="va-calc-head">
+        <span class="field-label">Tax on Retired Pay</span>
+        <span class="va-amount">{{money .Ret.Tax.Total}}<small> a month</small></span>
+        <span class="hint">DFAS withholds federal tax using your W-4P, and state tax only if you ask for it in myPay. {{if .Ret.Tax.Joint}}Married filing jointly, from the Married box above.{{else}}Filing single. Check Married above to file jointly.{{end}}</span>
+      </div>
+      {{if .Ret.Set}}
+      <table class="tax-table">
+        <tbody>
+          <tr><td>Taxable retired pay</td><td class="num">{{money .Ret.Tax.Taxable}}</td>
+            <td class="hint">{{if .Ret.Offset}}After SBP and the {{money .Ret.Offset}} VA waiver. VA pay is never taxed.{{else}}After SBP. VA pay is never taxed.{{end}}</td></tr>
+          <tr><td>Federal income tax</td><td class="num">{{money .Ret.Tax.Federal}}</td>
+            <td class="hint">{{.Ret.Tax.FedRate}} of retired pay, on the 2026 brackets after the standard deduction.</td></tr>
+          <tr><td>{{if .Ret.Tax.StateName}}{{.Ret.Tax.StateName}}{{else}}State{{end}} income tax</td><td class="num">{{if .Ret.Tax.State}}{{money .Ret.Tax.StateTax}}{{else}}·{{end}}</td>
+            <td class="hint">{{if .Ret.Tax.State}}{{.Ret.Tax.Rule.Note}}{{if .Ret.Tax.StateTax}} {{.Ret.Tax.StateRate}} of retired pay.{{end}}{{if .Ret.Tax.Guessed}} State taken from where you plan to retire.{{end}}{{else}}Pick the state you plan to retire in.{{end}}</td></tr>
+          <tr class="tax-total"><td>Each month after tax</td><td class="num">{{money .Ret.Tax.AfterTax}}</td>
+            <td class="hint">Retired pay after tax, plus {{money .Ret.VA}} VA pay.</td></tr>
+        </tbody>
+      </table>
+      {{end}}
+      <div class="field-row">
+        <label class="field"><span class="field-label">State You Retire In</span>
+          <select name="tax_state"><option value="">{{if .Ret.Tax.Guessed}}{{.Ret.Tax.StateName}} (from your retirement location){{else}}Pick a state{{end}}</option>
+            {{range .States}}<option value="{{.Code}}"{{if eq .Code $.Settings.TaxState}} selected{{end}}>{{.Name}}</option>{{end}}</select></label>
+        <label class="field"><span class="field-label">Birth Year</span>
+          <input type="number" name="birth_year" min="1930" max="2010" value="{{if .Settings.BirthYear}}{{.Settings.BirthYear}}{{end}}" placeholder="1985"></label>
+        <span class="field-note">Some states give more at 55 or 65.{{if .Ret.Tax.Age}} You will be {{.Ret.Tax.Age}} the year you retire.{{end}}</span>
       </div>
     </div>
     <button type="submit" class="primary">Estimate</button>

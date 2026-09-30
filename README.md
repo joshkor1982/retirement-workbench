@@ -62,6 +62,7 @@ later.
 | Build your VA claim evidence and estimate your combined rating | **Medical / VA** |
 | Work the PAR step by step and combine your packet into one PDF | **Submit Packet** |
 | Plan your budget, debt payoff, savings, and retired pay | **Budget**, **Debt**, **Savings**, and **Retired Pay** |
+| See federal and state tax on your retired pay in the state you plan to retire in | **Retired Pay** |
 | Write a tailored resume per job, pick its design, font, and colors, and download it as a PDF | **Resume** |
 | Find jobs near a ZIP code or remote, and track every opening | **Jobs** |
 | Find a SkillBridge program, track leads, work the packet, and download your request memo | **SkillBridge** |
@@ -219,6 +220,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) before you open a pull request, and
 ## License
 
 [MIT](LICENSE). Free for anyone to use, change, and share.
+
+Tax figures come from IRS Rev. Proc. 2025-32 (federal, 2026) and Tax
+Foundation's 2026 state income tax table, regenerated with
+[scripts/statetax](scripts/statetax). How each state treats military retired
+pay follows the Army's Soldier for Life newsletters. States change these rules
+often; check yours before you decide where to retire.
 
 The app's interface fonts (Barlow and Barlow Semi Condensed, license in
 [static/fonts/ui](static/fonts/ui)), Geist and Geist Mono, and the resume fonts

@@ -35,7 +35,8 @@ type retirePay struct {
 	CRDP       bool  // rating >= 50: both paid in full
 	Offset     int64 // retired pay given up to the VA waiver
 	Total      int64 // what arrives each month
-	Change     int64 // Total minus current take-home
+	Change     int64 // after-tax total minus current take-home
+	Tax        retireTax
 	HaveIncome bool
 }
 
@@ -92,9 +93,11 @@ func estimateRetirePay(st State) retirePay {
 		p.Offset = min(p.VA, p.Net)
 		p.Total = p.Net - p.Offset + p.VA
 	}
+	p.Tax = estimateRetireTax(st, p)
 	if s.MonthlyIncome > 0 {
+		// Take-home is after tax, so compare it with retired pay after tax.
 		p.HaveIncome = true
-		p.Change = p.Total - s.MonthlyIncome
+		p.Change = p.Tax.AfterTax - s.MonthlyIncome
 	}
 	return p
 }
@@ -111,6 +114,10 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 		flash(w, "err", "Years of service must be a number like 20 or 22.5.")
 	case !hOK:
 		flash(w, "err", "High-3 must be a dollar amount, like 6,450.00.")
+	case !validTaxState(r.FormValue("tax_state")):
+		flash(w, "err", "Pick a state from the list.")
+	case !validBirthYear(r.FormValue("birth_year")):
+		flash(w, "err", "Birth year must be four digits, like 1985.")
 	default:
 		_ = s.store.mutate(func(st *State) {
 			st.Settings.RetYears, st.Settings.RetHigh3 = years, high3
@@ -118,8 +125,24 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 			st.Settings.RetKids, st.Settings.RetSchoolKids, st.Settings.RetParents = count("kids", 20), count("school_kids", 20), count("parents", 2)
 			st.Settings.RetSystem = map[bool]string{true: "brs", false: "high3"}[r.FormValue("system") == "brs"]
 			st.Settings.RetSBP = r.FormValue("sbp") == "1"
+			st.Settings.TaxState = strings.TrimSpace(r.FormValue("tax_state"))
+			st.Settings.BirthYear, _ = strconv.Atoi(strings.TrimSpace(r.FormValue("birth_year")))
 		})
 		flash(w, "ok", "Retired pay estimate updated.")
 	}
 	http.Redirect(w, r, "/retired-pay", http.StatusSeeOther)
+}
+
+func validTaxState(s string) bool {
+	_, ok := stateNames[strings.TrimSpace(s)]
+	return ok || strings.TrimSpace(s) == ""
+}
+
+func validBirthYear(s string) bool {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return true
+	}
+	n, err := strconv.Atoi(s)
+	return err == nil && n >= 1930 && n <= 2010
 }

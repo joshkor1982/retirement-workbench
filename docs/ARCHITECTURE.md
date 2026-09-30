@@ -206,7 +206,7 @@ new data, so a mistaken restore is reversible by hand.
 
 | Layer | What it proves |
 |---|---|
-| Unit tests | Money parsing and formatting, VA combined-rating math, retired pay, leave projection, avalanche payoff, savings, quick search, date and path handling |
+| Unit tests | Money parsing and formatting, VA combined-rating math, retired pay, federal and state tax on retired pay, leave projection, avalanche payoff, savings, quick search, date and path handling |
 | Journey tests | A full app against a temp folder: first run, demo data, daily use on every page, uploads, backup and restore, erase, and hostile requests |
 | Guard tests | DNS rebinding, cross-site forms, `null` origins, and health probes |
 | CI | `gofmt`, `go vet`, `go test -race`, builds for five platforms, and a container health check |

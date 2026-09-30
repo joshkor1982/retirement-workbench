@@ -79,7 +79,7 @@ a:hover { text-decoration: underline; }
 .debt-update { display: flex; gap: 6px; align-items: center; }
 .debt-update input { min-width: 0; }
 
-.gist { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+.gist { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; }
 .gist-item { background: var(--bg-well); border: 1px solid var(--c-line);
   border-radius: var(--r-1); padding: .9rem 1.1rem;
   display: flex; flex-direction: column; gap: .25rem; }
@@ -926,3 +926,13 @@ main .card > details.how-to > summary { padding: 2px 0; }
 main .card > details.how-to[open] > .hint { margin: 10px 0 0; }
 /* Same width done or not, so the Edit and Delete buttons never shift. */
 .appt-done { min-width: 88px; justify-content: center; }
+
+/* Tax on retired pay: label, amount, then the rule that produced it. */
+.tax-table { margin: 0; }
+.tax-table td { padding: 8px 10px; vertical-align: baseline; }
+.tax-table td:first-child { white-space: nowrap; font-weight: 600; }
+.tax-table td.num { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 700; text-align: right; }
+.tax-table td.hint { margin: 0; }
+.tax-table .tax-total td { border-top: var(--border-strong); font-weight: 700; }
+.tax-table .tax-total td.num { color: var(--fg-accent); }
+.va-amount small { font-size: 14px; font-weight: 500; color: var(--fg-muted); margin-left: 4px; }

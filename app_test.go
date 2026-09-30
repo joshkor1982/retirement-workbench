@@ -887,3 +887,84 @@ func TestJourneyAppointmentEditAndDone(t *testing.T) {
 		t.Error("a second click should reopen the appointment")
 	}
 }
+
+func TestFederalTax2026(t *testing.T) {
+	// $60,000 single: taxable $43,900 = 10% of 12,400 + 12% of 31,500 = $5,020.
+	if got := bracketTax(60000-fedStdSingle, fedSingle); got < 5019.99 || got > 5020.01 {
+		t.Errorf("single $60k = %.2f, want 5020", got)
+	}
+	// $60,000 joint: taxable $27,800 = 10% of 24,800 + 12% of 3,000 = $2,840.
+	if got := bracketTax(60000-fedStdJoint, fedJoint); got < 2839.99 || got > 2840.01 {
+		t.Errorf("joint $60k = %.2f, want 2840", got)
+	}
+}
+
+func TestStateFromPlace(t *testing.T) {
+	for q, want := range map[string]string{
+		"80920": "CO", "35806": "AL", "20190": "VA", "20001": "DC", "98433": "WA", "00501": "NY",
+		"Colorado Springs, CO": "CO", "Huntsville, Alabama": "AL", "Wiesbaden, Germany": "", "Tampa": "",
+	} {
+		if got := stateFromPlace(q); got != want {
+			t.Errorf("stateFromPlace(%q) = %q, want %q", q, got, want)
+		}
+	}
+}
+
+func TestStateDataCoversEveryState(t *testing.T) {
+	for code := range stateNames {
+		if _, ok := milRules[code]; !ok {
+			t.Errorf("%s has no military retired pay rule", code)
+		}
+		if _, ok := stateTaxes[code]; !ok {
+			t.Errorf("%s has no tax table", code)
+		}
+	}
+	if len(milRules) != 51 || len(stateTaxes) != 51 {
+		t.Errorf("rules %d, tables %d, want 51 each", len(milRules), len(stateTaxes))
+	}
+}
+
+func TestRetireTaxByState(t *testing.T) {
+	// $4,000 a month retired pay, single, under 55: $48,000 a year.
+	st := State{Settings: Settings{RetYears: 20, RetHigh3: 800000, RetirementDate: "2027-11-01", BirthYear: 1985}}
+	tax := func(state string) retireTax {
+		st.Settings.TaxState = state
+		return estimateRetirePay(st).Tax
+	}
+	fed := tax("TX").Federal
+	// $48,000 - 16,100 = 31,900: 1,240 + 12% of 19,500 = 3,580 a year.
+	if fed != 29833 {
+		t.Errorf("federal = %d cents a month, want 29833", fed)
+	}
+	for _, s := range []string{"TX", "AL", "NY", "UT", "GA"} {
+		if got := tax(s).StateTax; got != 0 {
+			t.Errorf("%s state tax = %d, want 0", s, got)
+		}
+	}
+	// Virginia: 48,000 - 40,000 - 8,750 - 930 = none left.
+	if got := tax("VA").StateTax; got != 0 {
+		t.Errorf("VA = %d, want 0", got)
+	}
+	// Colorado under 55: (48,000 - 15,000 - 16,100) x 4.4% = 743.60 a year.
+	if got := tax("CO").StateTax; got != 6197 {
+		t.Errorf("CO = %d cents a month, want 6197", got)
+	}
+	// DC taxes all of it: 48,000 - 16,100 = 31,900 -> 400 + 6% of 21,900 = 1,714.
+	if got := tax("DC").StateTax; got != 14283 {
+		t.Errorf("DC = %d cents a month, want 14283", got)
+	}
+	// Colorado at 65 subtracts 24,000 instead: 7,900 x 4.4% = 347.60 a year.
+	st.Settings.BirthYear = 1960
+	if got := tax("CO").StateTax; got != 2897 {
+		t.Errorf("CO at 67 = %d cents a month, want 2897", got)
+	}
+	// Guess the state from where you plan to retire.
+	st.Settings.TaxState, st.Settings.WeatherRetire = "", "Colorado Springs, CO"
+	if tx := estimateRetirePay(st).Tax; tx.State != "CO" || !tx.Guessed {
+		t.Errorf("guessed state = %q (guessed %v)", tx.State, tx.Guessed)
+	}
+	p := estimateRetirePay(st)
+	if p.Tax.AfterTax != p.Total-p.Tax.Federal-p.Tax.StateTax {
+		t.Errorf("after tax does not add up: %+v", p.Tax)
+	}
+}

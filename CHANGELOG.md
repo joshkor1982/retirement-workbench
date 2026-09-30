@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- Retired Pay estimates federal and state income tax on your retired pay,
+  using the 2026 federal brackets, every state's 2026 brackets, and each
+  state's rule for military retired pay (no tax, fully exempt, partial, or
+  fully taxed). The state comes from where you plan to retire, or you pick it.
+  Each Month now shows pay after tax, and the comparison with today's
+  take-home uses it.
 - Appointments have a Done button that turns green when you finish one (click
   again to reopen), and an Edit button to change the title, time, place, or
   notes. Finished appointments drop off the dashboard.
