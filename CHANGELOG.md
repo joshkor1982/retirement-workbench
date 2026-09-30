@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Added
+- An ARW logo: the letters in bold strokes with a gold star resting in the
+  W's lowered middle. It leads the sidebar (following light and dark), the
+  README, and, as the W and star alone, the browser tab icon.
 - Jobs searches defense contractors' own career sites, no keys needed: GDIT,
   Booz Allen, CACI, Leidos, Northrop Grumman, Parsons, Boeing, and KBR
   (Workday), Anduril, Defense Unicorns, and Epirus (Greenhouse), and

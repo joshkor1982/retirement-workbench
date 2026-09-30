@@ -1,3 +1,5 @@
+<p align="center"><img src="static/brand/arw-logo.svg" alt="ARW" width="220"></p>
+
 # ARW: Army Retirement Workbench
 
 An AI-assisted Army retirement workbench: one private, single pane of glass

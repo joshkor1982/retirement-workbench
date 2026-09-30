@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ARW">
+  <title>ARW</title>
+  <defs><clipPath id="arw-mark-cap"><rect x="0" y="16" width="64" height="37"/></clipPath></defs>
+  <rect width="64" height="64" rx="14" fill="#15171c"/>
+  <path clip-path="url(#arw-mark-cap)" d="M8 12 L19 53 L32 31 L45 53 L56 12" fill="none" stroke="#F3F1EA" stroke-width="7.5" stroke-linejoin="miter" stroke-miterlimit="10"/>
+  <path d="M32.00,6.00 L35.09,14.25 L43.89,14.64 L36.99,20.12 L39.35,28.61 L32.00,23.75 L24.65,28.61 L27.01,20.12 L20.11,14.64 L28.91,14.25 Z" fill="#E8B923"/>
+</svg>
