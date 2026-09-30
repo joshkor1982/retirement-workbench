@@ -261,7 +261,7 @@ func (j *journey) post(path string, form url.Values) int {
 }
 
 var allPages = []string{"/", "/timeline", "/todos", "/notes", "/appointments", "/docs", "/medical",
-	"/packet", "/budget", "/debt", "/savings", "/retired-pay", "/resume", "/itp", "/jobs", "/housing", "/resources", "/learning", "/settings"}
+	"/packet", "/budget", "/debt", "/savings", "/retired-pay", "/resume", "/itp", "/jobs", "/housing", "/home-team", "/resources", "/learning", "/settings"}
 
 func TestJourneyFirstRunDemoAndErase(t *testing.T) {
 	j := newJourney(t)
@@ -1588,5 +1588,51 @@ func TestJourneyClaimEvidenceUpload(t *testing.T) {
 	}
 	if _, body := j.get("/medical"); !strings.Contains(body, "buddy.pdf") || !strings.Contains(body, `id="evidence"`) || strings.Contains(body, "spring 2027") {
 		t.Error("Claim Evidence card is missing the upload, or shows personal text")
+	}
+}
+
+func TestVAFundingFee(t *testing.T) {
+	for _, c := range []struct {
+		pct   float64
+		first bool
+		want  float64
+	}{{0, true, 2.15}, {4.9, true, 2.15}, {5, true, 1.5}, {10, true, 1.25}, {0, false, 3.3}, {6, false, 1.5}} {
+		if got := fundingFeeRate(c.pct, c.first); got != c.want {
+			t.Errorf("rate(%v%%, first %v) = %v, want %v", c.pct, c.first, got, c.want)
+		}
+	}
+	// VA's own example: $200,000 home, $10,000 down, first use: 1.5% of $190,000 = $2,850.
+	f := estimateFee(Settings{HomePrice: 20000000, HomeDown: 1000000})
+	if !f.Set || f.Fee != 285000 || f.Exempt {
+		t.Errorf("VA example = %+v", f)
+	}
+	if !estimateFee(Settings{HomePrice: 20000000, VaEstimate: 30}).Exempt {
+		t.Error("a VA rating should make the fee exempt")
+	}
+}
+
+func TestJourneyAgentsAndLenders(t *testing.T) {
+	j := newJourney(t)
+	j.post("/home-team/agents", url.Values{"name": {"Pat Lee"}, "brokerage": {"Acme Realty"}, "mrp": {"1"}})
+	j.post("/home-team/lenders", url.Values{"name": {"Big Bank"}, "kind": {"Bank"}, "rate": {"6.5"}, "apr": {"6.71%"}, "costs": {"5,100"}})
+	j.post("/home-team/lenders", url.Values{"name": {"Local CU"}, "kind": {"Credit union"}, "rate": {"6.25"}, "apr": {"6.40"}, "costs": {"3,900"}})
+	if f := flashOf(j.postResp("/home-team/lenders", url.Values{"name": {"X"}, "costs": {"lots"}})); !strings.HasPrefix(f, "err|") {
+		t.Errorf("bad costs flash = %q", f)
+	}
+	st := j.app.store.snapshot()
+	if len(st.Agents) != 1 || !st.Agents[0].MRP || len(st.Lenders) != 2 || st.Lenders[0].APR != "6.71" || st.Lenders[1].Costs != 390000 {
+		t.Fatalf("saved: %+v %+v", st.Agents, st.Lenders)
+	}
+	j.post("/home-team/agents/"+strconv.Itoa(st.Agents[0].ID)+"/update", url.Values{"name": {"Pat Lee"}, "status": {"interviewed"}})
+	if a := j.app.store.snapshot().Agents[0]; a.Status != "interviewed" || a.MRP {
+		t.Errorf("edited agent = %+v (unchecked MRP should clear)", a)
+	}
+	_, body := j.get("/home-team")
+	if i, k := strings.Index(body, "Local CU"), strings.Index(body, "Big Bank"); i < 0 || k < 0 || i > k || !strings.Contains(body, "Lowest APR") {
+		t.Error("lenders are not sorted lowest APR first with the badge")
+	}
+	j.post("/home-team/fee", url.Values{"price": {"350,000"}, "down": {"0"}})
+	if _, body := j.get("/home-team"); !strings.Contains(body, "$7,525.00") {
+		t.Error("funding fee for $350,000 at 0% down, first use, should be $7,525.00")
 	}
 }

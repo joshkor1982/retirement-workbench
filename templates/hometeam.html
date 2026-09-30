@@ -1,0 +1,148 @@
+{{template "head" .}}
+<section class="card">
+  <h2>Find Your Team</h2>
+  <details class="how-to"><summary>How to Use</summary>
+    <p class="hint">No official list says which agents or lenders are "VA qualified". Any VA-approved lender can make a VA loan, so get Loan Estimates from at least three (a bank, a credit union, and a mortgage company) on the same day and compare them below. For agents, ask whether they hold NAR's Military Relocation Professional (MRP) certification and how many VA buyers they have closed; sellers and listing agents sometimes steer away from VA offers, and an agent who knows the process keeps yours competitive. Searches use your Housing ZIP code{{if .Zip}} ({{.Zip}}){{end}}.</p>
+  </details>
+  <div class="grid2 team-links">
+    <div>
+      <h3 class="skill-area-name">Agents</h3>
+      <ul class="plain">{{range .AgentLinks}}<li class="team-link"><a href="{{.URL}}" target="_blank" rel="noopener"><b>{{.Label}} ↗</b></a><span class="note">{{.Note}}</span></li>{{end}}</ul>
+      {{if not .Zip}}<p class="hint">Set a ZIP code on <a href="/housing">Housing</a> and the agent search opens right on it.</p>{{end}}
+    </div>
+    <div>
+      <h3 class="skill-area-name">VA Loans and Lenders</h3>
+      <ul class="plain">{{range .LenderLinks}}<li class="team-link"><a href="{{.URL}}" target="_blank" rel="noopener"><b>{{.Label}} ↗</b></a><span class="note">{{.Note}}</span></li>{{end}}</ul>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="fee">
+  <h2>VA Funding Fee</h2>
+  <details class="how-to"><summary>How This Works</summary>
+    <p class="hint">VA charges a one-time funding fee on the loan amount, set by your down payment and whether you have used a VA loan before (first use: 2.15% under 5% down, 1.5% at 5%, 1.25% at 10%; after first use: 3.3%, 1.5%, 1.25%). You pay no fee if you receive VA disability compensation, or would except that you get retired pay instead, or have a rating from a pre-discharge claim before closing. Rated later? You can ask VA for a refund. Rates as published on va.gov.</p>
+  </details>
+  {{if .Fee.Set}}
+  <div class="gist">
+    <div class="gist-item"><span class="gist-label">Loan Amount</span><span class="gist-num">{{money .Fee.Loan}}</span><span class="gist-sub">{{money .Fee.Price}} price, {{.Fee.DownPct}} down</span></div>
+    <div class="gist-item"><span class="gist-label">Funding Fee</span>
+      {{if .Fee.Exempt}}<span class="gist-num gist-ok">$0.00</span><span class="gist-sub">Exempt with a VA rating. Without one: {{money .Fee.Fee}} ({{.Fee.Rate}})</span>
+      {{else}}<span class="gist-num">{{money .Fee.Fee}}</span><span class="gist-sub">{{.Fee.Rate}} of the loan, {{if .Fee.FirstUse}}first use{{else}}after first use{{end}}</span>{{end}}</div>
+  </div>
+  {{end}}
+  <form method="post" action="/home-team/fee" class="field-row">
+    <label class="field"><span class="field-label">Home Price</span><input type="text" name="price" inputmode="decimal" value="{{if .Settings.HomePrice}}{{money .Settings.HomePrice}}{{end}}" placeholder="350,000"></label>
+    <label class="field"><span class="field-label">Down Payment</span><input type="text" name="down" inputmode="decimal" value="{{if .Fee.Set}}{{money .Settings.HomeDown}}{{end}}" placeholder="0"></label>
+    <label class="field inline-check"><input type="checkbox" name="used" value="1"{{if .Settings.VALoanUsed}} checked{{end}}> Used a VA loan before</label>
+    <button type="submit" class="primary">Estimate</button>
+  </form>
+  <p class="hint">{{if .Fee.Exempt}}Your VA estimate in Settings is above 0%, so this assumes you will be rated before closing. File your claim in the BDD window to get the rating in time.{{else}}Set your VA estimate in <a href="/settings">Settings</a>: with any rating, the fee is $0.{{end}}</p>
+</section>
+
+<section class="card" id="agents">
+  <h2>Agents</h2>
+  <form method="post" action="/home-team/agents" class="field-row">
+    <label class="field"><span class="field-label">Name</span><input type="text" name="name" required placeholder="Agent name"></label>
+    <label class="field"><span class="field-label">Brokerage</span><input type="text" name="brokerage" placeholder="Brokerage"></label>
+    <label class="field field-grow"><span class="field-label">Phone or Email</span><input type="text" name="contact" placeholder="(555) 010-0100"></label>
+    <label class="field field-grow"><span class="field-label">VA Buyers Closed</span><input type="text" name="va_deals" placeholder="What they told you"></label>
+    <label class="field inline-check"><input type="checkbox" name="mrp" value="1"> MRP Certified</label>
+    <button type="submit" class="primary">Add</button>
+  </form>
+  {{if .Agents}}
+  <table>
+    <thead><tr><th>Agent</th><th>Brokerage</th><th>Contact</th><th>VA Buyers</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {{range .Agents}}
+    <tr>
+      <td>{{if .URL}}<a href="{{.URL}}" target="_blank" rel="noopener"><b>{{.Name}} ↗</b></a>{{else}}<b>{{.Name}}</b>{{end}}{{if .MRP}} <span class="chip">MRP</span>{{end}}{{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}</td>
+      <td>{{.Brokerage}}</td><td>{{.Contact}}</td><td>{{.VADeals}}</td>
+      <td><span class="chip p-{{.Status}}">{{.Status}}</span></td>
+      <td><span class="row-actions"><button type="button" class="btn-edit" data-edit="{{.ID}}">Edit</button>
+        <form method="post" action="/home-team/agents/{{.ID}}/delete"><button class="danger">Delete</button></form></span></td>
+    </tr>
+    <tr class="edit-row" id="edit-{{.ID}}" hidden><td colspan="6">
+      <form method="post" action="/home-team/agents/{{.ID}}/update" class="field-row">
+        <label class="field"><span class="field-label">Name</span><input type="text" name="name" value="{{.Name}}" required></label>
+        <label class="field"><span class="field-label">Brokerage</span><input type="text" name="brokerage" value="{{.Brokerage}}"></label>
+        <label class="field field-grow"><span class="field-label">Phone or Email</span><input type="text" name="contact" value="{{.Contact}}"></label>
+        <label class="field field-grow"><span class="field-label">Profile Link</span><input type="text" name="url" value="{{.URL}}"></label>
+        <label class="field field-grow"><span class="field-label">VA Buyers Closed</span><input type="text" name="va_deals" value="{{.VADeals}}"></label>
+        {{$st := .Status}}<label class="field"><span class="field-label">Status</span><select name="status">{{range $.AgentFlow}}<option value="{{.}}"{{if eq . $st}} selected{{end}}>{{.}}</option>{{end}}</select></label>
+        <label class="field inline-check"><input type="checkbox" name="mrp" value="1"{{if .MRP}} checked{{end}}> MRP Certified</label>
+        <label class="field field-full"><span class="field-label">Notes</span><input type="text" name="notes" value="{{.Notes}}"></label>
+        <button type="submit" class="primary">Save</button>
+      </form>
+    </td></tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{else}}<p class="hint">No agents yet. Interview two or three before you sign a buyer agreement.</p>{{end}}
+  <details class="how-to"><summary>Questions to Ask an Agent</summary>
+    <ul class="hint">
+      <li>How many VA buyers have you closed in the last two years, and how did you keep those offers competitive?</li>
+      <li>Do you hold the Military Relocation Professional (MRP) certification?</li>
+      <li>Can you work with me remotely until I arrive, including video tours?</li>
+      <li>What is in your buyer agreement: your fee, who pays it, and how long it lasts?</li>
+      <li>Which inspectors and appraisal issues do you see most with VA loans here?</li>
+    </ul>
+  </details>
+</section>
+
+<section class="card" id="lenders">
+  <h2>Lenders</h2>
+  <form method="post" action="/home-team/lenders" class="field-row">
+    <label class="field"><span class="field-label">Lender</span><input type="text" name="name" required placeholder="Lender name"></label>
+    <label class="field"><span class="field-label">Type</span><select name="kind"><option>Credit union</option><option>Bank</option><option>Mortgage company</option></select></label>
+    <label class="field"><span class="field-label">NMLS ID</span><input type="text" name="nmls" inputmode="numeric" placeholder="From the Loan Estimate"></label>
+    <label class="field"><span class="field-label">Rate %</span><input type="text" name="rate" inputmode="decimal" placeholder="6.125" size="6"></label>
+    <label class="field"><span class="field-label">APR %</span><input type="text" name="apr" inputmode="decimal" placeholder="6.310" size="6"></label>
+    <label class="field"><span class="field-label">Closing Costs</span><input type="text" name="costs" inputmode="decimal" placeholder="Sections A + B" size="10"></label>
+    <label class="field"><span class="field-label">Quote Date</span><input type="date" name="quoted_on"></label>
+    <button type="submit" class="primary">Add</button>
+  </form>
+  {{if .Lenders}}
+  <table>
+    <thead><tr><th>Lender</th><th>NMLS</th><th class="num">Rate</th><th class="num">APR</th><th class="num">Closing Costs</th><th>Quoted</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {{range .Lenders}}
+    <tr{{if eq .ID $.BestAPR}} class="best-quote"{{end}}>
+      <td><b>{{.Name}}</b>{{if eq .ID $.BestAPR}} <span class="chip">Lowest APR</span>{{end}}<span class="note">{{.Kind}}{{if .Contact}} · {{.Contact}}{{end}}{{if .Notes}} · {{.Notes}}{{end}}</span></td>
+      <td>{{if .NMLS}}<a href="https://www.nmlsconsumeraccess.org/" target="_blank" rel="noopener" title="Search this ID on NMLS Consumer Access">{{.NMLS}} ↗</a>{{end}}</td>
+      <td class="num">{{if .Rate}}{{.Rate}}%{{end}}</td><td class="num">{{if .APR}}<b>{{.APR}}%</b>{{end}}</td>
+      <td class="num">{{if .Costs}}{{money .Costs}}{{end}}</td><td class="nowrap">{{.QuotedOn}}</td>
+      <td><span class="chip p-{{.Status}}">{{.Status}}</span></td>
+      <td><span class="row-actions"><button type="button" class="btn-edit" data-edit="{{.ID}}">Edit</button>
+        <form method="post" action="/home-team/lenders/{{.ID}}/delete"><button class="danger">Delete</button></form></span></td>
+    </tr>
+    <tr class="edit-row" id="edit-{{.ID}}" hidden><td colspan="8">
+      <form method="post" action="/home-team/lenders/{{.ID}}/update" class="field-row">
+        <label class="field"><span class="field-label">Lender</span><input type="text" name="name" value="{{.Name}}" required></label>
+        {{$k := .Kind}}<label class="field"><span class="field-label">Type</span><select name="kind"><option{{if eq $k "Credit union"}} selected{{end}}>Credit union</option><option{{if eq $k "Bank"}} selected{{end}}>Bank</option><option{{if eq $k "Mortgage company"}} selected{{end}}>Mortgage company</option></select></label>
+        <label class="field"><span class="field-label">NMLS ID</span><input type="text" name="nmls" value="{{.NMLS}}"></label>
+        <label class="field field-grow"><span class="field-label">Loan Officer</span><input type="text" name="contact" value="{{.Contact}}"></label>
+        <label class="field"><span class="field-label">Rate %</span><input type="text" name="rate" value="{{.Rate}}" size="6"></label>
+        <label class="field"><span class="field-label">APR %</span><input type="text" name="apr" value="{{.APR}}" size="6"></label>
+        <label class="field"><span class="field-label">Closing Costs</span><input type="text" name="costs" value="{{if .Costs}}{{money .Costs}}{{end}}" size="10"></label>
+        <label class="field"><span class="field-label">Quote Date</span><input type="date" name="quoted_on" value="{{.QuotedOn}}"></label>
+        {{$st := .Status}}<label class="field"><span class="field-label">Status</span><select name="status">{{range $.LenderFlow}}<option value="{{.}}"{{if eq . $st}} selected{{end}}>{{.}}</option>{{end}}</select></label>
+        <label class="field field-full"><span class="field-label">Notes</span><input type="text" name="notes" value="{{.Notes}}"></label>
+        <button type="submit" class="primary">Save</button>
+      </form>
+    </td></tr>
+    {{end}}
+    </tbody>
+  </table>
+  <p class="hint">Sorted by APR, lowest first. APR folds the rate and the lender's fees into one number, so it is the fairest single comparison for quotes pulled on the same day.</p>
+  {{else}}<p class="hint">No quotes yet. Ask three lenders for a Loan Estimate on the same day and enter the rate, APR, and sections A plus B here.</p>{{end}}
+  <details class="how-to"><summary>Questions to Ask a Lender</summary>
+    <ul class="hint">
+      <li>How many VA loans did you close last year, and do you service them or sell them?</li>
+      <li>What are your lender fees (Loan Estimate section A), and will you waive any?</li>
+      <li>Can you lock today, for how long, and what does an extension cost?</li>
+      <li>Do you count my retired pay and VA compensation as income, and what documents do you need for each?</li>
+      <li>Will you pull my Certificate of Eligibility (COE) for me?</li>
+    </ul>
+  </details>
+</section>
+{{template "foot" .}}

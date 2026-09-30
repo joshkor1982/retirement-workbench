@@ -41,12 +41,14 @@ var sideNav = []navGroup{
 	}},
 	{"Next Home", []navItem{
 		{"housing", "Housing", "/housing", "house"},
+		{"hometeam", "Agents & Lenders", "/home-team", "key"},
 		{"resources", "Resources", "/resources", "link"},
 	}},
 }
 
 // navIcons are 24px stroke icons drawn for this app (stroke comes from CSS).
 var navIcons = map[string]string{
+	"key":       `<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/>`,
 	"book":      `<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5M8 7h8M8 11h6"/>`,
 	"home":      `<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>`,
 	"timeline":  `<path d="M4 6h10M4 12h16M4 18h7"/><circle cx="17" cy="6" r="2"/><circle cx="14" cy="18" r="2"/>`,

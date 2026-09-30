@@ -92,7 +92,10 @@ type Settings struct {
 	HealthPlan      string  `json:"health_plan,omitempty"`        // prime | select | tfl | none; "" = prime
 	NoDental        bool    `json:"no_dental,omitempty"`          // skip FEDVIP dental
 	NoVision        bool    `json:"no_vision,omitempty"`          // skip FEDVIP vision
-	HealthOther     int64   `json:"health_other_cents,omitempty"` // other health premiums, a month // estimated civilian job pay, a year
+	HealthOther     int64   `json:"health_other_cents,omitempty"` // other health premiums, a month
+	HomePrice       int64   `json:"home_price_cents,omitempty"`   // VA funding fee estimate
+	HomeDown        int64   `json:"home_down_cents,omitempty"`
+	VALoanUsed      bool    `json:"va_loan_used,omitempty"` // a VA loan was used before: higher fee // estimated civilian job pay, a year
 	SavingsGoal     int64   `json:"savings_goal_cents,omitempty"`
 	SavingsGoalName string  `json:"savings_goal_name,omitempty"`
 	TimelineSeeded  bool    `json:"timeline_seeded"`
@@ -282,6 +285,8 @@ type State struct {
 	Links         []Link            `json:"links,omitempty"`
 	Advisor       []AdvisorEntry    `json:"advisor,omitempty"`
 	Analysis      *ClaimAnalysis    `json:"analysis,omitempty"`
+	Agents        []Agent           `json:"agents,omitempty"` // Agents & Lenders
+	Lenders       []Lender          `json:"lenders,omitempty"`
 	Companies     []Company         `json:"companies,omitempty"`        // Learning: companies you want to work for
 	Skills        []Skill           `json:"skills,omitempty"`           // Learning: what to master for each
 	Found         *ConditionScan    `json:"found_conditions,omitempty"` // Find Conditions in My Records results, until added or dismissed
@@ -756,6 +761,7 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 	s.routeLearning(mux)
 	s.routeGenerate(mux)
 	s.routeHandbooks(mux)
+	s.routeHomeTeam(mux)
 	mux.HandleFunc("POST /medical/find", s.conditionsFind)
 	mux.HandleFunc("POST /medical/found/add", s.conditionsFoundAdd)
 	mux.HandleFunc("POST /medical/found/clear", s.conditionsFoundClear)
@@ -796,7 +802,7 @@ func (s *Server) page(w http.ResponseWriter, name string, data map[string]any) {
 		"dashboard": "Dashboard", "timeline": "Timeline", "todos": "To-Dos", "medical": "Medical / VA",
 		"appointments": "Appointments", "docs": "Documents", "budget": "Budget",
 		"resume": "Resume", "jobs": "Jobs", "resources": "Resources", "itp": "ITP", "settings": "Settings",
-		"packet": "Submit Packet", "housing": "Housing", "debt": "Debt", "savings": "Savings", "retirepay": "Retired Pay", "notes": "Notes", "skillbridge": "SkillBridge", "learning": "Learning",
+		"packet": "Submit Packet", "housing": "Housing", "debt": "Debt", "savings": "Savings", "retirepay": "Retired Pay", "notes": "Notes", "skillbridge": "SkillBridge", "learning": "Learning", "hometeam": "Agents & Lenders",
 	}
 	data["PageTitle"] = titles[name]
 	// Recent Advisor exchanges feed the docked sidebar on every page.
@@ -2095,6 +2101,12 @@ func advisorDigest(st *State) string {
 	b.WriteString(savingsDigest(*st))
 	b.WriteString(leaveDigest(*st))
 	b.WriteString(learningDigest(*st))
+	for _, a := range st.Agents {
+		fmt.Fprintf(&b, "Real estate agent #%d %s (%s) status %s, MRP %t, VA buyers: %s. %s\n", a.ID, a.Name, a.Brokerage, a.Status, a.MRP, a.VADeals, a.Notes)
+	}
+	for _, l := range st.Lenders {
+		fmt.Fprintf(&b, "Lender #%d %s (%s, NMLS %s) rate %s%% APR %s%% closing costs %s status %s. %s\n", l.ID, l.Name, l.Kind, l.NMLS, l.Rate, l.APR, money(l.Costs), l.Status, l.Notes)
+	}
 	if rp := estimateRetirePay(*st); rp.Set {
 		fmt.Fprintf(&b, "Retired pay estimate (%s, %s years): gross %s, SBP %s, VA %s, total %s/mo before tax\n", rp.System, rp.Years, money(rp.Gross), money(rp.SBP), money(rp.VA), money(rp.Total))
 		t := rp.Tax

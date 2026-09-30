@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- Agents & Lenders (under Next Home): searches for agents near your Housing
+  ZIP code and VA's own home loan pages (COE, funding fee, lender
+  statistics), NMLS license lookup, and CFPB's Loan Estimate guide; a tracker
+  for the agents you interview (MRP certification, VA buyers closed, status)
+  and the lenders who quote you, sorted by APR with the lowest marked; and a
+  VA funding fee estimate from VA's published table, $0 with a VA rating.
 - Medical / VA has a Claim Evidence card near the top: upload DBQs, medical
   records, and other evidence (buddy statements, photos, letters), several
   files at a time, and see and delete them in three lists. Analyze the Claim

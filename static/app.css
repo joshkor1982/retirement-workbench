@@ -1065,3 +1065,8 @@ a.skill-name:hover { color: var(--fg-accent); text-decoration: underline; }
 .evidence-lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
 .evidence-list .rowline { align-items: center; }
 .evidence-list .rowline form { margin: 0; }
+
+/* Agents & Lenders */
+.team-links { gap: 24px; }
+.team-link { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid color-mix(in srgb, var(--c-line) 60%, transparent); }
+tr.best-quote td { background: color-mix(in srgb, var(--status-ok-fg) 7%, transparent); }
