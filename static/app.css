@@ -1070,3 +1070,25 @@ a.skill-name:hover { color: var(--fg-accent); text-decoration: underline; }
 .team-links { gap: 24px; }
 .team-link { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid color-mix(in srgb, var(--c-line) 60%, transparent); }
 tr.best-quote td { background: color-mix(in srgb, var(--status-ok-fg) 7%, transparent); }
+
+/* Neighborhood map */
+.hood-map { height: 520px; border-radius: var(--r-1); border: 1px solid var(--c-line); overflow: hidden; z-index: 0; }
+.map-layers { display: flex; flex-wrap: wrap; gap: 6px; }
+.map-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--c-line); border-radius: 999px; font-size: var(--t-13); cursor: pointer; user-select: none; }
+.map-chip:has(input:checked) { border-color: var(--fg-accent); background: color-mix(in srgb, var(--fg-accent) 10%, transparent); }
+.map-chip input { margin: 0; }
+.map-dot, .map-legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0,0,0,.4); }
+.map-status { margin: 0; min-height: 1.2em; }
+.map-legends { display: flex; flex-direction: column; gap: 8px; }
+.map-legend { font-size: var(--t-13); color: var(--fg-muted); }
+.map-legend b { color: var(--fg-primary); margin-right: 6px; }
+.dens-scale i { display: inline-block; width: 14px; height: 10px; margin: 0 4px 0 10px; border: 1px solid rgba(0,0,0,.3); vertical-align: middle; }
+.map-photo { width: 100%; max-width: 240px; border-radius: 6px; display: block; margin-bottom: 6px; }
+.map-crime { margin: 6px 0; font-size: 12px; }
+.map-crime td, .map-crime th { padding: 2px 6px; }
+.leaflet-container { font-family: var(--font-sans); background: var(--bg-well); }
+.leaflet-popup-content { font-size: 13px; line-height: 1.45; }
+/* Dark theme: dim the street tiles, never the data overlays. */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .osm-base { filter: invert(1) hue-rotate(180deg) brightness(.85) contrast(.9); } }
+:root[data-theme="dark"] .osm-base { filter: invert(1) hue-rotate(180deg) brightness(.85) contrast(.9); }
+.crime-badge span { display: inline-block; transform: translate(-50%, -50%); padding: 3px 8px; border-radius: 999px; color: #fff; font: 700 12px/1.2 var(--font-sans); border: 2px solid #111; box-shadow: 0 1px 4px rgba(0,0,0,.4); white-space: nowrap; }

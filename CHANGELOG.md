@@ -3,6 +3,15 @@
 ## Unreleased
 
 ### Added
+- Neighborhood Map on Housing: homes for sale as pins, FEMA flood zones,
+  2020 Census population density by tract, NCES public schools, FBI crime
+  rates by police agency against the state and national rates, and
+  OpenStreetMap places (grocery, shopping, dining, hospitals, pharmacies,
+  parks, fitness, gas, libraries, fire and police, childcare, places of
+  worship, military). Layers load only when switched on, for the area in
+  view, through the app's own cached endpoints. `?layers=` bookmarks a view.
+  An optional free api.data.gov key in Settings lifts the crime data's demo
+  limit.
 - Agents & Lenders (under Next Home): searches for agents near your Housing
   ZIP code and VA's own home loan pages (COE, funding fee, lender
   statistics), NMLS license lookup, and CFPB's Loan Estimate guide; a tracker

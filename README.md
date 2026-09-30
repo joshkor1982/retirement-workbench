@@ -62,6 +62,7 @@ later.
 | Build your VA claim evidence and estimate your combined rating | **Medical / VA** |
 | Work the PAR step by step and combine your packet into one PDF | **Submit Packet** |
 | Plan your budget, debt payoff, savings, and retired pay | **Budget**, **Debt**, **Savings**, and **Retired Pay** |
+| See flood zones, schools, crime, population density, and nearby shopping and services on a map around the homes you are looking at | **Housing** |
 | Find and compare real estate agents and VA loan lenders, and estimate the VA funding fee | **Agents & Lenders** |
 | Track what to master for each company you want to work for, skill by skill | **Learning** |
 | See your take-home after retirement: retired pay, VA pay, and a civilian job, minus federal and state tax and TRICARE, dental, and vision costs | **Retired Pay** |
@@ -222,6 +223,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) before you open a pull request, and
 ## License
 
 [MIT](LICENSE). Free for anyone to use, change, and share.
+
+Map data comes from OpenStreetMap contributors (ODbL), FEMA's National Flood
+Hazard Layer, the Census Bureau's TIGERweb (2020 Census), NCES school
+locations, and the FBI Crime Data Explorer. The map is drawn with Leaflet
+(BSD 2-Clause, [static/vendor/leaflet/LICENSE](static/vendor/leaflet/LICENSE)).
 
 Tax figures come from IRS Rev. Proc. 2025-32 (federal, 2026) and Tax
 Foundation's 2026 state income tax table, regenerated with

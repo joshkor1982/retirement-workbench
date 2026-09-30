@@ -95,7 +95,8 @@ type Settings struct {
 	HealthOther     int64   `json:"health_other_cents,omitempty"` // other health premiums, a month
 	HomePrice       int64   `json:"home_price_cents,omitempty"`   // VA funding fee estimate
 	HomeDown        int64   `json:"home_down_cents,omitempty"`
-	VALoanUsed      bool    `json:"va_loan_used,omitempty"` // a VA loan was used before: higher fee // estimated civilian job pay, a year
+	VALoanUsed      bool    `json:"va_loan_used,omitempty"` // a VA loan was used before: higher fee
+	DataGovKey      string  `json:"data_gov_key,omitempty"` // api.data.gov key for FBI crime data; DEMO_KEY when empty // estimated civilian job pay, a year
 	SavingsGoal     int64   `json:"savings_goal_cents,omitempty"`
 	SavingsGoalName string  `json:"savings_goal_name,omitempty"`
 	TimelineSeeded  bool    `json:"timeline_seeded"`
@@ -762,6 +763,7 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 	s.routeGenerate(mux)
 	s.routeHandbooks(mux)
 	s.routeHomeTeam(mux)
+	s.routeMap(mux)
 	mux.HandleFunc("POST /medical/find", s.conditionsFind)
 	mux.HandleFunc("POST /medical/found/add", s.conditionsFoundAdd)
 	mux.HandleFunc("POST /medical/found/clear", s.conditionsFoundClear)
@@ -4208,6 +4210,12 @@ func (s *Server) settingsSave(w http.ResponseWriter, r *http.Request) {
 		}
 		if r.FormValue("adzuna_key_clear") == "1" {
 			st.Settings.AdzunaID, st.Settings.AdzunaKey = "", ""
+		}
+		if v := strings.TrimSpace(r.FormValue("data_gov_key")); v != "" {
+			st.Settings.DataGovKey = v
+		}
+		if r.FormValue("data_gov_key_clear") == "1" {
+			st.Settings.DataGovKey = ""
 		}
 		if v, err := strconv.Atoi(strings.TrimSpace(r.FormValue("va_estimate"))); err == nil && v >= 0 && v <= 100 {
 			st.Settings.VaEstimate = v

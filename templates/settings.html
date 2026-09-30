@@ -40,6 +40,9 @@
       <label class="field field-grow"><span class="field-label">Adzuna App Key</span>
         <input type="password" name="adzuna_key" value="" autocomplete="off" placeholder="{{if .Settings.AdzunaKey}}Saved. Type a new key to replace it.{{else}}Paste your key{{end}}"></label>
       {{if .Settings.AdzunaKey}}<label class="field inline-check"><input type="checkbox" name="adzuna_key_clear" value="1"> Remove Adzuna</label>{{end}}
+      <label class="field field-grow"><span class="field-label">Data.gov API Key (Crime Map)</span>
+        <input type="password" name="data_gov_key" value="" autocomplete="off" placeholder="{{if .Settings.DataGovKey}}Saved. Type a new key to replace it.{{else}}Free at api.data.gov/signup{{end}}"></label>
+      {{if .Settings.DataGovKey}}<label class="field inline-check"><input type="checkbox" name="data_gov_key_clear" value="1"> Remove Data.gov Key</label>{{end}}
       <label class="field"><span class="field-label">Potential VA Rating (%)</span>
         <input type="number" name="va_estimate" min="0" max="100" value="{{.Settings.VaEstimate}}"></label>
     </div>

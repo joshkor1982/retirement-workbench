@@ -1636,3 +1636,33 @@ func TestJourneyAgentsAndLenders(t *testing.T) {
 		t.Error("funding fee for $350,000 at 0% down, first use, should be $7,525.00")
 	}
 }
+
+func TestMapBBoxAndPlaces(t *testing.T) {
+	if _, err := parseBBox("-86.7,34.6,-86.5,34.8", 0.5); err != nil {
+		t.Errorf("good bbox refused: %v", err)
+	}
+	for _, bad := range []string{"", "1,2,3", "-86,34,-87,35", "-90,30,-80,40", "a,b,c,d", "NaN,1,2,3"} {
+		if _, err := parseBBox(bad, 0.5); err == nil {
+			t.Errorf("bbox %q accepted", bad)
+		}
+	}
+	if yearRate(map[string]float64{"01": 10, "02": 20.04}) != 30 {
+		t.Error("yearRate should sum monthly rates to one decimal")
+	}
+	if d := milesBetween(34.73, -86.59, 34.73, -86.59); d != 0 {
+		t.Errorf("zero distance = %v", d)
+	}
+	if d := milesBetween(34.7304, -86.5861, 33.5186, -86.8104); d < 83 || d > 85 {
+		t.Errorf("Huntsville to Birmingham = %.1f miles, want about 84", d)
+	}
+	j := newJourney(t)
+	if code, body := j.get("/map/places?kind=nope&bbox=-86.7,34.6,-86.5,34.8"); code != http.StatusBadGateway || !strings.Contains(body, "unknown place kind") {
+		t.Errorf("unknown kind: %d %s", code, body)
+	}
+	if _, body := j.get("/map/center"); !strings.Contains(body, `"ok":false`) {
+		t.Error("an empty app should not have a map center")
+	}
+	if _, body := j.get("/housing"); !strings.Contains(body, `id="hood-map"`) || !strings.Contains(body, "/static/vendor/leaflet/leaflet.js") {
+		t.Error("Housing is missing the map")
+	}
+}

@@ -30,6 +30,26 @@
   </form>
 </section>
 
+<section class="card" id="neighborhood">
+  <h2>Neighborhood Map</h2>
+  <details class="how-to"><summary>How to Use</summary>
+    <p class="hint">Switch layers on to see what matters around a house: FEMA flood zones, population density from the 2020 Census, public schools, crime rates from the FBI, and places from OpenStreetMap like grocery stores, hospitals, parks, and gyms. Places and schools load for the area in view, so zoom in to a neighborhood. Click the map to zoom with the scroll wheel, and click any dot for details. Crime is reported per police department or sheriff's office, so it describes the whole city or county, not one street; a free api.data.gov key in Settings keeps it from hitting the demo limit.</p>
+  </details>
+  <div class="map-layers" id="map-layers" aria-label="Map layers"></div>
+  <div id="hood-map" class="hood-map" role="region" aria-label="Neighborhood map"></div>
+  <p class="hint map-status" id="map-status" aria-live="polite"></p>
+  <div class="map-legends">
+    <div class="map-legend" data-legend="flood" hidden><b>Flood Zones</b> Shaded areas are FEMA special flood hazard areas (1% annual chance, the "100-year" flood); lighter shading is the 0.2% area. A lender will require flood insurance in the 1% zones. FEMA draws them only when zoomed in to street level. Confirm a specific address at <a href="https://msc.fema.gov/portal/search" target="_blank" rel="noopener">FEMA's Flood Map Service Center ↗</a>.</div>
+    <div class="map-legend" data-legend="density" hidden><b>People per Square Mile</b>
+      <span class="dens-scale"><i style="background:#f7fbff"></i>under 500 <i style="background:#c6dbef"></i>500 <i style="background:#6baed6"></i>1,500 <i style="background:#2171b5"></i>3,000 <i style="background:#08306b"></i>6,000+</span></div>
+    <div class="map-legend" data-legend="crime" hidden><b>Crime by Police Agency</b> Each badge is the violent crime rate per 100,000 people, colored against the national rate: <i class="dot" style="background:#2e9e5b"></i> well below <i class="dot" style="background:#f59f00"></i> near <i class="dot" style="background:#e03131"></i> well above. Source: FBI Crime Data Explorer, last full year.</div>
+    <div class="map-legend" data-legend="schools" hidden><b>Public Schools</b> From NCES. For ratings and boundaries, check the school district's site; boundaries decide which school a house feeds.</div>
+  </div>
+</section>
+<link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
+<script src="/static/vendor/leaflet/leaflet.js"></script>
+<script src="/static/map.js"></script>
+
 <section class="card">
   <div class="home-bar">
     <label class="field"><span class="field-label">Sort</span>

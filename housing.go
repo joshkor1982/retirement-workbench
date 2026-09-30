@@ -56,22 +56,24 @@ func (h HouseSearch) key() string {
 }
 
 type Home struct {
-	ID        string `json:"id"`
-	URL       string `json:"url"`
-	Photo     string `json:"photo"`
-	Address   string `json:"address"`
-	City      string `json:"city"`
-	State     string `json:"state"`
-	Zip       string `json:"zip"`
-	Type      string `json:"type"`
-	Price     int    `json:"price"`
-	Cut       int    `json:"cut,omitempty"` // latest price reduction, dollars
-	Beds      int    `json:"beds"`
-	Baths     string `json:"baths"`
-	Sqft      int    `json:"sqft"`
-	Year      int    `json:"year,omitempty"`
-	Listed    string `json:"listed"`     // RFC3339 list date from the feed
-	FirstSeen string `json:"first_seen"` // RFC3339, when this app first saw it
+	ID        string  `json:"id"`
+	URL       string  `json:"url"`
+	Photo     string  `json:"photo"`
+	Address   string  `json:"address"`
+	City      string  `json:"city"`
+	State     string  `json:"state"`
+	Zip       string  `json:"zip"`
+	Type      string  `json:"type"`
+	Price     int     `json:"price"`
+	Cut       int     `json:"cut,omitempty"` // latest price reduction, dollars
+	Beds      int     `json:"beds"`
+	Baths     string  `json:"baths"`
+	Sqft      int     `json:"sqft"`
+	Year      int     `json:"year,omitempty"`
+	Listed    string  `json:"listed"`        // RFC3339 list date from the feed
+	FirstSeen string  `json:"first_seen"`    // RFC3339, when this app first saw it
+	Lat       float64 `json:"lat,omitempty"` // for the neighborhood map
+	Lon       float64 `json:"lon,omitempty"`
 }
 
 type homeCache struct {
@@ -222,7 +224,7 @@ const homeQuery = `query ConsumerSearchQuery($query: HomeSearchCriteria!, $limit
       property_id status href list_price list_date price_reduced_amount
       flags { is_pending is_contingent }
       description { type beds baths_consolidated sqft year_built }
-      location { address { line city state_code postal_code } }
+      location { address { line city state_code postal_code coordinate { lat lon } } }
       primary_photo(https: true) { href }
     }
   }
@@ -252,6 +254,10 @@ type rdcResult struct {
 			City  string `json:"city"`
 			State string `json:"state_code"`
 			Zip   string `json:"postal_code"`
+			Coord struct {
+				Lat float64 `json:"lat"`
+				Lon float64 `json:"lon"`
+			} `json:"coordinate"`
 		} `json:"address"`
 	} `json:"location"`
 	Photo struct {
@@ -340,7 +346,7 @@ func fetchHomes(hs HouseSearch) ([]Home, int, error) {
 				Address: a.Line, City: a.City, State: a.State, Zip: a.Zip,
 				Type: r.Description.Type, Price: int(r.ListPrice), Cut: int(r.Reduced),
 				Beds: r.Description.Beds, Baths: r.Description.Baths, Sqft: r.Description.Sqft,
-				Year: r.Description.Year, Listed: r.ListDate,
+				Year: r.Description.Year, Listed: r.ListDate, Lat: a.Coord.Lat, Lon: a.Coord.Lon,
 			})
 		}
 		if len(hsr.Results) < homePageSize || offset+homePageSize >= total {
