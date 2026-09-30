@@ -37,6 +37,8 @@ type retirePay struct {
 	Total      int64 // what arrives each month
 	Change     int64 // after-tax total minus current take-home
 	Tax        retireTax
+	Health     healthCost
+	TakeHome   int64 // after tax and health coverage, cents a month
 	HaveIncome bool
 }
 
@@ -94,10 +96,13 @@ func estimateRetirePay(st State) retirePay {
 		p.Total = p.Net - p.Offset + p.VA
 	}
 	p.Tax = estimateRetireTax(st, p)
+	p.Health = estimateHealth(s)
+	p.TakeHome = p.Tax.AfterTax - p.Health.Total
 	if s.MonthlyIncome > 0 {
-		// Take-home is after tax, so compare it with retired pay after tax.
+		// Today's take-home is after tax, and TRICARE is free on active
+		// duty, so compare it with take-home after tax and health coverage.
 		p.HaveIncome = true
-		p.Change = p.Tax.AfterTax - s.MonthlyIncome
+		p.Change = p.TakeHome - s.MonthlyIncome
 	}
 	return p
 }
@@ -106,6 +111,7 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 	years, yErr := strconv.ParseFloat(strings.TrimSpace(r.FormValue("years")), 64)
 	high3, hOK := optionalMoney(r.FormValue("high3")) // blank is fine when ARW calculates it
 	salary, sOK := optionalMoney(r.FormValue("civ_salary"))
+	other, oOK := optionalMoney(r.FormValue("health_other"))
 	count := func(k string, hi int) int {
 		n, _ := strconv.Atoi(strings.TrimSpace(r.FormValue(k)))
 		return min(max(n, 0), hi)
@@ -117,6 +123,10 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 		flash(w, "err", "High-3 must be a dollar amount, like 6,450.00.")
 	case !sOK || salary < 0:
 		flash(w, "err", "Civilian salary must be a dollar amount a year, like 85,000.")
+	case !oOK || other < 0:
+		flash(w, "err", "Other health cost must be a dollar amount a month, like 150.")
+	case !validHealthPlan(r.FormValue("health_plan")):
+		flash(w, "err", "Pick a health plan from the list.")
 	case !validTaxState(r.FormValue("tax_state")):
 		flash(w, "err", "Pick a state from the list.")
 	case !validBirthYear(r.FormValue("birth_year")):
@@ -130,6 +140,9 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 			st.Settings.RetSBP = r.FormValue("sbp") == "1"
 			st.Settings.TaxState = strings.TrimSpace(r.FormValue("tax_state"))
 			st.Settings.CivSalary = salary
+			st.Settings.HealthPlan, st.Settings.HealthOther = r.FormValue("health_plan"), other
+			st.Settings.NoDental = r.FormValue("dental") != "1"
+			st.Settings.NoVision = r.FormValue("vision") != "1"
 			st.Settings.BirthYear, _ = strconv.Atoi(strings.TrimSpace(r.FormValue("birth_year")))
 		})
 		flash(w, "ok", "Retired pay estimate updated.")

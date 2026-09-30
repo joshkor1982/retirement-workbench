@@ -82,13 +82,17 @@ type Settings struct {
 	RetYears        float64 `json:"ret_years,omitempty"`
 	RetHigh3        int64   `json:"ret_high3_cents,omitempty"`
 	RetSBP          bool    `json:"ret_sbp,omitempty"`
-	RetSpouse       bool    `json:"ret_spouse,omitempty"`       // VA dependents: spouse
-	RetKids         int     `json:"ret_kids,omitempty"`         // children under 18
-	RetSchoolKids   int     `json:"ret_school_kids,omitempty"`  // children 18 to 23 in school
-	RetParents      int     `json:"ret_parents,omitempty"`      // dependent parents
-	TaxState        string  `json:"tax_state,omitempty"`        // state retired pay is taxed in; "" = guess from WeatherRetire
-	BirthYear       int     `json:"birth_year,omitempty"`       // for age-based state exclusions
-	CivSalary       int64   `json:"civ_salary_cents,omitempty"` // estimated civilian job pay, a year
+	RetSpouse       bool    `json:"ret_spouse,omitempty"`      // VA dependents: spouse
+	RetKids         int     `json:"ret_kids,omitempty"`        // children under 18
+	RetSchoolKids   int     `json:"ret_school_kids,omitempty"` // children 18 to 23 in school
+	RetParents      int     `json:"ret_parents,omitempty"`     // dependent parents
+	TaxState        string  `json:"tax_state,omitempty"`       // state retired pay is taxed in; "" = guess from WeatherRetire
+	BirthYear       int     `json:"birth_year,omitempty"`      // for age-based state exclusions
+	CivSalary       int64   `json:"civ_salary_cents,omitempty"`
+	HealthPlan      string  `json:"health_plan,omitempty"`        // prime | select | tfl | none; "" = prime
+	NoDental        bool    `json:"no_dental,omitempty"`          // skip FEDVIP dental
+	NoVision        bool    `json:"no_vision,omitempty"`          // skip FEDVIP vision
+	HealthOther     int64   `json:"health_other_cents,omitempty"` // other health premiums, a month // estimated civilian job pay, a year
 	SavingsGoal     int64   `json:"savings_goal_cents,omitempty"`
 	SavingsGoalName string  `json:"savings_goal_name,omitempty"`
 	TimelineSeeded  bool    `json:"timeline_seeded"`
@@ -604,7 +608,8 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 			}
 			return raw
 		},
-		"money": money,
+		"money":      money,
+		"healthYear": func() int { return healthYear },
 		"nicedate": func(s string) string {
 			t, err := parseDay(s)
 			if err != nil {
@@ -2064,6 +2069,7 @@ func advisorDigest(st *State) string {
 		fmt.Fprintf(&b, "Retired pay estimate (%s, %s years): gross %s, SBP %s, VA %s, total %s/mo before tax\n", rp.System, rp.Years, money(rp.Gross), money(rp.SBP), money(rp.VA), money(rp.Total))
 		t := rp.Tax
 		fmt.Fprintf(&b, "Estimated civilian job: %s/yr. Tax after retirement (%d rules, retired pay plus job): federal %s/mo, state %s %s/mo, Social Security and Medicare %s/mo, after tax %s/mo\n", money(st.Settings.CivSalary), fedTaxYear, money(t.Federal), cmp.Or(t.StateName, "not chosen"), money(t.StateTax), money(t.FICA), money(t.AfterTax))
+		fmt.Fprintf(&b, "Health after retirement: %s (Group %s, %s) %s/mo, dental %s, vision %s, other %s; take-home after tax and health %s/mo\n", rp.Health.PlanLabel, rp.Health.Group, rp.Health.Tier, money(rp.Health.Tricare+rp.Health.PartB), money(rp.Health.Dental), money(rp.Health.Vision), money(rp.Health.Other), money(rp.TakeHome))
 	}
 	b.WriteString("\nVA claim conditions (doc = in the record, dbq = criteria studied):\n")
 	for _, c := range st.Conditions {
@@ -3461,7 +3467,7 @@ func (s *Server) moneyPage(w http.ResponseWriter, tab string) {
 		"PlanInterest": totalInterest, "PlanTBD": planTBD, "HasPlan": planOK && engine > 0,
 		"Bills": st.Bills, "BillsTotal": billsTotal, "DebtMins": debtMins,
 		"Engine": engine, "EngineComputed": computed, "Gist": gist,
-		"Countdown": countdown, "Clock": clock, "Sav": summarizeSavings(st), "Ret": estimateRetirePay(st), "States": stateOptions(), "Today": time.Now().Format("2006-01-02"),
+		"Countdown": countdown, "Clock": clock, "Sav": summarizeSavings(st), "Ret": estimateRetirePay(st), "States": stateOptions(), "HealthPlans": healthPlans, "Today": time.Now().Format("2006-01-02"),
 	})
 }
 

@@ -936,3 +936,7 @@ main .card > details.how-to[open] > .hint { margin: 10px 0 0; }
 .tax-table .tax-total td { border-top: var(--border-strong); font-weight: 700; }
 .tax-table .tax-total td.num { color: var(--fg-accent); }
 .va-amount small { font-size: 14px; font-weight: 500; color: var(--fg-muted); margin-left: 4px; }
+/* Same column widths in the tax and health tables, so their amounts line up. */
+.tax-table td:first-child { width: 240px; }
+.tax-table td.num { width: 110px; }
+@media (max-width: 700px) { .tax-table td:first-child { width: auto; white-space: normal; } }

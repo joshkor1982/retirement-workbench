@@ -1013,3 +1013,48 @@ func TestJourneyCivilianSalary(t *testing.T) {
 		t.Error("the job rows are missing from Retired Pay")
 	}
 }
+
+func TestHealthCosts(t *testing.T) {
+	// E-8 retiring Nov 2027 after 22 years joined in 2005: Group A. Married
+	// with two children: family Prime, $765 a year.
+	s := Settings{RetirementDate: "2027-11-01", RetYears: 22, RetSpouse: true, RetKids: 2}
+	h := estimateHealth(s)
+	if h.Group != "A" || h.Plan != "prime" || h.Tricare != 6375 || h.Dental != 11369 || h.Vision != 3012 || h.Total != 6375+11369+3012 {
+		t.Errorf("family Prime, Group A: %+v", h)
+	}
+	// Joined in 2020: Group B. Single on Select: $594.96 a year.
+	h = estimateHealth(Settings{RetirementDate: "2040-06-01", RetYears: 20, HealthPlan: "select", NoDental: true})
+	if h.Group != "B" || h.Tricare != 4958 || h.Dental != 0 || h.Vision != 1004 {
+		t.Errorf("single Select, Group B: %+v", h)
+	}
+	// TRICARE For Life: Part B for both spouses, self plus one FEDVIP.
+	h = estimateHealth(Settings{HealthPlan: "tfl", RetSpouse: true})
+	if h.Tricare != 0 || h.PartB != 40580 || h.Tier != "self plus one" || h.Dental != 7579 {
+		t.Errorf("TFL married: %+v", h)
+	}
+	// No TRICARE plan: FEDVIP vision is not available, other premiums count.
+	h = estimateHealth(Settings{HealthPlan: "none", HealthOther: 25000})
+	if h.Vision != 0 || h.Total != 3790+25000 {
+		t.Errorf("no TRICARE: %+v", h)
+	}
+	st := State{Settings: Settings{RetYears: 20, RetHigh3: 800000, RetirementDate: "2027-11-01", MonthlyIncome: 500000}}
+	p := estimateRetirePay(st)
+	if p.TakeHome != p.Tax.AfterTax-p.Health.Total || p.Change != p.TakeHome-500000 {
+		t.Errorf("take-home does not add up: %d after tax, %d health, %d take-home", p.Tax.AfterTax, p.Health.Total, p.TakeHome)
+	}
+}
+
+func TestJourneyHealthPlan(t *testing.T) {
+	j := newJourney(t)
+	if f := flashOf(j.postResp("/budget/retirepay", url.Values{"years": {"22"}, "high3": {"6000"}, "health_plan": {"gold"}})); !strings.HasPrefix(f, "err|") {
+		t.Errorf("bad plan flash = %q", f)
+	}
+	j.post("/budget/retirepay", url.Values{"years": {"22"}, "high3": {"6000"}, "health_plan": {"select"}, "dental": {"1"}, "health_other": {"120"}})
+	s := j.app.store.snapshot().Settings
+	if s.HealthPlan != "select" || s.NoDental || !s.NoVision || s.HealthOther != 12000 {
+		t.Fatalf("saved health settings: plan %q dental off %v vision off %v other %d", s.HealthPlan, s.NoDental, s.NoVision, s.HealthOther)
+	}
+	if _, body := j.get("/retired-pay"); !strings.Contains(body, "Health Coverage After You Retire") || !strings.Contains(body, "Take-Home Each Month") {
+		t.Error("the health section is missing from Retired Pay")
+	}
+}

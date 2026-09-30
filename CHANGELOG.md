@@ -3,6 +3,11 @@
 ## Unreleased
 
 ### Added
+- Retired Pay counts health coverage: the 2026 TRICARE Prime or Select
+  enrollment fee for your group (A or B, worked out from when you joined) and
+  family size, Medicare Part B for TRICARE For Life, typical FEDVIP dental and
+  vision premiums, and any other premium you enter. The top tile is now
+  Take-Home Each Month, after tax and health coverage.
 - Retired Pay takes an estimated civilian salary. Federal and state tax are
   worked out on retired pay and the job together, Social Security and
   Medicare come out of the job only, and Each Month After Tax becomes your

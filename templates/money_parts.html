@@ -200,7 +200,7 @@
 <section class="card" id="retired-pay">
   <h2>Retired Pay Estimate</h2>
   <details class="how-to"><summary>How This Works</summary>
-    <p class="hint">Your pension is your years of service times 2.5% (High-3) or 2.0% (Blended Retirement System), times the average of your highest 36 months of base pay. SBP for full spouse coverage costs 6.5% of it. VA compensation is tax-free: at a combined rating of 50% or more you receive both in full (CRDP); below 50%, VA pay replaces an equal amount of retired pay. The rating comes from your Potential VA Rating. Taxes use the 2026 federal brackets and the rules of the state you retire in, taxing retired pay as your only income. This is a planning estimate, not a DFAS statement.</p>
+    <p class="hint">Your pension is your years of service times 2.5% (High-3) or 2.0% (Blended Retirement System), times the average of your highest 36 months of base pay. SBP for full spouse coverage costs 6.5% of it. VA compensation is tax-free: at a combined rating of 50% or more you receive both in full (CRDP); below 50%, VA pay replaces an equal amount of retired pay. The rating comes from your Potential VA Rating. Taxes use the 2026 federal brackets and the rules of the state you retire in, on retired pay plus any civilian job you enter. Health coverage uses the 2026 TRICARE fees and typical FEDVIP dental and vision premiums. Take-home is what is left after both. This is a planning estimate, not a DFAS statement.</p>
   </details>
   {{if .Ret.Set}}
   <div class="gist">
@@ -210,9 +210,9 @@
       <span class="gist-num">{{money .Ret.Net}}</span><span class="gist-sub">{{if .Ret.SBP}}{{money .Ret.SBP}} for spouse coverage{{else}}No SBP elected{{end}}</span></div>
     <div class="gist-item"><span class="gist-label">VA Compensation</span>
       <span class="gist-num">{{money .Ret.VA}}</span><span class="gist-sub">{{if .Ret.CRDP}}{{.Ret.Rating}}% rating: paid in full with retired pay (CRDP){{else if .Ret.Offset}}{{.Ret.Rating}}% rating: replaces {{money .Ret.Offset}} of retired pay{{else}}Tax-free{{end}}</span></div>
-    <div class="gist-item"><span class="gist-label">Each Month After Tax</span>
-      <span class="gist-num">{{money .Ret.Tax.AfterTax}}</span>
-      <span class="gist-sub {{if .Ret.HaveIncome}}{{if lt .Ret.Change 0}}gist-short{{else}}gist-ok{{end}}{{end}}">{{if .Ret.HaveIncome}}{{if lt .Ret.Change 0}}{{money .Ret.Change}} vs. today's take-home{{else}}+{{money .Ret.Change}} vs. today's take-home{{end}}{{else if .Ret.Tax.Wages}}Includes your civilian job{{else}}{{money .Ret.Total}} before tax{{end}}</span></div>
+    <div class="gist-item"><span class="gist-label">Take-Home Each Month</span>
+      <span class="gist-num">{{money .Ret.TakeHome}}</span>
+      <span class="gist-sub {{if .Ret.HaveIncome}}{{if lt .Ret.Change 0}}gist-short{{else}}gist-ok{{end}}{{end}}">{{if .Ret.HaveIncome}}{{if lt .Ret.Change 0}}{{money .Ret.Change}} vs. today's take-home{{else}}+{{money .Ret.Change}} vs. today's take-home{{end}}{{else}}After tax and health coverage{{end}}</span></div>
   </div>
   {{end}}
   <form method="post" action="/budget/retirepay" class="field-row sav-form">
@@ -282,6 +282,35 @@
         <label class="field"><span class="field-label">Birth Year</span>
           <input type="number" name="birth_year" min="1930" max="2010" value="{{if .Settings.BirthYear}}{{.Settings.BirthYear}}{{end}}" placeholder="1985"></label>
         <span class="field-note">Some states give more at 55 or 65.{{if .Ret.Tax.Age}} You will be {{.Ret.Tax.Age}} the year you retire.{{end}}</span>
+      </div>
+    </div>
+    <div class="va-calc tax-calc">
+      <div class="va-calc-head">
+        <span class="field-label">Health Coverage After You Retire</span>
+        <span class="va-amount">{{money .Ret.Health.Total}}<small> a month</small></span>
+        <span class="hint">TRICARE stops being free when you retire. Re-enroll in Prime or Select within 90 days of your retirement date, and sign up for FEDVIP dental and vision from 31 days before to 60 days after it.</span>
+      </div>
+      <table class="tax-table">
+        <tbody>
+          <tr><td>{{.Ret.Health.PlanLabel}}</td><td class="num">{{if eq .Ret.Health.Plan "tfl"}}{{money .Ret.Health.PartB}}{{else}}{{money .Ret.Health.Tricare}}{{end}}</td>
+            <td class="hint">{{if eq .Ret.Health.Plan "tfl"}}No TRICARE fee, but Medicare Part B is required: $202.90 a month each in {{healthYear}}, more at higher incomes.{{if .Settings.RetSpouse}} Counts you and your spouse.{{end}}{{else if eq .Ret.Health.Plan "none"}}No TRICARE fee. Put an employer premium in Other Health Cost below.{{else}}Group {{.Ret.Health.Group}} {{if gt .Ret.Health.People 1}}family{{else}}individual{{end}} enrollment fee for {{healthYear}}, spread over 12 months. {{if eq .Ret.Health.Group "A"}}Group A: you joined before 2018.{{else}}Group B: you joined in 2018 or later.{{end}}{{end}}</td></tr>
+          <tr><td>FEDVIP dental</td><td class="num">{{if .Ret.Health.Dental}}{{money .Ret.Health.Dental}}{{else}}·{{end}}</td>
+            <td class="hint">{{if .Ret.Health.Dental}}Typical {{healthYear}} premium, {{.Ret.Health.Tier}}. Plans run from about half to nearly double this; compare yours at BENEFEDS.{{else}}Not included.{{end}}</td></tr>
+          <tr><td>FEDVIP vision</td><td class="num">{{if .Ret.Health.Vision}}{{money .Ret.Health.Vision}}{{else}}·{{end}}</td>
+            <td class="hint">{{if .Ret.Health.Vision}}Typical {{healthYear}} premium, {{.Ret.Health.Tier}}.{{else if eq .Ret.Health.Plan "none"}}FEDVIP vision needs a TRICARE health plan.{{else}}Not included.{{end}}</td></tr>
+          {{if .Ret.Health.Other}}<tr><td>Other health cost</td><td class="num">{{money .Ret.Health.Other}}</td>
+            <td class="hint">Your entry, such as an employer plan premium.</td></tr>{{end}}
+          <tr class="tax-total"><td>Take-home each month</td><td class="num">{{money .Ret.TakeHome}}</td>
+            <td class="hint">After tax and health coverage. Copays, deductibles, and prescriptions are extra.</td></tr>
+        </tbody>
+      </table>
+      <div class="field-row">
+        <label class="field"><span class="field-label">Health Plan</span>
+          <select name="health_plan">{{range .HealthPlans}}<option value="{{.Value}}"{{if eq .Value $.Ret.Health.Plan}} selected{{end}}>{{.Label}}</option>{{end}}</select></label>
+        <label class="field"><span class="field-label">Other Health Cost per Month</span>
+          <input type="text" name="health_other" inputmode="decimal" value="{{if .Settings.HealthOther}}{{money .Settings.HealthOther}}{{end}}" placeholder="0.00"></label>
+        <label class="field inline-check"><input type="checkbox" name="dental" value="1"{{if not .Settings.NoDental}} checked{{end}}> FEDVIP Dental</label>
+        <label class="field inline-check"><input type="checkbox" name="vision" value="1"{{if not .Settings.NoVision}} checked{{end}}> FEDVIP Vision</label>
       </div>
     </div>
     <button type="submit" class="primary">Estimate</button>
