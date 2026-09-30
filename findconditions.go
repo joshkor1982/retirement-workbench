@@ -33,15 +33,17 @@ type ConditionScan struct {
 	Items    []FoundCondition `json:"items"`
 }
 
-// claimEvidence lists the DBQs and medical records on file and the PDFs the
-// Advisor may read, from the docs folder only, DBQs first.
+// claimEvidence lists the DBQs, medical records, and other evidence (lay
+// statements, photos of injuries, letters) on file and the PDFs the Advisor
+// may read, from the docs folder only, DBQs first. Other evidence counts as
+// records in the prompt.
 func (s *Server) claimEvidence(st State) (dbqNames, recNames, files []string, docsDir string) {
 	pdf := func(d Doc) {
 		if strings.HasSuffix(strings.ToLower(d.Name), ".pdf") && len(files) < 20 {
 			files = append(files, filepath.Base(s.docPath(d.File))+"  ("+d.Name+")")
 		}
 	}
-	for _, kind := range []string{"dbq", "medical"} {
+	for _, kind := range []string{"dbq", "medical", "evidence"} {
 		for _, d := range st.Docs {
 			if d.Kind != kind {
 				continue

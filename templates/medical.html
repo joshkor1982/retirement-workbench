@@ -26,7 +26,7 @@
     <div class="rating-square r-none"><span class="rating-num">-</span><span class="rating-cap">not run</span></div>
     <div class="rating-body">
       {{if .AdvisorReady}}
-      <p class="hint">Add the conditions you intend to claim, upload your DBQs and records below, then run the analysis. The Advisor rates each condition and computes the combined estimate.</p>
+      <p class="hint">Add the conditions you intend to claim, upload your DBQs and records under Claim Evidence, then run the analysis. The Advisor rates each condition and computes the combined estimate.</p>
       <form method="post" action="/medical/analyze" class="analyze-form"><button type="submit" class="primary">Analyze the Claim</button></form>
       {{else}}
       <p class="hint">Set up an Advisor provider in <a href="/settings">Settings</a> first - the analysis runs through it, on this machine.</p>
@@ -67,6 +67,45 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBreakdo
 </script>
 {{end}}
 
+<section class="card" id="evidence">
+  <h2>Claim Evidence</h2>
+  <details class="how-to"><summary>How to Use</summary>
+    <p class="hint">Upload everything the VA will rate from: completed or blank DBQs, service treatment records, clinic notes, imaging, referrals, and other evidence like buddy statements, photos, or letters. Pick several files at once. Analyze the Claim and Find Conditions in My Records read the PDFs here, on this machine. The files stay in your data folder and also show on the Documents page.</p>
+  </details>
+  <form method="post" action="/docs/bulk" enctype="multipart/form-data" class="field-row evidence-upload">
+    <label class="field"><span class="field-label">Type</span>
+      <select name="kind"><option value="medical">Medical Record</option><option value="dbq">DBQ</option><option value="evidence">Other Evidence</option></select></label>
+    <label class="field field-grow"><span class="field-label">Files</span>
+      <input type="file" name="files" multiple required accept=".pdf,.png,.jpg,.jpeg,.heic,.txt,.doc,.docx"></label>
+    <label class="field field-grow"><span class="field-label">Notes</span>
+      <input type="text" name="notes" placeholder="MRI lumbar spine, Feb 2025"></label>
+    <button type="submit" class="primary">Upload</button>
+  </form>
+  <div class="evidence-lists">
+    {{template "evidence-list" (evList "DBQs" .DBQs "No DBQs yet. A completed DBQ is the strongest evidence a condition can have.")}}
+    {{template "evidence-list" (evList "Medical Records" .Records "No records yet. Request your full service treatment record (STR) early; it takes weeks.")}}
+    {{template "evidence-list" (evList "Other Evidence" .Other "Buddy statements, photos of injuries, letters, and anything else that shows how a condition affects you.")}}
+  </div>
+</section>
+
+{{define "evidence-list"}}
+<div class="evidence-list">
+  <h3 class="skill-area-name">{{.Title}} <span>{{len .Docs}}</span></h3>
+  {{if .Docs}}
+  <ul class="plain">
+    {{range .Docs}}
+    <li class="rowline"><div>
+      <b><a href="/docs/{{.ID}}/file" target="_blank" rel="noopener">{{.Name}}</a></b>
+      <span class="due">{{atdate .UploadedAt}}</span>
+      {{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}
+    </div>
+    <form method="post" action="/docs/{{.ID}}/delete" onsubmit="return confirm('Delete {{.Name}}?')"><button class="danger">Delete</button></form></li>
+    {{end}}
+  </ul>
+  {{else}}<p class="hint">{{.Empty}}</p>{{end}}
+</div>
+{{end}}
+
 <section class="card" id="conditions">
   <h2>Conditions for the Claim</h2>
   <details class="how-to"><summary>How to Use</summary>
@@ -76,7 +115,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBreakdo
     <label class="field field-grow"><span class="field-label">Condition</span>
       <input type="text" name="name" required placeholder="Right knee, chronic pain"></label>
     <label class="field field-grow"><span class="field-label">Notes</span>
-      <input type="text" name="notes" placeholder="First documented 2019, Bragg"></label>
+      <input type="text" name="notes" placeholder="First seen at sick call, 2019"></label>
     <button type="submit" class="primary">Add</button>
   </form>
   <div class="find-bar">
@@ -87,7 +126,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBreakdo
     <span class="hint">The Advisor reads your uploaded medical records and DBQs and lists conditions they document that are not on this list yet. Nothing is added until you pick it. Your records go to your Advisor, the same as Analyze the Claim.</span>
     {{else}}
     <button type="button" class="btn" disabled>Find Conditions in My Records</button>
-    <span class="hint">{{if not .AdvisorReady}}Set up the Advisor in <a href="/settings">Settings</a>, then{{else}}First{{end}} upload your medical records or DBQs as PDFs below. The Advisor reads them and suggests conditions they document.</span>
+    <span class="hint">{{if not .AdvisorReady}}Set up the Advisor in <a href="/settings">Settings</a>, then{{else}}First{{end}} upload your medical records or DBQs as PDFs under <a href="#evidence">Claim Evidence</a>. The Advisor reads them and suggests conditions they document.</span>
     {{end}}
   </div>
   {{with .Found}}{{if .Items}}
@@ -148,13 +187,13 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBreakdo
   </details>
   <form method="post" action="/medical/meds" class="field-row">
     <label class="field"><span class="field-label">Medication</span>
-      <input type="text" name="name" required placeholder="Propranolol"></label>
+      <input type="text" name="name" required placeholder="Meloxicam"></label>
     <label class="field"><span class="field-label">Dose</span>
-      <input type="text" name="dose" placeholder="60 mg daily"></label>
+      <input type="text" name="dose" placeholder="15 mg daily"></label>
     <label class="field"><span class="field-label">For</span>
-      <input type="text" name="for" placeholder="migraines"></label>
+      <input type="text" name="for" placeholder="knee pain"></label>
     <label class="field"><span class="field-label">Prescriber</span>
-      <input type="text" name="prescriber" placeholder="Dr. Leber"></label>
+      <input type="text" name="prescriber" placeholder="Dr. Patel"></label>
     <label class="field field-grow"><span class="field-label">Notes / Refill Status</span>
       <input type="text" name="notes" placeholder="90-day home delivery"></label>
     <button type="submit" class="primary">Add</button>
@@ -188,56 +227,6 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBreakdo
   </table>
   {{else}}<p class="hint">No medications listed yet. Add each prescription so the list is ready for a new doctor at the destination.</p>{{end}}
 </section>
-
-<div class="grid2">
-  <section class="card">
-    <h2>DBQs</h2>
-    <p class="hint">Disability Benefits Questionnaires - blank forms to bring to your exams, or ones your doctor completed. A completed DBQ is the strongest evidence a condition can have.</p>
-    <form method="post" action="/docs" enctype="multipart/form-data" class="field-row">
-      <input type="hidden" name="kind" value="dbq">
-      <label class="field field-grow"><span class="field-label">File</span>
-        <input type="file" name="file" required></label>
-      <label class="field field-grow"><span class="field-label">Notes</span>
-        <input type="text" name="notes" placeholder="Sleep Apnea DBQ, blank"></label>
-      <button type="submit" class="primary">Upload</button>
-    </form>
-    {{if .DBQs}}
-    <ul class="plain">
-      {{range .DBQs}}
-      <li class="rowline"><div>
-        <b><a href="/docs/{{.ID}}/file">{{.Name}}</a></b>
-        <span class="due">{{atdate .UploadedAt}}</span>
-        {{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}
-      </div></li>
-      {{end}}
-    </ul>
-    {{else}}<p class="hint">No DBQs yet. Grab the ones for your conditions and bring them to the C&amp;P exams.</p>{{end}}
-  </section>
-
-  <section class="card">
-    <h2>Medical Records</h2>
-    <p class="hint">STR copies, clinic notes, imaging, referrals, VA letters. These are the evidence the rating rests on.</p>
-    <form method="post" action="/docs" enctype="multipart/form-data" class="field-row">
-      <input type="hidden" name="kind" value="medical">
-      <label class="field field-grow"><span class="field-label">File</span>
-        <input type="file" name="file" required></label>
-      <label class="field field-grow"><span class="field-label">Notes</span>
-        <input type="text" name="notes" placeholder="MRI lumbar spine, Feb 2025"></label>
-      <button type="submit" class="primary">Upload</button>
-    </form>
-    {{if .Records}}
-    <ul class="plain">
-      {{range .Records}}
-      <li class="rowline"><div>
-        <b><a href="/docs/{{.ID}}/file">{{.Name}}</a></b>
-        <span class="due">{{atdate .UploadedAt}}</span>
-        {{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}
-      </div></li>
-      {{end}}
-    </ul>
-    {{else}}<p class="hint">No records filed yet. The full STR copy request is on your timeline for spring 2027.</p>{{end}}
-  </section>
-</div>
 
 <section class="card">
   <h2>Symptom Log</h2>

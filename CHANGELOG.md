@@ -3,6 +3,10 @@
 ## Unreleased
 
 ### Added
+- Medical / VA has a Claim Evidence card near the top: upload DBQs, medical
+  records, and other evidence (buddy statements, photos, letters), several
+  files at a time, and see and delete them in three lists. Analyze the Claim
+  and Find Conditions in My Records read all three.
 - Topic and company pages. Every skill on Learning opens its own page with
   a handbook (a long-form guide with contents, labs, interview questions,
   and a cheat sheet) and a references list you can add to or trim. Every

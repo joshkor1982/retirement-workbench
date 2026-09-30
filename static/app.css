@@ -1060,3 +1060,8 @@ a.skill-name:hover { color: var(--fg-accent); text-decoration: underline; }
 .hb-tile:hover { border-color: var(--fg-accent); text-decoration: none; }
 .hb-tile .hint { margin: 0; }
 @media (max-width: 900px) { .hb { grid-template-columns: 1fr; } .hb-toc { position: static; } }
+
+/* Claim Evidence: one upload, three lists. */
+.evidence-lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.evidence-list .rowline { align-items: center; }
+.evidence-list .rowline form { margin: 0; }

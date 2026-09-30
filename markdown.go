@@ -78,7 +78,9 @@ func mdInline(s string) string {
 	return s
 }
 
-func mdID(s string) string { return strings.Trim(mdSlug.ReplaceAllString(strings.ToLower(s), "-"), "-") }
+func mdID(s string) string {
+	return strings.Trim(mdSlug.ReplaceAllString(strings.ToLower(s), "-"), "-")
+}
 
 // renderMarkdown turns a handbook body into HTML and its table of contents.
 func renderMarkdown(src string) (template.HTML, []mdHeading) {

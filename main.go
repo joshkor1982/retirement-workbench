@@ -124,7 +124,7 @@ type Doc struct {
 	File       string `json:"file"` // path under data dir
 	UploadedAt string `json:"uploaded_at"`
 	Notes      string `json:"notes"`
-	Kind       string `json:"kind,omitempty"`   // "" general | medical | dbq | resume | packet | les | form
+	Kind       string `json:"kind,omitempty"`   // "" general | medical | dbq | evidence | resume | packet | les | form
 	Filled     bool   `json:"filled,omitempty"` // for kind=form: filled out yet
 }
 
@@ -614,6 +614,9 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 		"money":      money,
 		"healthYear": func() int { return healthYear },
 		"abs":        func(n int64) int64 { return max(n, -n) },
+		"evList": func(title string, docs []Doc, empty string) map[string]any {
+			return map[string]any{"Title": title, "Docs": docs, "Empty": empty}
+		},
 		"nicedate": func(s string) string {
 			t, err := parseDay(s)
 			if err != nil {
@@ -1567,7 +1570,15 @@ func (s *Server) docBulkUpload(w http.ResponseWriter, r *http.Request) {
 		})
 		saved++
 	}
-	http.Redirect(w, r, "/docs", http.StatusSeeOther)
+	switch saved {
+	case 0:
+		flash(w, "err", "Nothing was uploaded. Pick at least one file.")
+	case 1:
+		flash(w, "ok", "Uploaded 1 file.")
+	default:
+		flash(w, "ok", fmt.Sprintf("Uploaded %d files.", saved))
+	}
+	http.Redirect(w, r, refererOr(r, "/docs"), http.StatusSeeOther)
 }
 
 // docRename updates a document's display name and notes.
@@ -2714,13 +2725,15 @@ Use an empty actions list when nothing in the app should change. Request a chang
 
 func (s *Server) medical(w http.ResponseWriter, r *http.Request) {
 	st := s.store.snapshot()
-	var records, dbqs []Doc
+	var records, dbqs, other []Doc
 	for _, d := range st.Docs {
 		switch d.Kind {
 		case "medical":
 			records = append(records, d)
 		case "dbq":
 			dbqs = append(dbqs, d)
+		case "evidence":
+			other = append(other, d)
 		}
 	}
 	symptoms := append([]Symptom(nil), st.Symptoms...)
@@ -2729,12 +2742,12 @@ func (s *Server) medical(w http.ResponseWriter, r *http.Request) {
 		symptoms = symptoms[:40]
 	}
 	s.page(w, "medical", map[string]any{
-		"Conditions": st.Conditions, "Symptoms": symptoms, "Records": records, "DBQs": dbqs, "Meds": st.Meds,
+		"Conditions": st.Conditions, "Symptoms": symptoms, "Records": records, "DBQs": dbqs, "Other": other, "Meds": st.Meds,
 		"Analysis": st.Analysis, "Err": r.URL.Query().Get("err"),
 		"JustAnalyzed": r.URL.Query().Get("analyzed") == "1", // the count-up plays once, right after an analysis
 		"AdvisorReady": st.aiReady(),
 		"Found":        st.Found,
-		"HaveRecords":  len(records)+len(dbqs) > 0,
+		"HaveRecords":  len(records)+len(dbqs)+len(other) > 0,
 	})
 }
 

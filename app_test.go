@@ -1554,3 +1554,39 @@ func TestRetirePayEmptyStillShowsHealth(t *testing.T) {
 		t.Errorf("empty settings health = %+v", p.Health)
 	}
 }
+
+func TestJourneyClaimEvidenceUpload(t *testing.T) {
+	j := newJourney(t)
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	_ = mw.WriteField("kind", "evidence")
+	_ = mw.WriteField("notes", "Buddy statement")
+	for _, n := range []string{"buddy.pdf", "photo.jpg"} {
+		fw, _ := mw.CreateFormFile("files", n)
+		_, _ = fw.Write([]byte("%PDF-1.4 test"))
+	}
+	mw.Close()
+	req, _ := http.NewRequest("POST", j.srv.URL+"/docs/bulk", &body)
+	req.Header.Set("Content-Type", mw.FormDataContentType())
+	req.Header.Set("Referer", j.srv.URL+"/medical")
+	req.Header.Set("Sec-Fetch-Site", "same-origin")
+	resp, err := j.c.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loc := resp.Header.Get("Location"); loc != "/medical" {
+		t.Errorf("upload went back to %q, want /medical", loc)
+	}
+	n := 0
+	for _, d := range j.app.store.snapshot().Docs {
+		if d.Kind == "evidence" {
+			n++
+		}
+	}
+	if n != 2 {
+		t.Fatalf("evidence docs = %d, want 2", n)
+	}
+	if _, body := j.get("/medical"); !strings.Contains(body, "buddy.pdf") || !strings.Contains(body, `id="evidence"`) || strings.Contains(body, "spring 2027") {
+		t.Error("Claim Evidence card is missing the upload, or shows personal text")
+	}
+}
