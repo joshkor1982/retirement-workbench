@@ -968,3 +968,48 @@ func TestRetireTaxByState(t *testing.T) {
 		t.Errorf("after tax does not add up: %+v", p.Tax)
 	}
 }
+
+func TestRetireTaxWithCivilianJob(t *testing.T) {
+	// $4,000 a month retired pay ($48,000) plus a $60,000 job, single.
+	st := State{Settings: Settings{RetYears: 20, RetHigh3: 800000, RetirementDate: "2027-11-01", BirthYear: 1985, CivSalary: 6000000}}
+	tax := func(state string) retireTax {
+		st.Settings.TaxState = state
+		return estimateRetirePay(st).Tax
+	}
+	tx := tax("TX")
+	// Federal on $108,000 - 16,100 = 91,900: 1,240 + 4,560 + 9,130 = 14,930 a year.
+	if tx.Federal != 124417 || tx.FICA != 38250 || tx.Wages != 500000 || tx.StateTax != 0 {
+		t.Errorf("Texas with a job: %+v", tx)
+	}
+	// Alabama exempts retired pay but taxes the job: 60,000 - 3,000 - 1,500 = 55,500.
+	if got := tax("AL").StateTax; got != 22792 {
+		t.Errorf("AL job = %d cents a month, want 22792", got)
+	}
+	// California: AGI $108,000 keeps the $20,000 subtraction.
+	if got := tax("CA").StateTax; got != 32953 {
+		t.Errorf("CA = %d, want 32953", got)
+	}
+	// A $100,000 job lifts AGI past $125,000, so the subtraction is lost.
+	st.Settings.CivSalary = 10000000
+	if got := tax("CA").StateTax; got != 79453 {
+		t.Errorf("CA over the limit = %d, want 79453", got)
+	}
+	p := estimateRetirePay(st)
+	if p.Tax.AfterTax != p.Total+p.Tax.Wages-p.Tax.Federal-p.Tax.StateTax-p.Tax.FICA {
+		t.Errorf("after tax does not add up: %+v", p.Tax)
+	}
+}
+
+func TestJourneyCivilianSalary(t *testing.T) {
+	j := newJourney(t)
+	if f := flashOf(j.postResp("/budget/retirepay", url.Values{"years": {"22"}, "high3": {"6000"}, "civ_salary": {"lots"}})); !strings.HasPrefix(f, "err|") {
+		t.Errorf("bad salary flash = %q", f)
+	}
+	j.post("/budget/retirepay", url.Values{"years": {"22"}, "high3": {"6000"}, "civ_salary": {"85,000"}, "tax_state": {"TX"}})
+	if got := j.app.store.snapshot().Settings.CivSalary; got != 8500000 {
+		t.Fatalf("salary = %d cents, want 8500000", got)
+	}
+	if _, body := j.get("/retired-pay"); !strings.Contains(body, "Social Security and Medicare") || !strings.Contains(body, "Taxes After You Retire") {
+		t.Error("the job rows are missing from Retired Pay")
+	}
+}

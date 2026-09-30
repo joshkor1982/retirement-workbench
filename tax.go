@@ -69,12 +69,12 @@ type milRule struct {
 	Kind string // none | exempt | partial | taxed
 	Note string
 	// exclude returns the dollars of a year's retired pay the state leaves
-	// untaxed, for partial states. income stands in for AGI.
-	exclude func(income float64, age int, joint bool) float64
+	// untaxed, for partial states. agi is retired pay plus job income.
+	exclude func(pay, agi float64, age int, joint bool) float64
 }
 
-func flatExclusion(n float64) func(float64, int, bool) float64 {
-	return func(income float64, _ int, _ bool) float64 { return min(n, income) }
+func flatExclusion(n float64) func(float64, float64, int, bool) float64 {
+	return func(pay, _ float64, _ int, _ bool) float64 { return min(n, pay) }
 }
 
 var milRules = func() map[string]milRule {
@@ -86,54 +86,54 @@ var milRules = func() map[string]milRule {
 		m[s] = milRule{Kind: "exempt", Note: "Military retired pay is fully exempt from state income tax."}
 	}
 	m["CA"] = milRule{Kind: "partial", Note: "California subtracts up to $20,000 when your income is $125,000 or less ($250,000 married), tax years 2025 to 2029.",
-		exclude: func(income float64, _ int, joint bool) float64 {
-			if limit := map[bool]float64{false: 125000, true: 250000}[joint]; income > limit {
+		exclude: func(pay, agi float64, _ int, joint bool) float64 {
+			if limit := map[bool]float64{false: 125000, true: 250000}[joint]; agi > limit {
 				return 0
 			}
-			return min(20000, income)
+			return min(20000, pay)
 		}}
 	m["CO"] = milRule{Kind: "partial", Note: "Colorado subtracts up to $15,000 under age 55, $20,000 at 55 to 64, and $24,000 at 65 or older.",
-		exclude: func(income float64, age int, _ bool) float64 {
+		exclude: func(pay, _ float64, age int, _ bool) float64 {
 			switch {
 			case age >= 65:
-				return min(24000, income)
+				return min(24000, pay)
 			case age >= 55:
-				return min(20000, income)
+				return min(20000, pay)
 			}
-			return min(15000, income)
+			return min(15000, pay)
 		}}
 	m["DE"] = milRule{Kind: "partial", Note: "Delaware excludes up to $12,500.", exclude: flatExclusion(12500)}
 	m["GA"] = milRule{Kind: "partial", Note: "Georgia excludes up to $65,000 at any age, starting with tax year 2026.", exclude: flatExclusion(65000)}
 	m["ID"] = milRule{Kind: "partial", Note: "Idaho's retirement deduction (up to $40,140, or $60,210 married) starts at age 65, or 62 if you are disabled. Younger retirees pay the full rate.",
-		exclude: func(income float64, age int, joint bool) float64 {
+		exclude: func(pay, _ float64, age int, joint bool) float64 {
 			if age < 65 {
 				return 0
 			}
-			return min(map[bool]float64{false: 40140, true: 60210}[joint], income)
+			return min(map[bool]float64{false: 40140, true: 60210}[joint], pay)
 		}}
 	m["KY"] = milRule{Kind: "partial", Note: "Kentucky excludes up to $31,110. Pay for service before 1998 is fully exempt, which this does not count.", exclude: flatExclusion(31110)}
 	m["MD"] = milRule{Kind: "partial", Note: "Maryland excludes up to $12,500, or $20,000 at 55 or older. County income tax (about 2.25% to 3.3%) is extra and not included.",
-		exclude: func(income float64, age int, _ bool) float64 {
+		exclude: func(pay, _ float64, age int, _ bool) float64 {
 			if age >= 55 {
-				return min(20000, income)
+				return min(20000, pay)
 			}
-			return min(12500, income)
+			return min(12500, pay)
 		}}
 	m["MT"] = milRule{Kind: "partial", Note: "Montana excludes half of military retired pay for your first 5 years as a resident. After that it is fully taxed.",
-		exclude: func(income float64, _ int, _ bool) float64 { return income / 2 }}
+		exclude: func(pay, _ float64, _ int, _ bool) float64 { return pay / 2 }}
 	m["NM"] = milRule{Kind: "partial", Note: "New Mexico excludes up to $30,000.", exclude: flatExclusion(30000)}
 	m["OR"] = milRule{Kind: "partial", Note: "Oregon exempts only the share earned for service before October 1, 1991. This taxes all of it.",
-		exclude: func(float64, int, bool) float64 { return 0 }}
+		exclude: func(float64, float64, int, bool) float64 { return 0 }}
 	m["UT"] = milRule{Kind: "exempt", Note: "Utah's military retirement credit cancels the state tax on retired pay."}
 	m["VT"] = milRule{Kind: "partial", Note: "Vermont exempts all of it when your income is $125,000 or less, part of it up to $175,000, and none above.",
-		exclude: func(income float64, _ int, _ bool) float64 {
+		exclude: func(pay, agi float64, _ int, _ bool) float64 {
 			switch {
-			case income <= 125000:
-				return income
-			case income >= 175000:
+			case agi <= 125000:
+				return pay
+			case agi >= 175000:
 				return 0
 			}
-			return income * (175000 - income) / 50000
+			return pay * (175000 - agi) / 50000
 		}}
 	m["VA"] = milRule{Kind: "partial", Note: "Virginia subtracts up to $40,000 at any age.", exclude: flatExclusion(40000)}
 	m["DC"] = milRule{Kind: "taxed", Note: "The District of Columbia taxes military retired pay in full."}
@@ -229,8 +229,27 @@ func (st State) taxState() (code string, guessed bool) {
 	return "", false
 }
 
+// Payroll tax on job wages (retired pay pays neither). The Social Security
+// wage base is SSA's 2026 figure; the 0.9% Additional Medicare Tax
+// thresholds are fixed by statute.
+const (
+	ssRate, ssWageBase2026 = 0.062, 184500
+	medicareRate           = 0.0145
+	addlMedicareRate       = 0.009
+)
+
+func fica(wages float64, joint bool) float64 {
+	t := min(wages, ssWageBase2026)*ssRate + wages*medicareRate
+	if over := map[bool]float64{false: 200000, true: 250000}[joint]; wages > over {
+		t += (wages - over) * addlMedicareRate
+	}
+	return t
+}
+
 type retireTax struct {
 	Taxable   int64 // retired pay subject to federal tax, cents a month
+	Wages     int64 // civilian job pay, cents a month
+	FICA      int64 // Social Security and Medicare on the job, cents a month
 	Federal   int64 // cents a month
 	FedRate   string
 	Joint     bool
@@ -241,8 +260,8 @@ type retireTax struct {
 	StateRate string
 	Rule      milRule
 	Age       int
-	Total     int64 // federal plus state, cents a month
-	AfterTax  int64 // retired pay after tax plus VA pay, cents a month
+	Total     int64 // income and payroll tax, cents a month
+	AfterTax  int64 // retired pay and job pay after tax, plus VA pay, cents a month
 }
 
 func pct(tax, income float64) string {
@@ -252,41 +271,51 @@ func pct(tax, income float64) string {
 	return strconv.FormatFloat(tax/income*100, 'f', 1, 64) + "%"
 }
 
+func cents(dollarsAYear float64) int64 { return int64(dollarsAYear/12*100 + 0.5) }
+
 // estimateRetireTax works out a year's tax on the taxable part of retired
-// pay and spreads it over 12 months.
+// pay plus any civilian job, and spreads it over 12 months.
 func estimateRetireTax(st State, p retirePay) retireTax {
 	s := st.Settings
-	t := retireTax{Joint: s.RetSpouse, Taxable: max(p.Net-p.Offset, 0)}
+	t := retireTax{Joint: s.RetSpouse, Taxable: max(p.Net-p.Offset, 0), Wages: (s.CivSalary + 6) / 12}
 	if rd, err := parseDay(s.RetirementDate); err == nil && s.BirthYear > 0 {
 		t.Age = rd.Year() - s.BirthYear
 	}
-	income := float64(t.Taxable) * 12 / 100 // dollars a year
+	pay := float64(t.Taxable) * 12 / 100 // retired pay, dollars a year
+	wages := float64(s.CivSalary) / 100  // job, dollars a year
+	income := pay + wages
 
 	fstd, fb := float64(fedStdSingle), fedSingle
 	if t.Joint {
 		fstd, fb = fedStdJoint, fedJoint
 	}
 	fed := bracketTax(max(income-fstd, 0), fb)
-	t.Federal, t.FedRate = int64(fed/12*100+0.5), pct(fed, income)
+	t.Federal, t.FedRate = cents(fed), pct(fed, income)
+	t.FICA = cents(fica(wages, t.Joint))
 
 	t.State, t.Guessed = st.taxState()
 	t.StateName = stateNames[t.State]
 	t.Rule = milRules[t.State]
 	var stax float64
-	if rule, ok := milRules[t.State]; ok && (rule.Kind == "partial" || rule.Kind == "taxed") {
-		table := stateTaxes[t.State]
+	if rule, ok := milRules[t.State]; ok && !stateTaxes[t.State].NoTax {
+		// Every state that taxes wages taxes the job; the rule decides how
+		// much of the retired pay it also taxes.
 		excl := 0.0
-		if rule.exclude != nil {
-			excl = rule.exclude(income, t.Age, t.Joint)
+		switch {
+		case rule.Kind == "exempt":
+			excl = pay
+		case rule.exclude != nil:
+			excl = rule.exclude(pay, income, t.Age, t.Joint)
 		}
+		table := stateTaxes[t.State]
 		std, ex, cr, bs := table.StdS, table.ExS, table.CrS, table.Single
 		if t.Joint {
 			std, ex, cr, bs = table.StdJ, table.ExJ, table.CrJ, table.Joint
 		}
 		stax = max(bracketTax(max(income-excl-float64(std+ex), 0), bs)-float64(cr), 0)
 	}
-	t.StateTax, t.StateRate = int64(stax/12*100+0.5), pct(stax, income)
-	t.Total = t.Federal + t.StateTax
-	t.AfterTax = p.Total - t.Total
+	t.StateTax, t.StateRate = cents(stax), pct(stax, income)
+	t.Total = t.Federal + t.StateTax + t.FICA
+	t.AfterTax = p.Total + t.Wages - t.Total
 	return t
 }

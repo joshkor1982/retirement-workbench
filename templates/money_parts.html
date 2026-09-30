@@ -212,7 +212,7 @@
       <span class="gist-num">{{money .Ret.VA}}</span><span class="gist-sub">{{if .Ret.CRDP}}{{.Ret.Rating}}% rating: paid in full with retired pay (CRDP){{else if .Ret.Offset}}{{.Ret.Rating}}% rating: replaces {{money .Ret.Offset}} of retired pay{{else}}Tax-free{{end}}</span></div>
     <div class="gist-item"><span class="gist-label">Each Month After Tax</span>
       <span class="gist-num">{{money .Ret.Tax.AfterTax}}</span>
-      <span class="gist-sub {{if .Ret.HaveIncome}}{{if lt .Ret.Change 0}}gist-short{{else}}gist-ok{{end}}{{end}}">{{if .Ret.HaveIncome}}{{if lt .Ret.Change 0}}{{money .Ret.Change}} vs. today's take-home{{else}}+{{money .Ret.Change}} vs. today's take-home{{end}}{{else}}{{money .Ret.Total}} before tax{{end}}</span></div>
+      <span class="gist-sub {{if .Ret.HaveIncome}}{{if lt .Ret.Change 0}}gist-short{{else}}gist-ok{{end}}{{end}}">{{if .Ret.HaveIncome}}{{if lt .Ret.Change 0}}{{money .Ret.Change}} vs. today's take-home{{else}}+{{money .Ret.Change}} vs. today's take-home{{end}}{{else if .Ret.Tax.Wages}}Includes your civilian job{{else}}{{money .Ret.Total}} before tax{{end}}</span></div>
   </div>
   {{end}}
   <form method="post" action="/budget/retirepay" class="field-row sav-form">
@@ -251,25 +251,31 @@
     </div>
     <div class="va-calc tax-calc">
       <div class="va-calc-head">
-        <span class="field-label">Tax on Retired Pay</span>
+        <span class="field-label">{{if .Ret.Tax.Wages}}Taxes After You Retire{{else}}Tax on Retired Pay{{end}}</span>
         <span class="va-amount">{{money .Ret.Tax.Total}}<small> a month</small></span>
-        <span class="hint">DFAS withholds federal tax using your W-4P, and state tax only if you ask for it in myPay. {{if .Ret.Tax.Joint}}Married filing jointly, from the Married box above.{{else}}Filing single. Check Married above to file jointly.{{end}}</span>
+        <span class="hint">{{if not .Ret.Tax.Wages}}Add an estimated civilian salary below to see your full take-home. {{end}}DFAS withholds federal tax using your W-4P, and state tax only if you ask for it in myPay. {{if .Ret.Tax.Joint}}Married filing jointly, from the Married box above.{{else}}Filing single. Check Married above to file jointly.{{end}}</span>
       </div>
       {{if .Ret.Set}}
       <table class="tax-table">
         <tbody>
           <tr><td>Taxable retired pay</td><td class="num">{{money .Ret.Tax.Taxable}}</td>
             <td class="hint">{{if .Ret.Offset}}After SBP and the {{money .Ret.Offset}} VA waiver. VA pay is never taxed.{{else}}After SBP. VA pay is never taxed.{{end}}</td></tr>
+          {{if .Ret.Tax.Wages}}<tr><td>Civilian job</td><td class="num">{{money .Ret.Tax.Wages}}</td>
+            <td class="hint">Your estimate of {{money .Settings.CivSalary}} a year, before tax.</td></tr>{{end}}
           <tr><td>Federal income tax</td><td class="num">{{money .Ret.Tax.Federal}}</td>
-            <td class="hint">{{.Ret.Tax.FedRate}} of retired pay, on the 2026 brackets after the standard deduction.</td></tr>
+            <td class="hint">{{.Ret.Tax.FedRate}} of {{if .Ret.Tax.Wages}}retired pay and job pay together{{else}}retired pay{{end}}, on the 2026 brackets after the standard deduction.{{if .Ret.Tax.Wages}} The job pushes retired pay into higher brackets, so raise your W-4P withholding in myPay or the job's W-4 to cover it.{{end}}</td></tr>
+          {{if .Ret.Tax.Wages}}<tr><td>Social Security and Medicare</td><td class="num">{{money .Ret.Tax.FICA}}</td>
+            <td class="hint">7.65% of job pay, withheld by the employer. Retired pay pays neither.</td></tr>{{end}}
           <tr><td>{{if .Ret.Tax.StateName}}{{.Ret.Tax.StateName}}{{else}}State{{end}} income tax</td><td class="num">{{if .Ret.Tax.State}}{{money .Ret.Tax.StateTax}}{{else}}·{{end}}</td>
-            <td class="hint">{{if .Ret.Tax.State}}{{.Ret.Tax.Rule.Note}}{{if .Ret.Tax.StateTax}} {{.Ret.Tax.StateRate}} of retired pay.{{end}}{{if .Ret.Tax.Guessed}} State taken from where you plan to retire.{{end}}{{else}}Pick the state you plan to retire in.{{end}}</td></tr>
+            <td class="hint">{{if .Ret.Tax.State}}{{.Ret.Tax.Rule.Note}}{{if and .Ret.Tax.Wages (ne .Ret.Tax.Rule.Kind "none")}} Job pay is taxed at the state's normal rates.{{end}}{{if .Ret.Tax.StateTax}} {{.Ret.Tax.StateRate}} of {{if .Ret.Tax.Wages}}all income{{else}}retired pay{{end}}.{{end}}{{if .Ret.Tax.Guessed}} State taken from where you plan to retire.{{end}}{{else}}Pick the state you plan to retire in.{{end}}</td></tr>
           <tr class="tax-total"><td>Each month after tax</td><td class="num">{{money .Ret.Tax.AfterTax}}</td>
-            <td class="hint">Retired pay after tax, plus {{money .Ret.VA}} VA pay.</td></tr>
+            <td class="hint">{{if .Ret.Tax.Wages}}Retired pay and job pay after tax{{else}}Retired pay after tax{{end}}, plus {{money .Ret.VA}} VA pay.</td></tr>
         </tbody>
       </table>
       {{end}}
       <div class="field-row">
+        <label class="field"><span class="field-label">Civilian Salary per Year</span>
+          <input type="text" name="civ_salary" inputmode="decimal" value="{{if .Settings.CivSalary}}{{money .Settings.CivSalary}}{{end}}" placeholder="85,000"></label>
         <label class="field"><span class="field-label">State You Retire In</span>
           <select name="tax_state"><option value="">{{if .Ret.Tax.Guessed}}{{.Ret.Tax.StateName}} (from your retirement location){{else}}Pick a state{{end}}</option>
             {{range .States}}<option value="{{.Code}}"{{if eq .Code $.Settings.TaxState}} selected{{end}}>{{.Name}}</option>{{end}}</select></label>

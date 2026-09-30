@@ -82,12 +82,13 @@ type Settings struct {
 	RetYears        float64 `json:"ret_years,omitempty"`
 	RetHigh3        int64   `json:"ret_high3_cents,omitempty"`
 	RetSBP          bool    `json:"ret_sbp,omitempty"`
-	RetSpouse       bool    `json:"ret_spouse,omitempty"`      // VA dependents: spouse
-	RetKids         int     `json:"ret_kids,omitempty"`        // children under 18
-	RetSchoolKids   int     `json:"ret_school_kids,omitempty"` // children 18 to 23 in school
-	RetParents      int     `json:"ret_parents,omitempty"`     // dependent parents
-	TaxState        string  `json:"tax_state,omitempty"`       // state retired pay is taxed in; "" = guess from WeatherRetire
-	BirthYear       int     `json:"birth_year,omitempty"`      // for age-based state exclusions
+	RetSpouse       bool    `json:"ret_spouse,omitempty"`       // VA dependents: spouse
+	RetKids         int     `json:"ret_kids,omitempty"`         // children under 18
+	RetSchoolKids   int     `json:"ret_school_kids,omitempty"`  // children 18 to 23 in school
+	RetParents      int     `json:"ret_parents,omitempty"`      // dependent parents
+	TaxState        string  `json:"tax_state,omitempty"`        // state retired pay is taxed in; "" = guess from WeatherRetire
+	BirthYear       int     `json:"birth_year,omitempty"`       // for age-based state exclusions
+	CivSalary       int64   `json:"civ_salary_cents,omitempty"` // estimated civilian job pay, a year
 	SavingsGoal     int64   `json:"savings_goal_cents,omitempty"`
 	SavingsGoalName string  `json:"savings_goal_name,omitempty"`
 	TimelineSeeded  bool    `json:"timeline_seeded"`
@@ -2062,7 +2063,7 @@ func advisorDigest(st *State) string {
 	if rp := estimateRetirePay(*st); rp.Set {
 		fmt.Fprintf(&b, "Retired pay estimate (%s, %s years): gross %s, SBP %s, VA %s, total %s/mo before tax\n", rp.System, rp.Years, money(rp.Gross), money(rp.SBP), money(rp.VA), money(rp.Total))
 		t := rp.Tax
-		fmt.Fprintf(&b, "Estimated tax on retired pay (%d rules): federal %s/mo, state %s %s/mo, after tax %s/mo\n", fedTaxYear, money(t.Federal), cmp.Or(t.StateName, "not chosen"), money(t.StateTax), money(t.AfterTax))
+		fmt.Fprintf(&b, "Estimated civilian job: %s/yr. Tax after retirement (%d rules, retired pay plus job): federal %s/mo, state %s %s/mo, Social Security and Medicare %s/mo, after tax %s/mo\n", money(st.Settings.CivSalary), fedTaxYear, money(t.Federal), cmp.Or(t.StateName, "not chosen"), money(t.StateTax), money(t.FICA), money(t.AfterTax))
 	}
 	b.WriteString("\nVA claim conditions (doc = in the record, dbq = criteria studied):\n")
 	for _, c := range st.Conditions {

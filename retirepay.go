@@ -105,6 +105,7 @@ func estimateRetirePay(st State) retirePay {
 func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 	years, yErr := strconv.ParseFloat(strings.TrimSpace(r.FormValue("years")), 64)
 	high3, hOK := optionalMoney(r.FormValue("high3")) // blank is fine when ARW calculates it
+	salary, sOK := optionalMoney(r.FormValue("civ_salary"))
 	count := func(k string, hi int) int {
 		n, _ := strconv.Atoi(strings.TrimSpace(r.FormValue(k)))
 		return min(max(n, 0), hi)
@@ -114,6 +115,8 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 		flash(w, "err", "Years of service must be a number like 20 or 22.5.")
 	case !hOK:
 		flash(w, "err", "High-3 must be a dollar amount, like 6,450.00.")
+	case !sOK || salary < 0:
+		flash(w, "err", "Civilian salary must be a dollar amount a year, like 85,000.")
 	case !validTaxState(r.FormValue("tax_state")):
 		flash(w, "err", "Pick a state from the list.")
 	case !validBirthYear(r.FormValue("birth_year")):
@@ -126,6 +129,7 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 			st.Settings.RetSystem = map[bool]string{true: "brs", false: "high3"}[r.FormValue("system") == "brs"]
 			st.Settings.RetSBP = r.FormValue("sbp") == "1"
 			st.Settings.TaxState = strings.TrimSpace(r.FormValue("tax_state"))
+			st.Settings.CivSalary = salary
 			st.Settings.BirthYear, _ = strconv.Atoi(strings.TrimSpace(r.FormValue("birth_year")))
 		})
 		flash(w, "ok", "Retired pay estimate updated.")

@@ -3,6 +3,10 @@
 ## Unreleased
 
 ### Added
+- Retired Pay takes an estimated civilian salary. Federal and state tax are
+  worked out on retired pay and the job together, Social Security and
+  Medicare come out of the job only, and Each Month After Tax becomes your
+  full take-home: retired pay, job, and VA pay.
 - Retired Pay estimates federal and state income tax on your retired pay,
   using the 2026 federal brackets, every state's 2026 brackets, and each
   state's rule for military retired pay (no tax, fully exempt, partial, or
