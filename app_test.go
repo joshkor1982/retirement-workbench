@@ -1081,3 +1081,141 @@ func TestJourneyRenameBillAndDebt(t *testing.T) {
 		t.Errorf("blank name replaced the bill name: %q", b.Name)
 	}
 }
+
+// Anything you can add, you can edit: every list with an add form has an
+// update route that changes the item in place.
+func TestJourneyEveryListIsEditable(t *testing.T) {
+	j := newJourney(t)
+	last := func(ids []int) string { return strconv.Itoa(ids[len(ids)-1]) }
+	ids := func(get func(State) []int) string { return last(get(j.app.store.snapshot())) }
+
+	j.post("/medical/conditions", url.Values{"name": {"Knee"}})
+	id := ids(func(s State) (o []int) {
+		for _, x := range s.Conditions {
+			o = append(o, x.ID)
+		}
+		return
+	})
+	j.post("/medical/conditions/"+id+"/update", url.Values{"name": {"Right knee"}, "notes": {"2019"}})
+
+	j.post("/medical/meds", url.Values{"name": {"Ibuprofen"}})
+	id = ids(func(s State) (o []int) {
+		for _, x := range s.Meds {
+			o = append(o, x.ID)
+		}
+		return
+	})
+	j.post("/medical/meds/"+id+"/update", url.Values{"name": {"Naproxen"}, "dose": {"500 mg"}})
+
+	j.post("/medical/symptoms", url.Values{"note": {"Locked up"}, "date": {"2026-09-01"}})
+	id = ids(func(s State) (o []int) {
+		for _, x := range s.Symptoms {
+			o = append(o, x.ID)
+		}
+		return
+	})
+	j.post("/medical/symptoms/"+id+"/update", url.Values{"note": {"Locked up on stairs"}, "date": {"2026-09-02"}, "condition": {"Right knee"}})
+
+	j.post("/jobs/prospects", url.Values{"title": {"Engineer"}})
+	id = ids(func(s State) (o []int) {
+		for _, x := range s.Prospects {
+			o = append(o, x.ID)
+		}
+		return
+	})
+	j.post("/jobs/prospects/"+id+"/update", url.Values{"title": {"Systems Engineer"}, "status": {"interview"}})
+
+	j.post("/jobs/contacts", url.Values{"name": {"Dana"}})
+	id = ids(func(s State) (o []int) {
+		for _, x := range s.Contacts {
+			o = append(o, x.ID)
+		}
+		return
+	})
+	j.post("/jobs/contacts/"+id+"/update", url.Values{"name": {"Dana Reyes"}, "org": {"SAIC"}})
+
+	j.post("/jobs/searches", url.Values{"keyword": {"logistics"}})
+	id = ids(func(s State) (o []int) {
+		for _, x := range s.JobSearches {
+			o = append(o, x.ID)
+		}
+		return
+	})
+	j.post("/jobs/searches/"+id+"/update", url.Values{"keyword": {"logistics manager"}, "zip": {"80903"}, "radius": {"50"}, "mode": {"remote"}})
+
+	j.post("/resources/contacts", url.Values{"name": {"TAP"}})
+	id = ids(func(s State) (o []int) {
+		for _, x := range s.Resources {
+			o = append(o, x.ID)
+		}
+		return
+	})
+	j.post("/resources/contacts/"+id+"/update", url.Values{"name": {"SFL-TAP Center"}, "info": {"DSN 548"}})
+
+	j.post("/resources/links", url.Values{"title": {"Crisis"}, "url": {"example.org"}})
+	id = ids(func(s State) (o []int) {
+		for _, x := range s.Links {
+			o = append(o, x.ID)
+		}
+		return
+	})
+	j.post("/resources/links/"+id+"/update", url.Values{"title": {"Crisis Line"}, "url": {"veteranscrisisline.net"}, "category": {"Health"}})
+
+	j.post("/skillbridge/leads", url.Values{"company": {"Acme"}})
+	id = ids(func(s State) (o []int) {
+		for _, x := range s.SBLeads {
+			o = append(o, x.ID)
+		}
+		return
+	})
+	j.post("/skillbridge/leads/"+id+"/update", url.Values{"company": {"Acme Defense"}, "status": {"applied"}})
+
+	j.post("/savings", url.Values{"kind": {"deposit"}, "amount": {"500"}})
+	id = ids(func(s State) (o []int) {
+		for _, x := range s.Savings {
+			o = append(o, x.ID)
+		}
+		return
+	})
+	j.post("/savings/"+id+"/update", url.Values{"kind": {"withdraw"}, "amount": {"200"}, "date": {"2026-09-15"}, "note": {"Car repair"}})
+
+	j.post("/budget", url.Values{"kind": {"spend"}, "amount": {"40"}})
+	id = ids(func(s State) (o []int) {
+		for _, x := range s.Txns {
+			o = append(o, x.ID)
+		}
+		return
+	})
+	j.post("/budget/"+id+"/update", url.Values{"kind": {"income"}, "amount": {"45.50"}, "category": {"refund"}})
+
+	st := j.app.store.snapshot()
+	checks := map[string]bool{
+		"condition": st.Conditions[len(st.Conditions)-1].Name == "Right knee",
+		"med":       st.Meds[len(st.Meds)-1].Dose == "500 mg",
+		"symptom":   st.Symptoms[len(st.Symptoms)-1].Condition == "Right knee",
+		"prospect":  st.Prospects[len(st.Prospects)-1].Status == "interview",
+		"contact":   st.Contacts[len(st.Contacts)-1].Org == "SAIC",
+		"search":    st.JobSearches[len(st.JobSearches)-1].Mode == "remote",
+		"resource":  st.Resources[len(st.Resources)-1].Name == "SFL-TAP Center",
+		"link":      st.Links[len(st.Links)-1].URL == "https://veteranscrisisline.net",
+		"lead":      st.SBLeads[len(st.SBLeads)-1].Status == "applied",
+		"savings":   st.Savings[len(st.Savings)-1].Amount == -20000,
+		"txn":       st.Txns[len(st.Txns)-1].Amount == 4550,
+	}
+	for k, ok := range checks {
+		if !ok {
+			t.Errorf("%s was not edited", k)
+		}
+	}
+	// A blank required field keeps the old value.
+	j.post("/medical/conditions/"+strconv.Itoa(st.Conditions[len(st.Conditions)-1].ID)+"/update", url.Values{"name": {""}})
+	if n := j.app.store.snapshot().Conditions; n[len(n)-1].Name != "Right knee" {
+		t.Errorf("blank name wiped the condition: %q", n[len(n)-1].Name)
+	}
+	// Every page with an edit form still renders.
+	for _, p := range []string{"/medical", "/jobs", "/resources", "/skillbridge", "/savings", "/budget"} {
+		if code, body := j.get(p); code != 200 || !strings.Contains(body, `data-edit=`) {
+			t.Errorf("%s: code %d, has edit buttons %v", p, code, strings.Contains(body, "data-edit="))
+		}
+	}
+}

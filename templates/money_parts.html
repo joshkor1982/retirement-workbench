@@ -364,7 +364,22 @@
     {{range .Sav.Entries}}
     <tr><td class="nowrap">{{atdate .Date}}</td><td>{{.Note}}</td>
       <td class="num {{if lt .Amount 0}}gist-short{{else}}gist-ok{{end}}">{{if gt .Amount 0}}+{{end}}{{money .Amount}}</td>
-      <td><form method="post" action="/savings/{{.ID}}/delete"><button class="danger">Delete</button></form></td></tr>
+      <td><span class="row-actions"><button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit</button><form method="post" action="/savings/{{.ID}}/delete"><button class="danger">Delete</button></form></span></td></tr>
+    <tr class="edit-row" id="edit-{{.ID}}" hidden>
+      <td colspan="4">
+        <form method="post" action="/savings/{{.ID}}/update" class="field-row">
+          <label class="field"><span class="field-label">Type</span>
+            <select name="kind"><option value="deposit">Deposit</option><option value="withdraw"{{if lt .Amount 0}} selected{{end}}>Withdrawal</option></select></label>
+          <label class="field"><span class="field-label">Amount</span>
+            <input type="text" name="amount" value="{{money (abs .Amount)}}" inputmode="decimal" required size="10"></label>
+          <label class="field"><span class="field-label">Date</span>
+            <input type="date" name="date" value="{{.Date}}"></label>
+          <label class="field field-grow"><span class="field-label">Note</span>
+            <input type="text" name="note" value="{{.Note}}"></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
+      </td>
+    </tr>
     {{end}}
     </tbody>
   </table>
@@ -563,7 +578,24 @@
       <td class="nowrap">{{.Date}}</td>
       <td class="num {{if lt .Amount 0}}neg{{else}}pos{{end}}">{{money .Amount}}</td>
       <td>{{.Category}}</td><td>{{.Note}}</td>
-      <td><form method="post" action="/budget/{{.ID}}/delete"><button class="danger">Delete</button></form></td>
+      <td><span class="row-actions"><button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit</button><form method="post" action="/budget/{{.ID}}/delete"><button class="danger">Delete</button></form></span></td>
+    </tr>
+    <tr class="edit-row" id="edit-{{.ID}}" hidden>
+      <td colspan="5">
+        <form method="post" action="/budget/{{.ID}}/update" class="field-row">
+          <label class="field"><span class="field-label">Kind</span>
+            <select name="kind"><option value="spend">Spend</option><option value="income"{{if gt .Amount 0}} selected{{end}}>Income</option></select></label>
+          <label class="field"><span class="field-label">Amount</span>
+            <input type="text" name="amount" value="{{money (abs .Amount)}}" inputmode="decimal" required size="10"></label>
+          <label class="field"><span class="field-label">Date</span>
+            <input type="date" name="date" value="{{.Date}}"></label>
+          <label class="field"><span class="field-label">Category</span>
+            <input type="text" name="category" value="{{.Category}}"></label>
+          <label class="field field-grow"><span class="field-label">Note</span>
+            <input type="text" name="note" value="{{.Note}}"></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
+      </td>
     </tr>
     {{end}}
     </tbody>

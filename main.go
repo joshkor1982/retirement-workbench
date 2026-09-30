@@ -610,6 +610,7 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 		},
 		"money":      money,
 		"healthYear": func() int { return healthYear },
+		"abs":        func(n int64) int64 { return max(n, -n) },
 		"nicedate": func(s string) string {
 			t, err := parseDay(s)
 			if err != nil {
@@ -745,6 +746,7 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 	mux.HandleFunc("POST /medical/conditions/{id}/toggle", s.conditionToggle)
 	mux.HandleFunc("POST /medical/conditions/{id}/delete", s.conditionDelete)
 	mux.HandleFunc("POST /medical/symptoms", s.symptomAdd)
+	s.routeEdits(mux)
 	mux.HandleFunc("POST /medical/symptoms/{id}/delete", s.symptomDelete)
 	mux.HandleFunc("POST /timeline/tasks", s.timelineTaskAdd)
 	mux.HandleFunc("GET /settings", s.settings)

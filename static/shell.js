@@ -331,7 +331,21 @@
     }).catch(function () {});
   }
 
-  function init() { var k = readFlash(); wireTheme(); wireMenu(); wireHowTos(); wireSearch(); wireCountUps(); wireAnalyze(); wireHeadIcons(); wireSaved(k); wireWeather(); }
+  // Edit buttons: <button data-edit="ID"> shows or hides #edit-ID, the
+  // prefilled form for that item, and puts the cursor in its first field.
+  function wireEdits() {
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-edit]');
+      if (!b) return;
+      var row = document.getElementById('edit-' + b.getAttribute('data-edit'));
+      if (!row) return;
+      row.hidden = !row.hidden;
+      b.setAttribute('aria-expanded', String(!row.hidden));
+      if (!row.hidden) { var f = row.querySelector('input, select'); if (f) f.focus(); }
+    });
+  }
+
+  function init() { var k = readFlash(); wireEdits(); wireTheme(); wireMenu(); wireHowTos(); wireSearch(); wireCountUps(); wireAnalyze(); wireHeadIcons(); wireSaved(k); wireWeather(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();

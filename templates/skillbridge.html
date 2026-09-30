@@ -86,9 +86,29 @@
       <td>{{.Program}}</td><td>{{.Location}}</td>
       <td><span class="chip sb-{{.Status}}">{{.Status}}</span></td>
       <td>{{.Notes}}</td>
-      <td class="row-actions">
+      <td><span class="row-actions">
         {{if ne .Status "approved"}}<form method="post" action="/skillbridge/leads/{{.ID}}/advance"><button>Advance</button></form>{{end}}
+        <button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit</button>
         <form method="post" action="/skillbridge/leads/{{.ID}}/delete" onsubmit="return confirm('Stop tracking {{.Company}}?')"><button class="danger">Delete</button></form>
+      </span></td>
+    </tr>
+    <tr class="edit-row" id="edit-{{.ID}}" hidden>
+      <td colspan="6">
+        <form method="post" action="/skillbridge/leads/{{.ID}}/update" class="field-row">
+          <label class="field"><span class="field-label">Company</span>
+            <input type="text" name="company" value="{{.Company}}" required></label>
+          <label class="field field-grow"><span class="field-label">Program</span>
+            <input type="text" name="program" value="{{.Program}}"></label>
+          <label class="field"><span class="field-label">Location</span>
+            <input type="text" name="location" value="{{.Location}}"></label>
+          <label class="field"><span class="field-label">Status</span>
+            <select name="status"><option value="found"{{if eq .Status "found"}} selected{{end}}>Found</option><option value="contacted"{{if eq .Status "contacted"}} selected{{end}}>Contacted</option><option value="applied"{{if eq .Status "applied"}} selected{{end}}>Applied</option><option value="accepted"{{if eq .Status "accepted"}} selected{{end}}>Accepted</option><option value="approved"{{if eq .Status "approved"}} selected{{end}}>Approved</option></select></label>
+          <label class="field field-grow"><span class="field-label">Link</span>
+            <input type="text" name="url" value="{{.URL}}"></label>
+          <label class="field field-grow"><span class="field-label">Notes</span>
+            <input type="text" name="notes" value="{{.Notes}}"></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
       </td>
     </tr>
     {{end}}

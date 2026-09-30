@@ -13,8 +13,22 @@
           <span class="res-host">{{if .Notes}}{{.Notes}}{{else}}{{host .URL}}{{end}}</span>
         </a>
         <form method="post" action="/resources/links/{{.ID}}/delete" class="res-del" onsubmit="return confirm('Remove {{.Title}} from your resources?')">
+          <button type="button" class="icon-btn res-x res-pen" data-edit="{{.ID}}" title="Edit {{.Title}}" aria-label="Edit {{.Title}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/></svg></button>
           <button type="submit" class="icon-btn res-x" title="Remove {{.Title}}" aria-label="Remove {{.Title}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
         </form>
+        <div class="res-edit" id="edit-{{.ID}}" hidden>
+        <form method="post" action="/resources/links/{{.ID}}/update" class="field-row">
+          <label class="field field-grow"><span class="field-label">Site</span>
+            <input type="text" name="title" value="{{.Title}}" required></label>
+          <label class="field field-grow"><span class="field-label">URL</span>
+            <input type="text" name="url" value="{{.URL}}" required></label>
+          <label class="field"><span class="field-label">Category</span>
+            <input type="text" name="category" value="{{.Category}}" list="cats"></label>
+          <label class="field field-grow"><span class="field-label">Notes</span>
+            <input type="text" name="notes" value="{{.Notes}}"></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
+        </div>
       </li>
       {{end}}
     </ul>
@@ -56,7 +70,22 @@
     <tbody>
     {{range .Contacts}}
     <tr><td><b>{{.Name}}</b></td><td>{{.Org}}</td><td>{{.Info}}</td><td>{{.Notes}}</td>
-      <td><form method="post" action="/resources/contacts/{{.ID}}/delete"><button class="danger">Delete</button></form></td></tr>
+      <td><span class="row-actions"><button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit</button><form method="post" action="/resources/contacts/{{.ID}}/delete"><button class="danger">Delete</button></form></span></td></tr>
+    <tr class="edit-row" id="edit-{{.ID}}" hidden>
+      <td colspan="5">
+        <form method="post" action="/resources/contacts/{{.ID}}/update" class="field-row">
+          <label class="field"><span class="field-label">Office or Program</span>
+            <input type="text" name="name" value="{{.Name}}" required></label>
+          <label class="field"><span class="field-label">Agency</span>
+            <input type="text" name="org" value="{{.Org}}"></label>
+          <label class="field field-grow"><span class="field-label">Phone / Email / Site</span>
+            <input type="text" name="info" value="{{.Info}}"></label>
+          <label class="field field-grow"><span class="field-label">Notes</span>
+            <input type="text" name="notes" value="{{.Notes}}"></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
+      </td>
+    </tr>
     {{end}}
     </tbody>
   </table>

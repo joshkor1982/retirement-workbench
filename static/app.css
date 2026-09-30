@@ -944,3 +944,11 @@ main .card > details.how-to[open] > .hint { margin: 10px 0 0; }
 /* A bill or debt name you can rename; it saves with the row's Save button. */
 .inline-name { width: 100%; min-width: 9ch; font-weight: 700; }
 th.num { text-align: right; }
+
+/* Resource tiles: edit and remove sit together; an open edit form takes the
+   whole row so its fields have room. */
+.res-del { display: flex; gap: 2px; }
+.res-tile:has(> .res-edit:not([hidden])) { grid-column: 1 / -1; }
+.res-edit { margin-top: 8px; padding: 12px; border: 1px dashed var(--c-line); border-radius: var(--r-1); }
+.res-tile:has(> .res-edit:not([hidden])) .res-link { height: auto; }
+.res-x.res-pen:hover { color: var(--fg-accent); background: color-mix(in srgb, var(--fg-accent) 12%, transparent); }

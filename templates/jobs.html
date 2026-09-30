@@ -97,7 +97,24 @@
       <td class="nowrap">{{.Added}}</td>
       <td>{{.Notes}}</td>
       <td>{{if ne .Status "offer"}}<form method="post" action="/jobs/prospects/{{.ID}}/advance"><button>Advance</button></form>{{end}}</td>
-      <td><form method="post" action="/jobs/prospects/{{.ID}}/delete"><button class="danger">Delete</button></form></td>
+      <td><span class="row-actions"><button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit</button><form method="post" action="/jobs/prospects/{{.ID}}/delete"><button class="danger">Delete</button></form></span></td>
+    </tr>
+    <tr class="edit-row" id="edit-{{.ID}}" hidden>
+      <td colspan="7">
+        <form method="post" action="/jobs/prospects/{{.ID}}/update" class="field-row">
+          <label class="field field-grow"><span class="field-label">Position</span>
+            <input type="text" name="title" value="{{.Title}}" required></label>
+          <label class="field"><span class="field-label">Organization</span>
+            <input type="text" name="org" value="{{.Org}}"></label>
+          <label class="field"><span class="field-label">Status</span>
+            <select name="status"><option value="found"{{if eq .Status "found"}} selected{{end}}>Found</option><option value="applied"{{if eq .Status "applied"}} selected{{end}}>Applied</option><option value="interview"{{if eq .Status "interview"}} selected{{end}}>Interview</option><option value="offer"{{if eq .Status "offer"}} selected{{end}}>Offer</option></select></label>
+          <label class="field field-grow"><span class="field-label">Link</span>
+            <input type="text" name="url" value="{{.URL}}"></label>
+          <label class="field field-grow"><span class="field-label">Notes</span>
+            <input type="text" name="notes" value="{{.Notes}}"></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
+      </td>
     </tr>
     {{end}}
     </tbody>
@@ -126,7 +143,24 @@
     <tbody>
     {{range .Contacts}}
     <tr><td><b>{{.Name}}</b></td><td>{{.Org}}</td><td>{{.Role}}</td><td>{{.Info}}</td><td>{{.Notes}}</td>
-      <td><form method="post" action="/jobs/contacts/{{.ID}}/delete"><button class="danger">Delete</button></form></td></tr>
+      <td><span class="row-actions"><button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit</button><form method="post" action="/jobs/contacts/{{.ID}}/delete"><button class="danger">Delete</button></form></span></td></tr>
+    <tr class="edit-row" id="edit-{{.ID}}" hidden>
+      <td colspan="6">
+        <form method="post" action="/jobs/contacts/{{.ID}}/update" class="field-row">
+          <label class="field"><span class="field-label">Name</span>
+            <input type="text" name="name" value="{{.Name}}" required></label>
+          <label class="field"><span class="field-label">Organization</span>
+            <input type="text" name="org" value="{{.Org}}"></label>
+          <label class="field"><span class="field-label">Role</span>
+            <input type="text" name="role" value="{{.Role}}"></label>
+          <label class="field field-grow"><span class="field-label">Reach Them At</span>
+            <input type="text" name="info" value="{{.Info}}"></label>
+          <label class="field field-grow"><span class="field-label">Notes</span>
+            <input type="text" name="notes" value="{{.Notes}}"></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
+      </td>
+    </tr>
     {{end}}
     </tbody>
   </table>
@@ -141,7 +175,20 @@
     <li class="rowline">
       <div><a href="/jobs?q={{.Keyword}}&zip={{.Zip}}&radius={{.Radius}}&mode={{.Mode}}&where={{.Location}}"><b>{{.Keyword}}</b>
         {{if eq .Mode "remote"}} · remote only{{else}}{{if .Zip}} · within {{.Radius}} miles of {{.Zip}}{{else if .Location}} · {{.Location}}{{end}}{{if eq .Mode "both"}} and remote{{end}}{{end}}</a></div>
-      <form method="post" action="/jobs/searches/{{.ID}}/delete"><button class="danger">Delete</button></form>
+      <span class="row-actions"><button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit</button><form method="post" action="/jobs/searches/{{.ID}}/delete"><button class="danger">Delete</button></form></span>
+    </li>
+    <li class="edit-row" id="edit-{{.ID}}" hidden>
+      <form method="post" action="/jobs/searches/{{.ID}}/update" class="field-row">
+          <label class="field field-grow"><span class="field-label">Keywords</span>
+            <input type="text" name="keyword" value="{{.Keyword}}" required></label>
+          <label class="field"><span class="field-label">ZIP Code</span>
+            <input type="text" name="zip" value="{{.Zip}}" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" size="7"></label>
+          <label class="field"><span class="field-label">Radius in Miles</span>
+            <input type="number" name="radius" value="{{if .Radius}}{{.Radius}}{{end}}" min="5" max="200" placeholder="50"></label>
+          <label class="field"><span class="field-label">Where</span>
+            <select name="mode"><option value="both"{{if eq .Mode "both"}} selected{{end}}>Near Me and Remote</option><option value="near"{{if eq .Mode "near"}} selected{{end}}>Near Me Only</option><option value="remote"{{if eq .Mode "remote"}} selected{{end}}>Remote Only</option></select></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
     </li>
     {{end}}
   </ul>

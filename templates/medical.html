@@ -91,7 +91,18 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBreakdo
       <td><form method="post" action="/medical/conditions/{{.ID}}/toggle"><input type="hidden" name="field" value="dbq">
         <button class="{{if .DBQ}}tick{{end}}">{{if .DBQ}}✓ Studied{{else}}Not Yet{{end}}</button></form></td>
       <td>{{.Notes}}</td>
-      <td><form method="post" action="/medical/conditions/{{.ID}}/delete"><button class="danger">Delete</button></form></td>
+      <td><span class="row-actions"><button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit</button><form method="post" action="/medical/conditions/{{.ID}}/delete"><button class="danger">Delete</button></form></span></td>
+    </tr>
+    <tr class="edit-row" id="edit-{{.ID}}" hidden>
+      <td colspan="5">
+        <form method="post" action="/medical/conditions/{{.ID}}/update" class="field-row">
+          <label class="field field-grow"><span class="field-label">Condition</span>
+            <input type="text" name="name" value="{{.Name}}" required></label>
+          <label class="field field-grow"><span class="field-label">Notes</span>
+            <input type="text" name="notes" value="{{.Notes}}"></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
+      </td>
     </tr>
     {{end}}
     </tbody>
@@ -123,7 +134,24 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBreakdo
     <tbody>
     {{range .Meds}}
     <tr><td><b>{{.Name}}</b></td><td>{{.Dose}}</td><td>{{.For}}</td><td>{{.Prescriber}}</td><td>{{.Notes}}</td>
-      <td><form method="post" action="/medical/meds/{{.ID}}/delete"><button class="danger">Delete</button></form></td></tr>
+      <td><span class="row-actions"><button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit</button><form method="post" action="/medical/meds/{{.ID}}/delete"><button class="danger">Delete</button></form></span></td></tr>
+    <tr class="edit-row" id="edit-{{.ID}}" hidden>
+      <td colspan="6">
+        <form method="post" action="/medical/meds/{{.ID}}/update" class="field-row">
+          <label class="field"><span class="field-label">Medication</span>
+            <input type="text" name="name" value="{{.Name}}" required></label>
+          <label class="field"><span class="field-label">Dose</span>
+            <input type="text" name="dose" value="{{.Dose}}"></label>
+          <label class="field"><span class="field-label">For</span>
+            <input type="text" name="for" value="{{.For}}"></label>
+          <label class="field"><span class="field-label">Prescriber</span>
+            <input type="text" name="prescriber" value="{{.Prescriber}}"></label>
+          <label class="field field-grow"><span class="field-label">Notes / Refill Status</span>
+            <input type="text" name="notes" value="{{.Notes}}"></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
+      </td>
+    </tr>
     {{end}}
     </tbody>
   </table>
@@ -198,7 +226,20 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBreakdo
     <tbody>
     {{range .Symptoms}}
     <tr><td class="nowrap">{{.Date}}</td><td>{{.Condition}}</td><td>{{.Note}}</td>
-      <td><form method="post" action="/medical/symptoms/{{.ID}}/delete"><button class="danger">Delete</button></form></td></tr>
+      <td><span class="row-actions"><button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit</button><form method="post" action="/medical/symptoms/{{.ID}}/delete"><button class="danger">Delete</button></form></span></td></tr>
+    <tr class="edit-row" id="edit-{{.ID}}" hidden>
+      <td colspan="4">
+        <form method="post" action="/medical/symptoms/{{.ID}}/update" class="field-row">
+          <label class="field"><span class="field-label">Date</span>
+            <input type="date" name="date" value="{{.Date}}"></label>
+          <label class="field"><span class="field-label">Condition</span>
+            <input type="text" name="condition" value="{{.Condition}}" list="cond-list"></label>
+          <label class="field field-grow"><span class="field-label">What Happened</span>
+            <input type="text" name="note" value="{{.Note}}" required></label>
+          <button type="submit" class="primary">Save</button>
+        </form>
+      </td>
+    </tr>
     {{end}}
     </tbody>
   </table>

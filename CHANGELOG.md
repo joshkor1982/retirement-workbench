@@ -3,6 +3,11 @@
 ## Unreleased
 
 ### Added
+- Everything you can add, you can edit. Conditions, medications, symptom
+  entries, job prospects and contacts, saved job searches, SkillBridge leads,
+  Who to Call offices, resource sites, savings entries, and recorded money all
+  have an Edit button that opens the item's fields prefilled. Prospects and
+  leads can move to any status, including back a step.
 - Retired Pay counts health coverage: the 2026 TRICARE Prime or Select
   enrollment fee for your group (A or B, worked out from when you joined) and
   family size, Medicare Part B for TRICARE For Life, typical FEDVIP dental and
