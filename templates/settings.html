@@ -75,7 +75,10 @@
 <section class="card">
   <h2>Your Data</h2>
   <p class="hint">Everything the app knows about you lives in one folder on this computer, never in the app's code:</p>
-  <p class="data-path"><code>{{.DataDir}}</code></p>
+  <div class="settings-action">
+    <code class="data-path">{{.DataDir}}</code>
+    <form method="post" action="/settings/open-data"><button type="submit">Show in {{.FolderApp}}</button></form>
+  </div>
   <p class="hint">Back that folder up and you have backed up everything. The app only reaches the internet for the features you turn on: the Advisor (the AI company you pick above), job searches (USAJOBS), and housing listings (realtor.com, once you enter a ZIP code).</p>
   <div class="settings-action">
     <a class="btn primary" href="/settings/backup">Back Up Everything</a>

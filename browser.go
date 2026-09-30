@@ -21,3 +21,29 @@ func openInBrowser(u string) {
 	}
 	_ = cmd.Start()
 }
+
+// openFolder shows a folder in Finder, File Explorer, or the Linux file
+// manager. It only ever opens the app's own data folder.
+func openFolder(dir string) error {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "darwin":
+		cmd = exec.Command("open", dir)
+	case "windows":
+		cmd = exec.Command("explorer", dir)
+	default:
+		cmd = exec.Command("xdg-open", dir)
+	}
+	return cmd.Start()
+}
+
+// folderApp names the file manager for the button label.
+func folderApp() string {
+	switch runtime.GOOS {
+	case "darwin":
+		return "Finder"
+	case "windows":
+		return "File Explorer"
+	}
+	return "Files"
+}

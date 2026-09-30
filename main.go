@@ -767,6 +767,7 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 	mux.HandleFunc("POST /settings/demo", s.settingsDemo)
 	mux.HandleFunc("POST /settings/erase", s.settingsErase)
 	mux.HandleFunc("POST /settings/quit", s.quitApp)
+	mux.HandleFunc("POST /settings/open-data", s.openDataFolder)
 	mux.HandleFunc("GET /settings/backup", s.backupDownload)
 	mux.HandleFunc("POST /settings/restore", s.backupRestore)
 	return s, guard(mux), nil
@@ -4151,7 +4152,7 @@ func (s *Server) settings(w http.ResponseWriter, r *http.Request) {
 	for _, p := range aiProviders {
 		provs = append(provs, provView{p, aiStatus(p.Key)})
 	}
-	s.page(w, "settings", map[string]any{"Err": r.URL.Query().Get("err"), "AIProviders": provs, "DataDir": absPath(s.data), "PayGrades": payGrades})
+	s.page(w, "settings", map[string]any{"Err": r.URL.Query().Get("err"), "AIProviders": provs, "DataDir": tildePath(absPath(s.data)), "FolderApp": folderApp(), "PayGrades": payGrades})
 }
 
 func (s *Server) settingsSave(w http.ResponseWriter, r *http.Request) {
@@ -4331,4 +4332,20 @@ func (s *Server) settingsSeed(w http.ResponseWriter, r *http.Request) {
 		}
 	})
 	http.Redirect(w, r, "/timeline", http.StatusSeeOther)
+}
+
+func (s *Server) openDataFolder(w http.ResponseWriter, r *http.Request) {
+	if err := openFolder(absPath(s.data)); err != nil {
+		flash(w, "err", "Could not open the folder: "+err.Error())
+	}
+	http.Redirect(w, r, "/settings", http.StatusSeeOther)
+}
+
+// tildePath shortens a path under the home folder to ~/..., which is what
+// people recognize.
+func tildePath(p string) string {
+	if home, err := os.UserHomeDir(); err == nil && home != "" && strings.HasPrefix(p, home+string(os.PathSeparator)) {
+		return "~" + p[len(home):]
+	}
+	return p
 }
