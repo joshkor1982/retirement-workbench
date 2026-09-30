@@ -990,7 +990,11 @@ a.co-tile:hover { border-color: var(--fg-accent); text-decoration: none; }
 .skill-row form { margin: 0; }
 .skill-status { min-width: 96px; justify-content: center; }
 .skill-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.skill-row.s-mastered .skill-text b { opacity: .6; }
+
 .skill-link { white-space: nowrap; }
 .skill-list .edit-row { padding: 8px 0; }
 @media (max-width: 700px) { .skill-row { flex-wrap: wrap; } .co-actions { margin-left: 0; } }
+.co-role { font-weight: 650; }
+.skill-name { font-weight: 600; color: var(--fg-primary); }
+.skill-row.s-mastered .skill-name { opacity: .6; }
+.skill-link { font-size: var(--t-13); align-self: flex-start; }
