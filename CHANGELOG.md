@@ -3,6 +3,13 @@
 ## Unreleased
 
 ### Added
+- Topic and company pages. Every skill on Learning opens its own page with
+  a handbook (a long-form guide with contents, labs, interview questions,
+  and a cheat sheet) and a references list you can add to or trim. Every
+  company opens a page with its profile, recommended books, references, and
+  its topics with progress. Generate Handbook and Generate Profile have the
+  Advisor write one where none exists. Handbooks live in the docs folder, so
+  backup and restore include them, and the Documents page lists them all.
 - Generate buttons. On Learning, Generate Topics has the Advisor add what a
   company expects for your target role that you have not listed, reading the
   job posting, and notes what you already bring. On a resume, Generate

@@ -1,0 +1,44 @@
+{{define "hb-body"}}
+<div class="hb">
+  {{if .TOC}}
+  <nav class="hb-toc" aria-label="Contents">
+    <span class="field-label">Contents</span>
+    <ol>{{range .TOC}}{{if eq .Level 2}}<li><a href="#{{.ID}}">{{.Text}}</a></li>{{end}}{{end}}</ol>
+  </nav>
+  {{end}}
+  <article class="hb-body">{{.Body}}</article>
+</div>
+{{end}}
+
+{{define "hb-refs"}}
+<section class="card" id="references">
+  <h2 data-icon="link">References</h2>
+  {{if .Refs}}
+  <ul class="plain hb-refs">
+    {{range .Refs}}
+    <li class="hb-ref">
+      <div><a href="{{.URL}}" target="_blank" rel="noopener"><b>{{.Title}} ↗</b></a>{{if .Note}}<span class="note">{{.Note}}</span>{{end}}<span class="hb-host">{{host .URL}}</span></div>
+      <form method="post" action="/handbooks/{{$.Slug}}/refs/delete"><input type="hidden" name="url" value="{{.URL}}"><input type="hidden" name="back" value="{{$.Back}}"><button class="danger">Remove</button></form>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}<p class="hint">No references yet. Add the docs, specs, and courses you learn from.</p>{{end}}
+  <form method="post" action="/handbooks/{{.Slug}}/refs" class="field-row">
+    <input type="hidden" name="back" value="{{.Back}}">
+    <label class="field field-grow"><span class="field-label">Add a Reference</span><input type="text" name="title" required placeholder="Title"></label>
+    <label class="field field-grow"><span class="field-label">Link</span><input type="text" name="url" required placeholder="https://..."></label>
+    <label class="field field-grow"><span class="field-label">What It Is Good For</span><input type="text" name="note" placeholder="Optional"></label>
+    <button type="submit" class="primary">Add</button>
+  </form>
+</section>
+{{if .Books}}
+<section class="card" id="books">
+  <h2 data-icon="book">Recommended Books</h2>
+  <ul class="plain hb-refs">
+    {{range .Books}}
+    <li class="hb-ref"><div><a href="{{.URL}}" target="_blank" rel="noopener"><b>{{.Title}} ↗</b></a>{{if .Note}}<span class="note">{{.Note}}</span>{{end}}</div></li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
+{{end}}

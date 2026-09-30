@@ -83,4 +83,18 @@
   </ul>
   {{else}}<p class="hint">No documents yet.</p>{{end}}
 </section>
+{{if .Handbooks}}
+<section class="card" id="handbooks">
+  <h2 data-icon="book">Handbooks</h2>
+  <p class="hint">Guides for each topic on your Learning page, and profiles of the companies you are aiming for. Open one to read it, with its references.</p>
+  <ul class="hb-shelf">
+    {{range .Handbooks}}
+    <li><a href="/handbooks/{{.Slug}}" class="hb-tile">
+      <span class="field-label">{{if .Company}}Company Profile{{else}}Handbook{{end}}</span>
+      <b>{{.Title}}</b>
+      <span class="hint">{{.Words}} words · {{.Updated}}</span></a></li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
 {{template "foot" .}}

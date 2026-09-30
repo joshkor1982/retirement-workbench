@@ -1,0 +1,37 @@
+{{template "head" .}}
+<section class="card">
+  <p class="crumbs"><a href="/learning">Learning</a> › {{if .Co.ID}}<a href="/learning/companies/{{.Co.ID}}">{{.Co.Name}}</a> › {{end}}{{or .Skill.Area "General"}}</p>
+  <h2 data-icon="book">{{.Skill.Name}}</h2>
+  <div class="co-meta">
+    <form method="post" action="/learning/skills/{{.Skill.ID}}/status">
+      <button class="skill-status {{if eq .Skill.Status "mastered"}}btn-done{{else if eq .Skill.Status "learning"}}primary{{end}}" title="Click to move to the next step">{{index .SkillLabels .Skill.Status}}</button>
+    </form>
+    {{if .Skill.URL}}<a href="{{.Skill.URL}}" target="_blank" rel="noopener">Official Docs ↗</a>{{end}}
+    {{if .Skill.Notes}}<span class="hint">{{.Skill.Notes}}</span>{{end}}
+  </div>
+  {{if .HB}}
+  <p class="hb-lead">{{.HB.Summary}}</p>
+  <p class="hint">{{.HB.Words}} words · updated {{.HB.Updated}}</p>
+  {{else}}
+  <p class="hint">No handbook for this topic yet. Generate one, or link a handbook from your library.</p>
+  {{end}}
+  <div class="gen-bar">
+    <form method="post" action="/learning/skills/{{.Skill.ID}}/generate-handbook" data-busy="Writing the handbook, this takes a minute...">
+      <button type="submit" class="{{if not .HB}}primary {{end}}gen-btn"{{if not .AdvisorReady}} disabled title="Set up the Advisor in Settings first"{{end}}><svg class="gen-ic" viewBox="0 0 24 24" aria-hidden="true">{{navIcon "sparkle"}}</svg>{{if .HB}}Regenerate Handbook{{else}}Generate Handbook{{end}}</button>
+    </form>
+    {{if .Library}}
+    <form method="post" action="/learning/skills/{{.Skill.ID}}/handbook" class="hb-link">
+      <select name="handbook" aria-label="Handbook for this topic"><option value="">No handbook</option>{{$cur := .Skill.Handbook}}{{range .Library}}{{if not .Company}}<option value="{{.Slug}}"{{if eq .Slug $cur}} selected{{end}}>{{.Title}}</option>{{end}}{{end}}</select>
+      <button type="submit">Link</button>
+    </form>
+    {{end}}
+  </div>
+</section>
+{{with .HB}}
+<section class="card hb-card">
+  <h2 data-icon="book">{{.Title}}</h2>
+  {{template "hb-body" .}}
+</section>
+{{template "hb-refs" .}}
+{{end}}
+{{template "foot" .}}

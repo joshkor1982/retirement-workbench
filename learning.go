@@ -23,7 +23,8 @@ type Company struct {
 	// TargetID is the tailored resume for this company, 0 when there is none.
 	// Adding a company starts one, and starting a resume adds a company.
 	TargetID int    `json:"target_id,omitempty"`
-	Fit      string `json:"fit,omitempty"` // the last Generate's read on what you bring and what is missing
+	Fit      string `json:"fit,omitempty"`     // the last Generate's read on what you bring and what is missing
+	Profile  string `json:"profile,omitempty"` // handbook slug of the company profile
 	FitAt    string `json:"fit_at,omitempty"`
 }
 
@@ -34,7 +35,8 @@ type Skill struct {
 	Area      string `json:"area"` // grouping, e.g. "Protocols"
 	URL       string `json:"url"`  // where to learn it
 	Notes     string `json:"notes"`
-	Status    string `json:"status"` // learn | learning | mastered
+	Status    string `json:"status"`             // learn | learning | mastered
+	Handbook  string `json:"handbook,omitempty"` // slug of the guide in docs/handbook-<slug>.md
 }
 
 var skillFlow = []string{"learn", "learning", "mastered"}

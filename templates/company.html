@@ -1,0 +1,57 @@
+{{template "head" .}}
+<section class="card">
+  <p class="crumbs"><a href="/learning">Learning</a> › {{.Co.Name}}</p>
+  <h2 data-icon="briefcase">{{.Co.Name}}</h2>
+  <div class="co-meta">
+    {{if .Co.Role}}<b class="co-role">{{.Co.Role}}</b>{{end}}
+    {{if .Co.URL}}<a href="{{.Co.URL}}" target="_blank" rel="noopener">Careers ↗</a>{{end}}
+    {{if .Co.Target}}<a href="/resume?t={{.Co.Target.ID}}">Tailored Resume →</a>{{end}}
+    <a href="/learning#co-{{.Co.ID}}">Checklist →</a>
+  </div>
+  {{if .Profile}}<p class="hb-lead">{{.Profile.Summary}}</p>{{else if .Co.Notes}}<p class="hb-lead">{{.Co.Notes}}</p>{{end}}
+  {{if .Co.Total}}
+  <div class="co-progress">
+    <div class="sav-track" role="progressbar" aria-valuenow="{{.Co.Pct}}" aria-valuemin="0" aria-valuemax="100"><div class="sav-fill" style="width: {{.Co.Pct}}%"></div></div>
+    <span class="hint">{{.Co.Mastered}} of {{.Co.Total}} mastered{{if .Co.Learning}} · {{.Co.Learning}} in progress{{end}}</span>
+  </div>
+  {{end}}
+  {{if .Co.Fit}}<div class="fit-note"><span class="field-label">Your Fit · {{.Co.FitAt}}</span><p>{{.Co.Fit}}</p></div>{{end}}
+  <div class="gen-bar">
+    <form method="post" action="/learning/companies/{{.Co.ID}}/generate-profile" data-busy="Writing the profile...">
+      <button type="submit" class="{{if not .Profile}}primary {{end}}gen-btn"{{if not .AdvisorReady}} disabled{{end}}><svg class="gen-ic" viewBox="0 0 24 24" aria-hidden="true">{{navIcon "sparkle"}}</svg>{{if .Profile}}Regenerate Profile{{else}}Generate Profile{{end}}</button>
+    </form>
+    <form method="post" action="/learning/companies/{{.Co.ID}}/generate" data-busy="Generating topics...">
+      <button type="submit" class="gen-btn"{{if not .AdvisorReady}} disabled{{end}}><svg class="gen-ic" viewBox="0 0 24 24" aria-hidden="true">{{navIcon "sparkle"}}</svg>Generate Topics</button>
+    </form>
+    {{if .Library}}
+    <form method="post" action="/learning/companies/{{.Co.ID}}/profile" class="hb-link">
+      <select name="profile" aria-label="Company profile"><option value="">No profile</option>{{$cur := .Co.Profile}}{{range .Library}}{{if .Company}}<option value="{{.Slug}}"{{if eq .Slug $cur}} selected{{end}}>{{.Title}}</option>{{end}}{{end}}</select>
+      <button type="submit">Link</button>
+    </form>
+    {{end}}
+  </div>
+</section>
+
+<section class="card">
+  <h2 data-icon="check">Topics to Master</h2>
+  {{range .Co.Areas}}
+  <div class="skill-area">
+    <h3 class="skill-area-name">{{.Name}} <span>{{len .Skills}}</span></h3>
+    <ul class="plain topic-list">
+      {{range .Skills}}
+      <li><a href="/learning/skills/{{.ID}}" class="topic-link"><span class="topic-dot s-{{.Status}}" aria-hidden="true"></span><span class="skill-name">{{.Name}}</span>
+        <span class="hint">{{index $.SkillLabels .Status}}{{with index $.HBTitles .Handbook}} · Handbook{{end}}</span></a></li>
+      {{end}}
+    </ul>
+  </div>
+  {{else}}<p class="hint">No topics yet. Click Generate Topics, or add them on the <a href="/learning#co-{{.Co.ID}}">Learning page</a>.</p>{{end}}
+</section>
+
+{{with .Profile}}
+<section class="card hb-card">
+  <h2 data-icon="book">About {{.Title}}</h2>
+  {{template "hb-body" .}}
+</section>
+{{template "hb-refs" .}}
+{{end}}
+{{template "foot" .}}

@@ -1,0 +1,12 @@
+{{template "head" .}}
+<section class="card">
+  <p class="crumbs"><a href="/docs">Documents</a> › Handbooks</p>
+  <h2 data-icon="book">{{.HB.Title}}</h2>
+  <p class="hb-lead">{{.HB.Summary}}</p>
+  <p class="hint">{{.HB.Words}} words · updated {{.HB.Updated}}{{if .Users}} · used by {{range $i, $s := .Users}}{{if $i}}, {{end}}<a href="/learning/skills/{{$s.ID}}">{{$s.Name}}</a>{{end}}{{end}}{{if .Cos}} · profile of {{range $i, $c := .Cos}}{{if $i}}, {{end}}<a href="/learning/companies/{{$c.ID}}">{{$c.Name}}</a>{{end}}{{end}}</p>
+</section>
+<section class="card hb-card">
+  {{template "hb-body" .HB}}
+</section>
+{{template "hb-refs" .HB}}
+{{template "foot" .}}

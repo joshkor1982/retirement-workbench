@@ -752,6 +752,7 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 	s.routeEdits(mux)
 	s.routeLearning(mux)
 	s.routeGenerate(mux)
+	s.routeHandbooks(mux)
 	mux.HandleFunc("POST /medical/find", s.conditionsFind)
 	mux.HandleFunc("POST /medical/found/add", s.conditionsFoundAdd)
 	mux.HandleFunc("POST /medical/found/clear", s.conditionsFoundClear)
@@ -810,7 +811,13 @@ func (s *Server) page(w http.ResponseWriter, name string, data map[string]any) {
 		}
 	}
 	var buf bytes.Buffer
-	if err := s.tmpl.ExecuteTemplate(&buf, name+".html", data); err != nil {
+	// A sub-page (a topic, a company) renders its own template but keeps
+	// its section's title and sidebar highlight.
+	tmplName := name
+	if t, ok := data["Template"].(string); ok {
+		tmplName = t
+	}
+	if err := s.tmpl.ExecuteTemplate(&buf, tmplName+".html", data); err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -1456,7 +1463,7 @@ func (s *Server) docs(w http.ResponseWriter, r *http.Request) {
 	}
 	// Forms: unfilled first, then filled.
 	sort.SliceStable(forms, func(i, j int) bool { return !forms[i].Filled && forms[j].Filled })
-	s.page(w, "docs", map[string]any{"Items": items, "Forms": forms})
+	s.page(w, "docs", map[string]any{"Items": items, "Forms": forms, "Handbooks": s.handbookLibrary()})
 }
 
 func (s *Server) docUpload(w http.ResponseWriter, r *http.Request) {

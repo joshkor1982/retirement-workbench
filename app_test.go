@@ -1460,3 +1460,90 @@ func TestLinkCompanyToExistingResume(t *testing.T) {
 		t.Errorf("switching resumes overwrote the posting with the old box: %q", got)
 	}
 }
+
+func TestMarkdownIsSafeAndComplete(t *testing.T) {
+	src := "# Title\n\nSummary here.\n\n## Core Concepts\n\nText with **bold**, *ital*, `a<b>` and [ok](https://x.example/a?b=1&c=2) and [bad](javascript:alert(1)).\n\n" +
+		"<script>alert(1)</script>\n\n- one\n- two\n\n1. first\n2. second\n\n```bash\necho \"<hi>\" && ls\n```\n\n| A | B |\n|---|---|\n| 1 | <i>2</i> |\n\n> **Warning:** careful\n\n### Sub\n"
+	out, toc := renderMarkdown(src)
+	h := string(out)
+	for _, bad := range []string{"<script", "javascript:", "<i>2"} {
+		if strings.Contains(h, bad) {
+			t.Errorf("rendered HTML contains %q:\n%s", bad, h)
+		}
+	}
+	for _, want := range []string{"<strong>bold</strong>", "<em>ital</em>", "<code>a&lt;b&gt;</code>", `href="https://x.example/a?b=1&amp;c=2"`,
+		"<ul>", "<ol>", `<code class="lang-bash">echo &#34;&lt;hi&gt;&#34; &amp;&amp; ls</code>`, "<th>A</th>", `md-warning`, `<h3 id="core-concepts">`, `<h4 id="sub">`} {
+		if !strings.Contains(h, want) {
+			t.Errorf("missing %q in:\n%s", want, h)
+		}
+	}
+	if len(toc) != 2 || toc[0].Text != "Core Concepts" {
+		t.Errorf("toc = %+v", toc)
+	}
+	title, sum := mdTitle(src)
+	if title != "Title" || sum != "Summary here." {
+		t.Errorf("title %q summary %q", title, sum)
+	}
+	_, refs := splitSection("# T\n\n## References\n\n- [Go](https://go.dev/doc/) - the docs\n- [x](javascript:1) - no\n\n## After\n", "References")
+	if r := parseRefs(refs); len(r) != 1 || r[0].URL != "https://go.dev/doc/" || r[0].Note != "the docs" {
+		t.Errorf("refs = %+v", r)
+	}
+}
+
+func TestJourneyTopicAndCompanyPages(t *testing.T) {
+	j := newJourney(t)
+	j.post("/learning/companies", url.Values{"name": {"Acme Radar"}, "role": {"TDL engineer"}})
+	cid := j.app.store.snapshot().Companies[0].ID
+	j.post("/learning/companies/"+strconv.Itoa(cid)+"/skills", url.Values{"name": {"JREAP-C"}, "area": {"Protocols"}})
+	sk := j.app.store.snapshot().Skills[0]
+	page := "/learning/skills/" + strconv.Itoa(sk.ID)
+	if code, body := j.get(page); code != 200 || !strings.Contains(body, "No handbook for this topic yet") {
+		t.Fatalf("topic page without a handbook: %d", code)
+	}
+
+	askAIFunc = func(_ context.Context, _, _, _ string) (string, error) {
+		return "```markdown\n# JREAP-C Handbook\n\nWhat JREAP-C is.\n\n## Core Concepts\n\nIt carries J-series over IP.\n\n## References\n\n- [MIL-STD-3011 overview](https://example.mil/jreap) - public summary\n```", nil
+	}
+	defer func() { askAIFunc = askAI }()
+	_ = j.app.store.mutate(func(st *State) { st.Settings.AdvisorProvider = "claude" })
+	j.post(page+"/generate-handbook", nil)
+	sk = j.app.store.snapshot().Skills[0]
+	if sk.Handbook != "jreap-c" {
+		t.Fatalf("handbook slug = %q", sk.Handbook)
+	}
+	_, body := j.get(page)
+	for _, want := range []string{"JREAP-C Handbook", "It carries J-series over IP.", "MIL-STD-3011 overview", `id="references"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("topic page missing %q", want)
+		}
+	}
+
+	// Add and remove a reference; they persist in the file.
+	j.post("/handbooks/jreap-c/refs", url.Values{"title": {"Guidebook"}, "url": {"example.org/guide"}, "note": {"primer"}, "back": {page}})
+	if h := j.app.loadHandbook("jreap-c"); len(h.Refs) != 2 || h.Refs[1].URL != "https://example.org/guide" {
+		t.Fatalf("after add: %+v", h.Refs)
+	}
+	j.post("/handbooks/jreap-c/refs/delete", url.Values{"url": {"https://example.mil/jreap"}, "back": {page}})
+	if h := j.app.loadHandbook("jreap-c"); len(h.Refs) != 1 || h.Refs[0].Title != "Guidebook" {
+		t.Fatalf("after delete: %+v", h.Refs)
+	}
+	// A back link off this app is ignored.
+	if loc := j.postResp("/handbooks/jreap-c/refs/delete", url.Values{"url": {"x"}, "back": {"https://evil.example/"}}).Header.Get("Location"); strings.Contains(loc, "evil") {
+		t.Errorf("redirected off-app: %s", loc)
+	}
+	// Path tricks never reach the file system.
+	if code, _ := j.get("/handbooks/..%2Fstate"); code == 200 {
+		t.Error("a bad slug rendered a page")
+	}
+
+	// The company page lists the topic, the Documents page lists the handbook.
+	if _, body := j.get("/learning/companies/" + strconv.Itoa(cid)); !strings.Contains(body, "JREAP-C") || !strings.Contains(body, "Generate Profile") {
+		t.Error("company page is missing the topic or the profile button")
+	}
+	if _, body := j.get("/docs"); !strings.Contains(body, "/handbooks/jreap-c") {
+		t.Error("Documents does not list the handbook")
+	}
+	if _, body := j.get("/handbooks/jreap-c"); !strings.Contains(body, "used by") {
+		t.Error("handbook page does not show which topics use it")
+	}
+}

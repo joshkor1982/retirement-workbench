@@ -7,7 +7,7 @@
   {{if .Companies}}
   <div class="gist">
     {{range .Companies}}
-    <a class="gist-item co-tile" href="#co-{{.ID}}"><span class="gist-label">{{.Name}}</span>
+    <a class="gist-item co-tile" href="/learning/companies/{{.ID}}"><span class="gist-label">{{.Name}}</span>
       <span class="gist-num">{{.Pct}}%</span>
       <span class="gist-sub">{{if .Total}}{{.Mastered}} of {{.Total}} mastered{{if .Learning}} · {{.Learning}} in progress{{end}}{{else}}No skills yet{{end}}</span></a>
     {{end}}
@@ -36,6 +36,7 @@
   <h2 data-icon="book">{{.Name}}</h2>
   <div class="co-meta">
     {{if .Role}}<b class="co-role">{{.Role}}</b>{{end}}
+    <a href="/learning/companies/{{.ID}}">Company Page →</a>
     {{if .URL}}<a href="{{.URL}}" target="_blank" rel="noopener">Careers ↗</a>{{end}}
     {{if .Notes}}<span class="hint">{{.Notes}}</span>{{end}}
     <span class="row-actions co-actions">
@@ -84,7 +85,7 @@
         <form method="post" action="/learning/skills/{{.ID}}/status">
           <button class="skill-status {{if eq .Status "mastered"}}btn-done{{else if eq .Status "learning"}}primary{{end}}" title="Click to move to the next step">{{index $.SkillLabels .Status}}</button>
         </form>
-        <div class="skill-text"><span class="skill-name">{{.Name}}</span>{{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}{{if .URL}}<a href="{{.URL}}" target="_blank" rel="noopener" class="skill-link">Where to learn it ↗</a>{{end}}</div>
+        <div class="skill-text"><a href="/learning/skills/{{.ID}}" class="skill-name">{{.Name}}</a>{{if .Handbook}} <span class="chip hb-chip">Handbook</span>{{end}}{{if .Notes}}<span class="note">{{.Notes}}</span>{{end}}{{if .URL}}<a href="{{.URL}}" target="_blank" rel="noopener" class="skill-link">Where to learn it ↗</a>{{end}}</div>
         <span class="row-actions">
           <button type="button" class="btn-edit" data-edit="{{.ID}}" aria-expanded="false">Edit</button>
           <form method="post" action="/learning/skills/{{.ID}}/delete"><button class="danger">Delete</button></form>

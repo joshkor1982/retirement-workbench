@@ -1014,3 +1014,49 @@ a.co-tile:hover { border-color: var(--fg-accent); text-decoration: none; }
 .target-list li:hover .res-x, .target-x .res-x:focus-visible { opacity: 1; }
 .target-list li a { padding-right: 40px; }
 .target-delete { margin: 0; }
+
+/* Handbooks: a reading page with a sticky contents list. */
+.crumbs { margin: 0; font-size: var(--t-13); color: var(--fg-muted); }
+.crumbs a { color: var(--fg-muted); }
+.crumbs a:hover { color: var(--fg-accent); }
+.hb-lead { margin: 0; font-size: var(--t-15); line-height: 1.6; }
+.hb-link { display: flex; gap: 8px; margin: 0; }
+.hb-chip { font-size: 11px; }
+a.skill-name { text-decoration: none; }
+a.skill-name:hover { color: var(--fg-accent); text-decoration: underline; }
+.hb { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; align-items: start; }
+.hb-toc { position: sticky; top: calc(var(--topbar-h, 56px) + 16px); display: flex; flex-direction: column; gap: 8px; }
+.hb-toc ol { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: var(--t-13); }
+.hb-toc a { color: var(--fg-muted); text-decoration: none; }
+.hb-toc a:hover { color: var(--fg-accent); }
+.hb-body { max-width: 76ch; line-height: 1.7; font-size: var(--t-15); }
+.hb-body h3 { font-size: 22px; margin: 32px 0 10px; padding-top: 12px; border-top: 1px solid var(--c-line); scroll-margin-top: calc(var(--topbar-h, 56px) + 16px); }
+.hb-body h3:first-child { margin-top: 0; border-top: 0; padding-top: 0; }
+.hb-body h4 { font-size: var(--t-15); margin: 22px 0 6px; color: var(--fg-accent); scroll-margin-top: calc(var(--topbar-h, 56px) + 16px); }
+.hb-body p, .hb-body ul, .hb-body ol { margin: 0 0 14px; }
+.hb-body li { margin-bottom: 4px; }
+.hb-body code { font-family: var(--font-mono, ui-monospace, monospace); font-size: .88em; background: var(--bg-well); border: 1px solid var(--c-line); border-radius: 4px; padding: 1px 5px; }
+.hb-body pre { background: var(--bg-well); border: 1px solid var(--c-line); border-radius: var(--r-1); padding: 14px 16px; overflow-x: auto; margin: 0 0 16px; }
+.hb-body pre code { background: none; border: 0; padding: 0; font-size: 13.5px; line-height: 1.55; }
+.md-table { overflow-x: auto; margin: 0 0 16px; }
+.md-table table { margin: 0; }
+.md-callout { border: 1px solid var(--c-line); background: var(--bg-well); border-radius: var(--r-1); padding: 10px 14px; margin: 0 0 16px; }
+.md-callout.md-warning { border-color: color-mix(in srgb, var(--status-err-fg) 45%, var(--c-line)); }
+.md-callout.md-tip { border-color: color-mix(in srgb, var(--status-ok-fg) 45%, var(--c-line)); }
+.hb-refs { gap: 0; }
+.hb-ref { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid color-mix(in srgb, var(--c-line) 60%, transparent); }
+.hb-ref > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hb-ref form { margin: 0; flex-shrink: 0; }
+.hb-host { font-size: var(--t-13); color: var(--fg-muted); }
+.topic-list { gap: 0; }
+.topic-link { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid color-mix(in srgb, var(--c-line) 60%, transparent); text-decoration: none; color: inherit; }
+.topic-link:hover { background: var(--bg-hover); text-decoration: none; }
+.topic-link .hint { margin: 0 0 0 auto; white-space: nowrap; }
+.topic-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--fg-muted); flex-shrink: 0; }
+.topic-dot.s-learning { border-color: var(--fg-accent); background: var(--fg-accent); }
+.topic-dot.s-mastered { border-color: var(--status-ok-fg); background: var(--status-ok-fg); }
+.hb-shelf { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.hb-tile { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; height: 100%; background: var(--bg-well); border: 1px solid var(--c-line); border-radius: var(--r-1); text-decoration: none; color: inherit; }
+.hb-tile:hover { border-color: var(--fg-accent); text-decoration: none; }
+.hb-tile .hint { margin: 0; }
+@media (max-width: 900px) { .hb { grid-template-columns: 1fr; } .hb-toc { position: static; } }
