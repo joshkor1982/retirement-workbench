@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"math"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -1664,5 +1665,68 @@ func TestMapBBoxAndPlaces(t *testing.T) {
 	}
 	if _, body := j.get("/housing"); !strings.Contains(body, `id="hood-map"`) || !strings.Contains(body, "/static/vendor/leaflet/leaflet.js") {
 		t.Error("Housing is missing the map")
+	}
+}
+
+func TestItemizeHomeAndRV(t *testing.T) {
+	if got := firstYearInterest(350000, 6.25, 30); math.Abs(got-21758.84) > 0.01 {
+		t.Errorf("home first-year interest = %.2f, want 21758.84", got)
+	}
+	if got := payment(35000000, 6.25, 30); got != 215501 {
+		t.Errorf("P&I = %d cents, want 215501", got)
+	}
+	// Married, $4,000 a month retired pay in Alabama (exempt), 60% rating
+	// (no funding fee), $350,000 home at 6.25%, $1,800 property tax.
+	s := Settings{RetYears: 20, RetHigh3: 800000, RetirementDate: "2027-11-01", RetSpouse: true, VaEstimate: 60, TaxState: "AL",
+		OwnHome: true, HomePrice: 35000000, HomeRate: 6.25, PropTax: 180000}
+	tax := estimateRetirePay(State{Settings: s}).Tax
+	// 21,759 interest + 1,800 property tax = 23,559, under the $32,200 standard.
+	if it := tax.Itemized; it.Better || it.Total != 23559 || it.Standard != 32200 {
+		t.Errorf("home only: %+v", it)
+	}
+	// Add an $80,000 RV at 8% over 15 years with $4,000 sales tax: interest
+	// 6,296, and the sales tax beats Alabama income tax on exempt pay (0).
+	s.OwnRV, s.RVIsHome, s.RVLoan, s.RVRate, s.RVYears, s.RVSalesTax = true, true, 8000000, 8, 15, 400000
+	tax = estimateRetirePay(State{Settings: s}).Tax
+	it := tax.Itemized
+	if !it.Better || it.RVInterest != 6296 || !it.SALTUsesSales || it.SALT != 5800 || it.Total != 33855 {
+		t.Fatalf("home and RV: %+v", it)
+	}
+	// Federal on $48,000: standard 15,800 taxable = 1,580; itemized 14,145 = 1,414.50.
+	if it.Saves != 166 {
+		t.Errorf("saves = %d, want 166", it.Saves)
+	}
+	// Without sleeping, cooking, and toilet the RV interest does not count.
+	s.RVIsHome = false
+	if it := estimateRetirePay(State{Settings: s}).Tax.Itemized; it.RVInterest != 0 || !it.RVNotHome {
+		t.Errorf("RV not a home: %+v", it)
+	}
+	if c := saltCap(600000); c != 11900 {
+		t.Errorf("SALT cap at $600k = %v, want 11,900", c)
+	}
+	if c := saltCap(900000); c != 10000 {
+		t.Errorf("SALT cap floor = %v", c)
+	}
+}
+
+func TestHomePlanUsesQuotesAndSavings(t *testing.T) {
+	st := State{Settings: Settings{RetYears: 20, RetHigh3: 800000, RetirementDate: "2027-11-01", OwnHome: true,
+		HomePrice: 30000000, HomeDown: 0, PropTax: 120000, HomeIns: 144000},
+		Lenders: []Lender{{Name: "Big Bank", Rate: "6.5", Costs: 500000}, {Name: "Local CU", Rate: "6.25", Costs: 390000}},
+		Savings: []SavingsEntry{{ID: 1, Date: "2026-09-01", Amount: 1000000}}}
+	p := estimateRetirePay(st)
+	h := p.Home
+	// No VA rating: first-use fee 2.15% of $300,000 = $6,450, financed.
+	if h.Fee != 645000 || h.Loan != 30645000 || h.Rate != 6.25 || h.RateFrom != "Local CU" {
+		t.Fatalf("loan and rate: %+v", h)
+	}
+	if h.PI != payment(30645000, 6.25, 30) || h.Tax != 10000 || h.Ins != 12000 {
+		t.Errorf("monthly pieces: %+v", h)
+	}
+	if h.Closing != 390000 || h.ClosingFrom != "Local CU" || h.Cash != 390000 || h.SavingsAfter != 610000 {
+		t.Errorf("closing and savings: %+v", h)
+	}
+	if h.Left != p.TakeHome-h.Total {
+		t.Errorf("left = %d, want take-home %d minus housing %d", h.Left, p.TakeHome, h.Total)
 	}
 }

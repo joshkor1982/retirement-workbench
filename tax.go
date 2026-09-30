@@ -262,6 +262,7 @@ type retireTax struct {
 	Age       int
 	Total     int64 // income and payroll tax, cents a month
 	AfterTax  int64 // retired pay and job pay after tax, plus VA pay, cents a month
+	Itemized  itemization
 }
 
 func pct(tax, income float64) string {
@@ -285,12 +286,6 @@ func estimateRetireTax(st State, p retirePay) retireTax {
 	wages := float64(s.CivSalary) / 100  // job, dollars a year
 	income := pay + wages
 
-	fstd, fb := float64(fedStdSingle), fedSingle
-	if t.Joint {
-		fstd, fb = fedStdJoint, fedJoint
-	}
-	fed := bracketTax(max(income-fstd, 0), fb)
-	t.Federal, t.FedRate = cents(fed), pct(fed, income)
 	t.FICA = cents(fica(wages, t.Joint))
 
 	t.State, t.Guessed = st.taxState()
@@ -315,6 +310,21 @@ func estimateRetireTax(st State, p retirePay) retireTax {
 		stax = max(bracketTax(max(income-excl-float64(std+ex), 0), bs)-float64(cr), 0)
 	}
 	t.StateTax, t.StateRate = cents(stax), pct(stax, income)
+
+	// Federal: the standard deduction, or itemized when that is larger.
+	fstd, fb := float64(fedStdSingle), fedSingle
+	if t.Joint {
+		fstd, fb = fedStdJoint, fedJoint
+	}
+	rate, _ := st.homeRate()
+	t.Itemized = itemize(s, rate, income, stax, fstd)
+	withStd := bracketTax(max(income-fstd, 0), fb)
+	fed := withStd
+	if t.Itemized.Better {
+		fed = bracketTax(max(income-float64(t.Itemized.Total), 0), fb)
+		t.Itemized.Saves = int64(withStd - fed + 0.5)
+	}
+	t.Federal, t.FedRate = cents(fed), pct(fed, income)
 	t.Total = t.Federal + t.StateTax + t.FICA
 	t.AfterTax = p.Total + t.Wages - t.Total
 	return t

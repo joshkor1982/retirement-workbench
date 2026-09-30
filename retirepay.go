@@ -39,6 +39,7 @@ type retirePay struct {
 	Tax        retireTax
 	Health     healthCost
 	TakeHome   int64 // after tax and health coverage, cents a month
+	Home       homePlan
 	HaveIncome bool
 }
 
@@ -104,6 +105,7 @@ func estimateRetirePay(st State) retirePay {
 	p.Tax = estimateRetireTax(st, p)
 	p.Health = estimateHealth(s)
 	p.TakeHome = p.Tax.AfterTax - p.Health.Total
+	p.Home = estimateHomePlan(st, p.TakeHome)
 	if s.MonthlyIncome > 0 {
 		// Today's take-home is after tax, and TRICARE is free on active
 		// duty, so compare it with take-home after tax and health coverage.
@@ -118,6 +120,17 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 	high3, hOK := optionalMoney(r.FormValue("high3")) // blank is fine when ARW calculates it
 	salary, sOK := optionalMoney(r.FormValue("civ_salary"))
 	other, oOK := optionalMoney(r.FormValue("health_other"))
+	price, prOK := optionalMoney(r.FormValue("home_price"))
+	down, dnOK := optionalMoney(r.FormValue("home_down"))
+	homeIns, hiOK := optionalMoney(r.FormValue("home_ins"))
+	hoa, hoOK := optionalMoney(r.FormValue("hoa"))
+	propTax, ptOK := optionalMoney(r.FormValue("prop_tax"))
+	rvLoan, rlOK := optionalMoney(r.FormValue("rv_loan"))
+	rvSales, rsOK := optionalMoney(r.FormValue("rv_sales_tax"))
+	charity, chOK := optionalMoney(r.FormValue("charity"))
+	homeRate, hrOK := optionalRate(r.FormValue("home_rate"))
+	rvRate, rrOK := optionalRate(r.FormValue("rv_rate"))
+	rvYears, ryErr := strconv.Atoi(cmpOr(field(r, "rv_years"), "15"))
 	count := func(k string, hi int) int {
 		n, _ := strconv.Atoi(strings.TrimSpace(r.FormValue(k)))
 		return min(max(n, 0), hi)
@@ -129,6 +142,14 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 		flash(w, "err", "High-3 must be a dollar amount, like 6,450.00.")
 	case !sOK || salary < 0:
 		flash(w, "err", "Civilian salary must be a dollar amount a year, like 85,000.")
+	case !prOK || !dnOK || !hiOK || !hoOK || !ptOK || !rlOK || !rsOK || !chOK || price < 0 || down < 0 || homeIns < 0 || hoa < 0 || propTax < 0 || rvLoan < 0 || rvSales < 0 || charity < 0:
+		flash(w, "err", "Loan, tax, and gift amounts must be dollar amounts, like 350,000.")
+	case price > 0 && down >= price:
+		flash(w, "err", "The down payment has to be less than the home price.")
+	case !hrOK || !rrOK:
+		flash(w, "err", "Interest rates must be percentages, like 6.25.")
+	case ryErr != nil || rvYears < 1 || rvYears > 30:
+		flash(w, "err", "The RV loan term must be 1 to 30 years.")
 	case !oOK || other < 0:
 		flash(w, "err", "Other health cost must be a dollar amount a month, like 150.")
 	case !validHealthPlan(r.FormValue("health_plan")):
@@ -148,6 +169,11 @@ func (s *Server) retirePaySave(w http.ResponseWriter, r *http.Request) {
 			st.Settings.CivSalary = salary
 			st.Settings.HealthPlan, st.Settings.HealthOther = r.FormValue("health_plan"), other
 			st.Settings.NoDental = r.FormValue("dental") != "1"
+			st.Settings.OwnHome, st.Settings.HomeRate, st.Settings.PropTax = r.FormValue("own_home") == "1", homeRate, propTax
+			st.Settings.HomePrice, st.Settings.HomeDown, st.Settings.HomeIns, st.Settings.HOA = price, down, homeIns, hoa
+			st.Settings.OwnRV, st.Settings.RVIsHome = r.FormValue("own_rv") == "1", r.FormValue("rv_is_home") == "1"
+			st.Settings.RVLoan, st.Settings.RVRate, st.Settings.RVYears, st.Settings.RVSalesTax = rvLoan, rvRate, rvYears, rvSales
+			st.Settings.Charity = charity
 			st.Settings.NoVision = r.FormValue("vision") != "1"
 			st.Settings.BirthYear, _ = strconv.Atoi(strings.TrimSpace(r.FormValue("birth_year")))
 		})
@@ -168,4 +194,14 @@ func validBirthYear(s string) bool {
 	}
 	n, err := strconv.Atoi(s)
 	return err == nil && n >= 1930 && n <= 2010
+}
+
+// optionalRate reads a percentage like "6.25" or "6.25%"; blank is 0.
+func optionalRate(v string) (float64, bool) {
+	v = strings.TrimSuffix(strings.TrimSpace(v), "%")
+	if v == "" {
+		return 0, true
+	}
+	f, err := strconv.ParseFloat(v, 64)
+	return f, err == nil && f >= 0 && f <= 30
 }

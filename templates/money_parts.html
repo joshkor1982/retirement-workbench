@@ -264,6 +264,8 @@
             <td class="hint">Your estimate of {{money .Settings.CivSalary}} a year, before tax.</td></tr>{{end}}
           <tr><td>Federal income tax</td><td class="num">{{money .Ret.Tax.Federal}}</td>
             <td class="hint">{{.Ret.Tax.FedRate}} of {{if .Ret.Tax.Wages}}retired pay and job pay together{{else}}retired pay{{end}}, on the 2026 brackets after the standard deduction.{{if .Ret.Tax.Wages}} The job pushes retired pay into higher brackets, so raise your W-4P withholding in myPay or the job's W-4 to cover it.{{end}}</td></tr>
+          <tr><td>Deduction</td><td class="num">{{if .Ret.Tax.Itemized.Better}}{{dollars .Ret.Tax.Itemized.Total}}{{else}}{{dollars .Ret.Tax.Itemized.Standard}}{{end}}</td>
+            <td class="hint">{{if .Ret.Tax.Itemized.Better}}Itemized: saves {{dollars .Ret.Tax.Itemized.Saves}} a year over the standard deduction.{{else}}Standard deduction.{{if or .Settings.OwnHome .Settings.OwnRV}} Itemizing the house{{if .Settings.OwnRV}} and RV{{end}} comes to {{dollars .Ret.Tax.Itemized.Total}}, less than the standard, so it would not lower your federal tax.{{end}}{{end}}</td></tr>
           {{if .Ret.Tax.Wages}}<tr><td>Social Security and Medicare</td><td class="num">{{money .Ret.Tax.FICA}}</td>
             <td class="hint">7.65% of job pay, withheld by the employer. Retired pay pays neither.</td></tr>{{end}}
           <tr><td>{{if .Ret.Tax.StateName}}{{.Ret.Tax.StateName}}{{else}}State{{end}} income tax</td><td class="num">{{if .Ret.Tax.State}}{{money .Ret.Tax.StateTax}}{{else}}·{{end}}</td>
@@ -311,6 +313,64 @@
           <input type="text" name="health_other" inputmode="decimal" value="{{if .Settings.HealthOther}}{{money .Settings.HealthOther}}{{end}}" placeholder="0.00"></label>
         <label class="field inline-check"><input type="checkbox" name="dental" value="1"{{if not .Settings.NoDental}} checked{{end}}> FEDVIP Dental</label>
         <label class="field inline-check"><input type="checkbox" name="vision" value="1"{{if not .Settings.NoVision}} checked{{end}}> FEDVIP Vision</label>
+      </div>
+    </div>
+    <div class="va-calc tax-calc" id="home-plan">
+      <div class="va-calc-head">
+        <span class="field-label">Home, RV, and Deductions</span>
+        {{if .Ret.Home.Set}}<span class="va-amount">{{money .Ret.Home.Left}}<small> a month left after housing</small></span>{{end}}
+        <span class="hint">Check what you plan to own. The house uses your price and down payment from <a href="/home-team#fee">Agents &amp; Lenders</a>, the lowest rate and closing costs from your lender quotes, and your <a href="/savings">Savings</a> balance. Interest and property tax only lower your tax if, together with state taxes and gifts, they beat the standard deduction.</span>
+      </div>
+      {{with .Ret.Home}}{{if .Set}}
+      <table class="tax-table">
+        <tbody>
+          {{if $.Settings.OwnHome}}
+          <tr><td>Mortgage (principal and interest)</td><td class="num">{{money .PI}}</td>
+            <td class="hint">{{money .Loan}} over 30 years at {{.Rate}}%{{if eq .RateFrom "yours"}}{{else if .RateFrom}} ({{.RateFrom}}'s quote){{else}}. Enter a rate below or a lender quote{{end}}{{if .Fee}}, including the {{money .Fee}} VA funding fee financed{{end}}.</td></tr>
+          <tr><td>Property tax, insurance, and HOA</td><td class="num">{{money (addc .Tax .Ins .HOA)}}</td>
+            <td class="hint">{{money .Tax}} tax, {{money .Ins}} insurance, {{money .HOA}} HOA a month.{{if not $.Settings.HomeIns}} Add a homeowners insurance quote below.{{end}}</td></tr>
+          {{end}}
+          {{if $.Settings.OwnRV}}<tr><td>RV payment</td><td class="num">{{money .RVPay}}</td>
+            <td class="hint">{{money $.Settings.RVLoan}} over {{$.Settings.RVYears}} years at {{$.Settings.RVRate}}%.</td></tr>{{end}}
+          <tr><td>Housing each month</td><td class="num"><b>{{money .Total}}</b></td><td class="hint">Everything above.</td></tr>
+          <tr class="tax-total"><td>Left each month</td><td class="num">{{money .Left}}</td>
+            <td class="hint">Take-home after tax and health ({{money $.Ret.TakeHome}}) minus housing. Food, utilities, cars, and other bills come out of this.</td></tr>
+          {{if $.Settings.OwnHome}}
+          <tr><td>Cash to close</td><td class="num">{{money .Cash}}</td>
+            <td class="hint">{{money .Down}} down{{if .Closing}} plus {{money .Closing}} closing costs ({{.ClosingFrom}}'s quote){{else}}, plus closing costs once a lender quotes them{{end}}. VA lets the seller pay closing costs, so ask.</td></tr>
+          <tr><td>Savings after closing</td><td class="num {{if lt .SavingsAfter 0}}gist-short{{end}}">{{money .SavingsAfter}}</td>
+            <td class="hint">From {{money .Savings}} saved today.{{if lt .SavingsAfter 0}} Short by {{money (neg .SavingsAfter)}}.{{end}}</td></tr>
+          {{end}}
+        </tbody>
+      </table>
+      {{end}}{{end}}
+      {{with .Ret.Tax.Itemized}}{{if or .Home .RV $.Settings.Charity}}
+      <p class="hint ded-line">Itemized {{dollars .Total}}: {{if .Home}}mortgage interest {{dollars .HomeInterest}}, {{end}}{{if .RV}}RV interest {{dollars .RVInterest}}, {{end}}state and local taxes {{dollars .SALT}}{{if .SALTUsesSales}} (the RV's sales tax beat state income tax){{end}}{{if .SALTCapped}} (capped){{end}}{{if .Charity}}, gifts {{dollars .Charity}}{{end}}. Standard {{dollars .Standard}}.{{if .RVNotHome}} RV interest only counts when it has sleeping, cooking, and toilet facilities.{{end}}{{if .InterestCapped}} Loans over $750,000 only get part of their interest counted.{{end}} First-year interest; it shrinks each year after.</p>
+      {{end}}{{end}}
+      <div class="ded-group">
+        <label class="field inline-check"><input type="checkbox" name="own_home" value="1"{{if .Settings.OwnHome}} checked{{end}}> I'll Own a Home</label>
+        <div class="field-row ded-fields">
+          <label class="field"><span class="field-label">Home Price</span><input type="text" name="home_price" inputmode="decimal" value="{{if .Settings.HomePrice}}{{money .Settings.HomePrice}}{{end}}" placeholder="350,000"></label>
+          <label class="field"><span class="field-label">Down Payment</span><input type="text" name="home_down" inputmode="decimal" value="{{if .Settings.HomePrice}}{{money .Settings.HomeDown}}{{end}}" placeholder="0"></label>
+          <label class="field"><span class="field-label">Interest Rate %</span><input type="text" name="home_rate" inputmode="decimal" value="{{if .Settings.HomeRate}}{{.Settings.HomeRate}}{{end}}" placeholder="{{with .Ret.Home}}{{if and .Rate (ne .RateFrom "yours")}}{{.Rate}} (lowest quote){{else}}6.25{{end}}{{else}}6.25{{end}}" size="8"></label>
+          <label class="field"><span class="field-label">Property Tax per Year</span><input type="text" name="prop_tax" inputmode="decimal" value="{{if .Settings.PropTax}}{{money .Settings.PropTax}}{{end}}" placeholder="1,800"></label>
+          <label class="field"><span class="field-label">Insurance per Year</span><input type="text" name="home_ins" inputmode="decimal" value="{{if .Settings.HomeIns}}{{money .Settings.HomeIns}}{{end}}" placeholder="1,600"></label>
+          <label class="field"><span class="field-label">HOA per Month</span><input type="text" name="hoa" inputmode="decimal" value="{{if .Settings.HOA}}{{money .Settings.HOA}}{{end}}" placeholder="0"></label>
+        </div>
+      </div>
+      <div class="ded-group">
+        <label class="field inline-check"><input type="checkbox" name="own_rv" value="1"{{if .Settings.OwnRV}} checked{{end}}> I'll Own an RV</label>
+        <div class="field-row ded-fields">
+          <label class="field"><span class="field-label">RV Loan</span><input type="text" name="rv_loan" inputmode="decimal" value="{{if .Settings.RVLoan}}{{money .Settings.RVLoan}}{{end}}" placeholder="80,000"></label>
+          <label class="field"><span class="field-label">Rate %</span><input type="text" name="rv_rate" inputmode="decimal" value="{{if .Settings.RVRate}}{{.Settings.RVRate}}{{end}}" placeholder="8.0" size="6"></label>
+          <label class="field"><span class="field-label">Years</span><input type="number" name="rv_years" min="1" max="30" value="{{or .Settings.RVYears 15}}"></label>
+          <label class="field"><span class="field-label">Sales Tax Paid</span><input type="text" name="rv_sales_tax" inputmode="decimal" value="{{if .Settings.RVSalesTax}}{{money .Settings.RVSalesTax}}{{end}}" placeholder="4,000"></label>
+          <label class="field inline-check"><input type="checkbox" name="rv_is_home" value="1"{{if .Settings.RVIsHome}} checked{{end}}> Has Sleeping, Cooking, and Toilet</label>
+        </div>
+      </div>
+      <div class="field-row">
+        <label class="field"><span class="field-label">Charitable Gifts per Year</span><input type="text" name="charity" inputmode="decimal" value="{{if .Settings.Charity}}{{money .Settings.Charity}}{{end}}" placeholder="0"></label>
+        <span class="field-note">General information, not tax advice. MilTax (Military OneSource) and the VITA office on post are free.</span>
       </div>
     </div>
     <button type="submit" class="primary">Estimate</button>

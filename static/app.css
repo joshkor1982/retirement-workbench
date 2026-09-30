@@ -1094,3 +1094,9 @@ tr.best-quote td { background: color-mix(in srgb, var(--status-ok-fg) 7%, transp
 :root[data-theme="dark"] .osm-base { filter: invert(1) hue-rotate(180deg) brightness(.85) contrast(.9); }
 .map-base { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-13); margin-right: 6px; }
 .map-base select { padding: 4px 8px; }
+/* Home, RV, and deductions: fields show once the box is checked. */
+.ded-group { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; border-top: 1px solid color-mix(in srgb, var(--c-line) 60%, transparent); }
+.ded-group .ded-fields { display: none; }
+.ded-group:has(> label input:checked) .ded-fields { display: flex; }
+.ded-line { margin: 0; }
+.ded-group > label.inline-check { align-self: flex-start; }

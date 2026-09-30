@@ -95,8 +95,21 @@ type Settings struct {
 	HealthOther     int64   `json:"health_other_cents,omitempty"` // other health premiums, a month
 	HomePrice       int64   `json:"home_price_cents,omitempty"`   // VA funding fee estimate
 	HomeDown        int64   `json:"home_down_cents,omitempty"`
-	VALoanUsed      bool    `json:"va_loan_used,omitempty"` // a VA loan was used before: higher fee
-	DataGovKey      string  `json:"data_gov_key,omitempty"` // api.data.gov key for FBI crime data; DEMO_KEY when empty // estimated civilian job pay, a year
+	VALoanUsed      bool    `json:"va_loan_used,omitempty"`    // a VA loan was used before: higher fee
+	DataGovKey      string  `json:"data_gov_key,omitempty"`    // api.data.gov key for FBI crime data; DEMO_KEY when empty
+	OwnHome         bool    `json:"own_home,omitempty"`        // itemize: a home with a mortgage
+	HomeLoan        int64   `json:"home_loan_cents,omitempty"` // 0 = price minus down payment
+	HomeRate        float64 `json:"home_rate,omitempty"`       // percent
+	PropTax         int64   `json:"prop_tax_cents,omitempty"`  // a year
+	HomeIns         int64   `json:"home_ins_cents,omitempty"`  // homeowners insurance, a year
+	HOA             int64   `json:"hoa_cents,omitempty"`       // a month
+	OwnRV           bool    `json:"own_rv,omitempty"`          // itemize: an RV as a second home
+	RVIsHome        bool    `json:"rv_is_home,omitempty"`      // has sleeping, cooking, and toilet facilities
+	RVLoan          int64   `json:"rv_loan_cents,omitempty"`
+	RVRate          float64 `json:"rv_rate,omitempty"`
+	RVYears         int     `json:"rv_years,omitempty"`
+	RVSalesTax      int64   `json:"rv_sales_tax_cents,omitempty"`
+	Charity         int64   `json:"charity_cents,omitempty"` // a year // estimated civilian job pay, a year
 	SavingsGoal     int64   `json:"savings_goal_cents,omitempty"`
 	SavingsGoalName string  `json:"savings_goal_name,omitempty"`
 	TimelineSeeded  bool    `json:"timeline_seeded"`
@@ -620,6 +633,15 @@ func newApp(dataDir string) (*Server, http.Handler, error) {
 		"money":      money,
 		"healthYear": func() int { return healthYear },
 		"abs":        func(n int64) int64 { return max(n, -n) },
+		"neg":        func(n int64) int64 { return -n },
+		"addc": func(ns ...int64) int64 {
+			var t int64
+			for _, n := range ns {
+				t += n
+			}
+			return t
+		},
+		"dollars": func(n int64) string { return money(n * 100) },
 		"evList": func(title string, docs []Doc, empty string) map[string]any {
 			return map[string]any{"Title": title, "Docs": docs, "Empty": empty}
 		},

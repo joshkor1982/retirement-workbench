@@ -3,6 +3,13 @@
 ## Unreleased
 
 ### Added
+- Retired Pay: Home, RV, and Deductions. Check "I'll own a home" and "I'll
+  own an RV" to see the monthly payment (principal and interest, property
+  tax, insurance, HOA, and the RV loan), what is left of take-home after
+  housing, cash to close against your savings, and whether itemizing the
+  mortgage and RV interest, state and local taxes (the RV's sales tax
+  counts), and gifts beats the standard deduction, with the federal tax it
+  saves. The rate and closing costs come from your lowest lender quote.
 - Neighborhood Map on Housing: homes for sale as pins, FEMA flood zones,
   2020 Census population density by tract, NCES public schools, FBI crime
   rates by police agency against the state and national rates, and
